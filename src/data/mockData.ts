@@ -1,4 +1,5 @@
 import { Opportunity, PresalesEngineer } from '../types';
+import { DEFAULT_ROLES } from '../rbac';
 
 export const INITIAL_ENGINEERS: PresalesEngineer[] = [
   {
@@ -1422,6 +1423,7 @@ export const MOCK_USERS = [
     name: 'Dr. Marcus Vance',
     email: 'marcus.vance@presaleshq.io',
     role: 'Principal Solutions Architect' as const,
+    roleId: 'role-sa',
     department: 'Solutions Engineering' as const,
     status: 'Active' as const,
     lastActive: '5 mins ago',
@@ -1432,6 +1434,7 @@ export const MOCK_USERS = [
     name: 'Elena Rostova',
     email: 'elena.rostova@presaleshq.io',
     role: 'Presales Lead / Architect' as const,
+    roleId: 'role-sa',
     department: 'Solutions Engineering' as const,
     status: 'Active' as const,
     lastActive: '12 mins ago',
@@ -1442,6 +1445,7 @@ export const MOCK_USERS = [
     name: 'Rachel Sterling',
     email: 'rachel.sterling@presaleshq.io',
     role: 'Sales KAM' as const,
+    roleId: 'role-kam',
     department: 'Sales' as const,
     status: 'Active' as const,
     lastActive: '1 hour ago',
@@ -1452,6 +1456,7 @@ export const MOCK_USERS = [
     name: 'Vikram Mehta',
     email: 'vikram.mehta@presaleshq.io',
     role: 'Principal Solutions Architect' as const,
+    roleId: 'role-sa',
     department: 'Solutions Engineering' as const,
     status: 'Active' as const,
     lastActive: '25 mins ago',
@@ -1462,89 +1467,27 @@ export const MOCK_USERS = [
     name: 'Carlos Mendez',
     email: 'carlos.mendez@presaleshq.io',
     role: 'Delivery Manager' as const,
+    roleId: 'role-delivery',
     department: 'Delivery & Services' as const,
     status: 'Active' as const,
     lastActive: '3 hours ago',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'usr-006',
+    name: 'Athena Cole',
+    email: 'athena.cole@presaleshq.io',
+    role: 'System Administrator' as const,
+    roleId: 'role-admin',
+    department: 'Operations' as const,
+    status: 'Active' as const,
+    lastActive: '2 hours ago',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80'
   }
 ];
 
-export const MOCK_ROLES = [
-  {
-    id: 'role-1',
-    roleName: 'Presales Lead / Principal Architect',
-    description: 'Full authorization over solution designs, technical discovery, and BOQ pricing up to 20% discount.',
-    usersCount: 6,
-    permissions: [
-      {
-        category: 'Opportunity Management',
-        items: [
-          { key: 'opp.create', label: 'Create new opportunities & sizing intake', granted: true },
-          { key: 'opp.edit_tech', label: 'Edit technical architecture & stack configurations', granted: true },
-          { key: 'opp.stage_advance', label: 'Promote pipeline stage through technical gates', granted: true },
-          { key: 'opp.delete', label: 'Archive or remove opportunities', granted: false }
-        ]
-      },
-      {
-        category: 'BOQ & Financial Governance',
-        items: [
-          { key: 'boq.create', label: 'Author and modify Bill of Quantities', granted: true },
-          { key: 'boq.approve_standard', label: 'Approve standard discounts (up to 15%)', granted: true },
-          { key: 'boq.approve_executive', label: 'Approve deep executive discounts (> 20%)', granted: false }
-        ]
-      },
-      {
-        category: 'Handover & Delivery',
-        items: [
-          { key: 'handover.signoff', label: 'Sign off on technical runbooks and SOW readiness', granted: true },
-          { key: 'handover.assign_ps', label: 'Assign delivery leads to won deals', granted: true }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'role-2',
-    roleName: 'Sales KAM / Account Executive',
-    description: 'Commercial deal owner with CRM sync, stakeholder engagement, and contract value updates.',
-    usersCount: 14,
-    permissions: [
-      {
-        category: 'Opportunity Management',
-        items: [
-          { key: 'opp.create', label: 'Create new opportunities & sizing intake', granted: true },
-          { key: 'opp.edit_tech', label: 'Edit technical architecture & stack configurations', granted: false },
-          { key: 'opp.stage_advance', label: 'Promote pipeline stage through technical gates', granted: false },
-          { key: 'opp.delete', label: 'Archive or remove opportunities', granted: false }
-        ]
-      },
-      {
-        category: 'BOQ & Financial Governance',
-        items: [
-          { key: 'boq.create', label: 'Author and modify Bill of Quantities', granted: false },
-          { key: 'boq.approve_standard', label: 'Approve standard discounts (up to 15%)', granted: false },
-          { key: 'boq.approve_executive', label: 'Approve deep executive discounts (> 20%)', granted: false }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'role-3',
-    roleName: 'System Administrator',
-    description: 'Unrestricted enterprise administrative permissions across users, audit logs, and master configurations.',
-    usersCount: 2,
-    permissions: [
-      {
-        category: 'System Configuration',
-        items: [
-          { key: 'sys.users', label: 'Manage user accounts and role assignments', granted: true },
-          { key: 'sys.rbac', label: 'Modify RBAC policy matrix', granted: true },
-          { key: 'sys.audit', label: 'Access immutable audit trail and export logs', granted: true },
-          { key: 'sys.integrations', label: 'Configure CRM, ERP, and Cloud OEM webhook keys', granted: true }
-        ]
-      }
-    ]
-  }
-];
+// Aligned to the canonical RBAC policy (see src/rbac.ts).
+export const MOCK_ROLES = DEFAULT_ROLES;
 
 export const MOCK_MASTER_CONFIG = {
   slaThresholds: [

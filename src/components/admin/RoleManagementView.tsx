@@ -1,26 +1,27 @@
 import React, { useState } from 'react';
 import { RolePermission } from '../../types';
+import { PERMISSION_CATALOG, roleHasKey } from '../../rbac';
 import { 
   ShieldCheck, 
-  Check, 
   X, 
   Plus, 
-  Lock, 
-  Layers,
-  KeyRound,
   Users,
-  CheckCircle2
+  CheckCircle2,
+  Lock
 } from 'lucide-react';
 
 interface RoleManagementViewProps {
   roles: RolePermission[];
+  onRolesChange?: (roles: RolePermission[]) => void;
 }
 
 export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
-  roles: initialRoles,
+  roles,
+  onRolesChange,
 }) => {
-  const [roles, setRoles] = useState<RolePermission[]>(initialRoles);
-  const [selectedRole, setSelectedRole] = useState<RolePermission>(initialRoles[0]);
+  const [selectedRole, setSelectedRole] = useState<RolePermission>(() =>
+    roles[0] || ({ id: 'role-empty', permissions: [] } as RolePermission),
+  );
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
 
@@ -28,21 +29,24 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleDesc, setNewRoleDesc] = useState('');
 
+  const roleName = (r: RolePermission) => (r.roleName ?? r.name) || '(unnamed role)';
+
   const handleCreateRole = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRoleName.trim()) return;
 
     const newRole: RolePermission = {
       id: `role-${Date.now()}`,
+      roleName: newRoleName,
       name: newRoleName,
       description: newRoleDesc || 'Custom Presales Role',
       isSystemRole: false,
       usersCount: 0,
-      permissions: ['create_opportunity', 'author_sadd', 'author_boq']
+      permissions: ['create_opportunity']
     };
 
     const updated = [...roles, newRole];
-    setRoles(updated);
+    onRolesChange?.(updated);
     setSelectedRole(newRole);
     setShowCreateModal(false);
     setNewRoleName('');
@@ -50,46 +54,19 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
   };
 
   const handleSavePermissions = () => {
-    setRoles(roles.map(r => r.id === selectedRole.id ? selectedRole : r));
-    setSaveSuccessMsg(`Security permissions policy for "${selectedRole.name}" successfully updated & enforced.`);
+    onRolesChange?.(roles);
+    setSaveSuccessMsg(`Security permissions policy for "${roleName(selectedRole)}" successfully updated & enforced.`);
     setTimeout(() => setSaveSuccessMsg(null), 3000);
   };
 
-  const permissionModules = [
-    {
-      module: 'Opportunities & Deals',
-      permissions: [
-        { key: 'create_opportunity', name: 'Create New Opportunity' },
-        { key: 'edit_opportunity_core', name: 'Edit Core Deal Terms & TCV' },
-        { key: 'promote_stage', name: 'Promote Opportunity Stage' },
-        { key: 'delete_opportunity', name: 'Delete / Purge Opportunity' }
-      ]
-    },
-    {
-      module: 'Technical Architecture & SADD',
-      permissions: [
-        { key: 'author_sadd', name: 'Author & Publish SADD Blueprints' },
-        { key: 'approve_sadd', name: 'Approve Architecture Design (Lead SA)' },
-        { key: 'run_poc_benchmarks', name: 'Execute POC Benchmark Matrix' },
-        { key: 'security_signoff', name: 'Grant InfoSec & Compliance Waiver' }
-      ]
-    },
-    {
-      module: 'BOQ Workbench & Commercial Margin',
-      permissions: [
-        { key: 'author_boq', name: 'Build & Modify BOQ Line Items' },
-        { key: 'override_margin', name: 'Override Floor Margins (<35%)' },
-        { key: 'approve_boq_discount', name: 'Approve Discount Packages' }
-      ]
-    },
-    {
-      module: 'Implementation & Delivery Handover',
-      permissions: [
-        { key: 'initiate_handover', name: 'Initiate Delivery Handover' },
-        { key: 'signoff_handover', name: 'Sign-off Delivery Readiness' }
-      ]
+  const permissionModules = (() => {
+    const grouped = new Map<string, typeof PERMISSION_CATALOG>();
+    for (const p of PERMISSION_CATALOG) {
+      if (!grouped.has(p.module)) grouped.set(p.module, []);
+      grouped.get(p.module)!.push(p);
     }
-  ];
+    return Array.from(grouped.entries()).map(([module, perms]) => ({ module, permissions: perms }));
+  })();
 
   return (
     <div className="space-y-4">
@@ -139,7 +116,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold">{r.name}</span>
+                  <span className="text-xs font-bold">{roleName(r)}</span>
                   {r.isSystemRole && (
                     <span className="text-[10px] font-mono uppercase px-1.5 py-0.2 rounded bg-gray-200 text-gray-700">
                       System
@@ -161,7 +138,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
           <div className="flex items-center justify-between border-b border-gray-200 pb-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-gray-900">{selectedRole.name}</h3>
+                <h3 className="text-sm font-bold text-gray-900">{roleName(selectedRole)}</h3>
                 <span className="text-xs font-mono text-gray-500">({selectedRole.id})</span>
               </div>
               <p className="text-xs text-gray-500 mt-0.5">{selectedRole.description}</p>
@@ -184,7 +161,8 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
 
                 <div className="divide-y divide-gray-100">
                   {mod.permissions.map(perm => {
-                    const isGranted = selectedRole.permissions.includes(perm.key) || selectedRole.permissions.includes('all');
+                    const isGranted = roleHasKey(selectedRole, perm.key);
+                    const isUnrestricted = roleHasKey(selectedRole, 'all');
                     return (
                       <div key={perm.key} className="p-2.5 flex items-center justify-between hover:bg-gray-50 text-xs">
                         <div>
@@ -196,15 +174,18 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
                           <input
                             type="checkbox"
                             checked={isGranted}
-                            disabled={selectedRole.id === 'role-superadmin'}
+                            disabled={isUnrestricted}
                             onChange={() => {
-                              if (selectedRole.id === 'role-superadmin') return;
+                              if (isUnrestricted) return;
+                              const currentList = Array.isArray(selectedRole.permissions)
+                                ? selectedRole.permissions.filter(p => typeof p === 'string') as string[]
+                                : [];
                               const updatedPerms = isGranted
-                                ? selectedRole.permissions.filter(p => p !== perm.key)
-                                : [...selectedRole.permissions, perm.key];
+                                ? currentList.filter(p => p !== perm.key)
+                                : [...currentList, perm.key];
                               const updatedRole = { ...selectedRole, permissions: updatedPerms };
                               setSelectedRole(updatedRole);
-                              setRoles(roles.map(r => r.id === selectedRole.id ? updatedRole : r));
+                              onRolesChange?.(roles.map(r => r.id === selectedRole.id ? updatedRole : r));
                             }}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />

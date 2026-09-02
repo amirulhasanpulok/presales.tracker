@@ -305,6 +305,7 @@ export interface UserAccount {
   name: string;
   email: string;
   role: 'Presales Lead / Architect' | 'Principal Solutions Architect' | 'Sales KAM' | 'Delivery Manager' | 'System Administrator' | 'presales_architect' | 'sales_kam' | 'presales_lead' | 'super_admin' | string;
+  roleId?: string;
   department: 'Solutions Engineering' | 'Sales' | 'Delivery & Services' | 'Information Security' | 'Operations' | string;
   status: 'Active' | 'Inactive' | 'Invited' | 'active' | 'inactive' | string;
   lastActive?: string;

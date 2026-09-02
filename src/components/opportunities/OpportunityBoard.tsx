@@ -32,7 +32,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
 
   return (
     <div className="flex-1 overflow-x-auto bg-gray-100/70 p-4">
-      <div className="flex gap-3 min-w-[1750px] h-[calc(100vh-135px)]">
+      <div className="flex gap-3 min-w-[1750px] h-full">
         {stages.map((stageKey) => {
           const config = STAGE_CONFIG[stageKey];
           const stageOpps = opportunities.filter(o => o.stage === stageKey);

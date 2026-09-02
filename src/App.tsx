@@ -1,19 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { ActiveTab, Opportunity, OpportunityStage, ClientAccount } from './types';
-import { 
-  INITIAL_OPPORTUNITIES, 
-  INITIAL_ENGINEERS, 
-  MOCK_CLIENTS, 
-  MOCK_SALES_KAMS, 
-  MOCK_CALENDAR_EVENTS, 
-  MOCK_CENTRAL_DOCUMENTS, 
-  MOCK_NOTIFICATIONS, 
-  MOCK_AUDIT_LOGS, 
-  MOCK_USERS, 
-  MOCK_ROLES 
+import React, { useState, useEffect, useCallback } from 'react';
+import { ActiveTab, Opportunity, OpportunityStage, ClientAccount, UserAccount, RolePermission } from './types';
+import {
+  INITIAL_OPPORTUNITIES,
+  INITIAL_ENGINEERS,
+  MOCK_CLIENTS,
+  MOCK_SALES_KAMS,
+  MOCK_CALENDAR_EVENTS,
+  MOCK_CENTRAL_DOCUMENTS,
+  MOCK_NOTIFICATIONS,
+  MOCK_AUDIT_LOGS,
+  MOCK_USERS,
 } from './data/mockData';
+import {
+  can,
+  resolveRole,
+  TAB_PERMISSIONS,
+  PERMISSION_CATALOG,
+  loadRoles,
+  saveRoles,
+  loadCurrentUser,
+  saveCurrentUser,
+} from './rbac';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
+import { AccessDenied } from './components/common/AccessDenied';
 import { ExecutiveDashboard } from './components/dashboard/ExecutiveDashboard';
 import { OpportunityTable } from './components/opportunities/OpportunityTable';
 import { OpportunityBoard } from './components/opportunities/OpportunityBoard';
@@ -63,6 +73,44 @@ export default function App() {
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [density, setDensity] = useState<'compact' | 'dense' | 'spacious'>('dense');
+
+  // ---------------------------------------------------------------------------
+  // Role-Based Access Control state
+  // ---------------------------------------------------------------------------
+  const [roles, setRoles] = useState<RolePermission[]>(() => loadRoles() as RolePermission[]);
+  const [currentUser, setCurrentUser] = useState<UserAccount>(() => loadCurrentUser(MOCK_USERS as any));
+
+  const updateRoles = useCallback((next: RolePermission[]) => {
+    setRoles(next);
+    saveRoles(next as any);
+  }, []);
+
+  const switchUser = useCallback((user: UserAccount) => {
+    setCurrentUser(user);
+    saveCurrentUser(user);
+    setActiveTab(tab => (can(roles, user, TAB_PERMISSIONS[tab] ?? 'app.access') ? tab : 'dashboard'));
+    setFullDetailOpportunity(null);
+    setSelectedClient(null);
+  }, [roles]);
+
+  const canDo = useCallback(
+    (permission: string) => can(roles, currentUser, permission),
+    [roles, currentUser],
+  );
+
+  const currentRole = resolveRole(roles, currentUser);
+  const currentRoleName = (currentRole as any)?.roleName ?? (currentRole as any)?.name ?? currentUser?.role ?? null;
+
+  const handleCreateOpportunityRequest = useCallback(() => {
+    if (canDo('create_opportunity')) {
+      setIsNewModalOpen(true);
+    }
+  }, [canDo]);
+
+  // Save roles to localStorage (persists edits from the RBAC admin view)
+  useEffect(() => {
+    saveRoles(roles);
+  }, [roles]);
 
   // Save to localStorage
   useEffect(() => {
@@ -127,11 +175,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+    <div className="h-screen overflow-hidden bg-gray-50 text-gray-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Top Header Command Bar */}
       <Header
         opportunities={opportunities}
-        onOpenNewOpportunity={() => setIsNewModalOpen(true)}
+        onOpenNewOpportunity={handleCreateOpportunityRequest}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onNavigateTab={(tab) => {
           setActiveTab(tab);
@@ -142,7 +190,7 @@ export default function App() {
       />
 
       {/* Main Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Navigation Sidebar */}
         <Sidebar
           activeTab={activeTab}
@@ -152,11 +200,20 @@ export default function App() {
             setSelectedClient(null);
           }}
           opportunities={opportunities}
-          onOpenNewOpportunity={() => setIsNewModalOpen(true)}
+          onOpenNewOpportunity={handleCreateOpportunityRequest}
+          can={canDo}
+          canCreateOpportunity={canDo('create_opportunity')}
+          currentUser={currentUser}
+          currentRoleName={currentRoleName}
+          demoUsers={MOCK_USERS as any}
+          onSwitchUser={switchUser}
         />
 
         {/* Dynamic Center Viewport */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-gray-50 p-4">
+        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto bg-gray-50 p-4">
+          {/* RBAC view guard: block access if the active tab is not permitted */}
+          {canDo(TAB_PERMISSIONS[activeTab] ?? 'app.access') ? (
+          <>
           {/* Full Screen Opportunity Detail View (when active) */}
           {fullDetailOpportunity ? (
             <OpportunityDetailView
@@ -299,7 +356,8 @@ export default function App() {
 
               {activeTab === 'role_permissions' && (
                 <RoleManagementView
-                  roles={MOCK_ROLES as any}
+                  roles={roles as any}
+                  onRolesChange={updateRoles}
                 />
               )}
 
@@ -311,6 +369,17 @@ export default function App() {
                 <SystemSettingsView />
               )}
             </>
+          )}
+          </>
+          ) : (
+            <AccessDenied
+              roleName={currentRoleName}
+              requiredPermission={TAB_PERMISSIONS[activeTab] ?? 'app.access'}
+              permissionLabel={
+                PERMISSION_CATALOG.find(p => p.key === (TAB_PERMISSIONS[activeTab] ?? 'app.access'))?.name ?? null
+              }
+              onBack={() => setActiveTab('dashboard')}
+            />
           )}
         </main>
       </div>
@@ -349,7 +418,7 @@ export default function App() {
           setFullDetailOpportunity(null);
           setSelectedClient(null);
         }}
-        onOpenNewOpportunity={() => setIsNewModalOpen(true)}
+        onOpenNewOpportunity={handleCreateOpportunityRequest}
       />
     </div>
   );
