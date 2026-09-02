@@ -1,0 +1,172 @@
+import React from 'react';
+import { 
+  LayoutDashboard,
+  TableProperties, 
+  Kanban, 
+  Calculator, 
+  FlaskConical, 
+  CheckSquare, 
+  ArrowRightLeft, 
+  Users, 
+  BarChart3, 
+  Calendar,
+  Building2,
+  Briefcase,
+  FileText,
+  Bell,
+  ShieldCheck,
+  UserCheck,
+  KeyRound,
+  Sliders,
+  Settings,
+  Plus
+} from 'lucide-react';
+import { ActiveTab, Opportunity } from '../../types';
+
+interface SidebarProps {
+  activeTab: ActiveTab;
+  setActiveTab: (tab: ActiveTab) => void;
+  opportunities: Opportunity[];
+  onOpenNewOpportunity: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({
+  activeTab,
+  setActiveTab,
+  opportunities,
+  onOpenNewOpportunity,
+}) => {
+  // Compute contextual badge counts
+  const totalOpps = opportunities.length;
+  const activePocs = opportunities.filter(o => ['active_testing', 'scoping', 'provisioning', 'validating_kpis'].includes(o.poc.status)).length;
+  const pendingBoqs = opportunities.filter(o => o.boq.approvalStatus.startsWith('pending')).length;
+  const openActions = opportunities.reduce((acc, o) => acc + o.actionItems.filter(a => !a.isCompleted).length, 0);
+  const pendingHandovers = opportunities.filter(o => o.stage === 'closed_won' && !o.handover.isHandedOver).length;
+
+  const sections = [
+    {
+      title: 'Executive & Pipelines',
+      items: [
+        { id: 'dashboard' as ActiveTab, label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'opportunities' as ActiveTab, label: 'Opportunities Tracker', icon: TableProperties, count: totalOpps },
+        { id: 'board' as ActiveTab, label: 'Stage Matrix Board', icon: Kanban },
+        { id: 'calendar' as ActiveTab, label: 'Calendar & Sessions', icon: Calendar },
+      ]
+    },
+    {
+      title: 'Solutions Engineering',
+      items: [
+        { id: 'poc_center' as ActiveTab, label: 'POC & Lab Sandbox', icon: FlaskConical, count: activePocs, highlight: 'amber' },
+        { id: 'boq_workbench' as ActiveTab, label: 'BOQ / BOM Workbench', icon: Calculator, count: pendingBoqs > 0 ? `${pendingBoqs} apprv` : undefined, highlight: 'purple' },
+        { id: 'action_center' as ActiveTab, label: 'Tasks & Next Actions', icon: CheckSquare, count: openActions, highlight: 'red' },
+        { id: 'handover_queue' as ActiveTab, label: 'Implementation Handover', icon: ArrowRightLeft, count: pendingHandovers > 0 ? `${pendingHandovers} ready` : undefined, highlight: 'emerald' },
+        { id: 'team_capacity' as ActiveTab, label: 'Presales Team', icon: Users },
+        { id: 'documents' as ActiveTab, label: 'Documents & SADD', icon: FileText },
+        { id: 'analytics' as ActiveTab, label: 'Reports & Analytics', icon: BarChart3 },
+      ]
+    },
+    {
+      title: 'Commercial & Accounts',
+      items: [
+        { id: 'clients' as ActiveTab, label: 'Clients Directory', icon: Building2 },
+        { id: 'sales_kams' as ActiveTab, label: 'Sales KAM Directory', icon: Briefcase },
+      ]
+    },
+    {
+      title: 'Administration & Governance',
+      items: [
+        { id: 'notifications' as ActiveTab, label: 'Notification Center', icon: Bell },
+        { id: 'audit_logs' as ActiveTab, label: 'Audit Logs', icon: ShieldCheck },
+        { id: 'user_management' as ActiveTab, label: 'User Management', icon: UserCheck },
+        { id: 'role_permissions' as ActiveTab, label: 'Role & Permissions', icon: KeyRound },
+        { id: 'master_config' as ActiveTab, label: 'Master Configuration', icon: Sliders },
+        { id: 'system_settings' as ActiveTab, label: 'System Settings', icon: Settings },
+      ]
+    }
+  ];
+
+  return (
+    <aside className="w-60 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col h-[calc(100vh-49px)] select-none">
+      {/* Quick Action Button */}
+      <div className="p-3 border-b border-gray-200">
+        <button
+          onClick={onOpenNewOpportunity}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          New Opportunity
+        </button>
+      </div>
+
+      {/* Navigation Sections */}
+      <div className="p-2 flex-1 overflow-y-auto space-y-4">
+        {sections.map((sec, secIdx) => (
+          <div key={secIdx} className="space-y-0.5">
+            <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-gray-400 font-bold">
+              {sec.title}
+            </div>
+
+            {sec.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs transition-colors text-left group ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-700 font-semibold border border-blue-200 shadow-2xs'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 border border-transparent'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Icon
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                        isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                      }`}
+                    />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+
+                  {item.count !== undefined && (
+                    <span
+                      className={`text-[10px] font-mono px-1.5 py-0.2 rounded border ml-1 flex-shrink-0 font-medium ${
+                        item.highlight === 'red'
+                          ? 'bg-red-50 text-red-700 border-red-200'
+                          : item.highlight === 'amber'
+                          ? 'bg-amber-50 text-amber-800 border-amber-200'
+                          : item.highlight === 'emerald'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : item.highlight === 'purple'
+                          ? 'bg-purple-50 text-purple-700 border-purple-200'
+                          : isActive
+                          ? 'bg-blue-100 text-blue-800 border-blue-200'
+                          : 'bg-gray-100 text-gray-600 border-gray-200'
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* Footer User Info */}
+      <div className="p-2.5 bg-gray-50 border-t border-gray-200 text-xs flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">
+            MV
+          </div>
+          <div>
+            <div className="font-bold text-gray-900 text-[11px] leading-tight">Dr. Marcus Vance</div>
+            <div className="text-[10px] text-gray-500 font-mono leading-none">Principal SA Lead</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+};

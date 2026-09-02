@@ -1,0 +1,6 @@
+{
+  "name": "Presales Tracker",
+  "description": "Enterprise-grade Presales Management Console for sales leads, technical discovery, POCs, BOQ proposals, stakeholder matrix, and implementation handover.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

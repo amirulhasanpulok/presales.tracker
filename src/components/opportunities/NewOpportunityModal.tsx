@@ -1,0 +1,372 @@
+import React, { useState } from 'react';
+import { X, Plus, Layers, DollarSign, Calendar, Shield, Cpu } from 'lucide-react';
+import { Opportunity, OpportunityStage, CloudProvider, DealComplexity, DealPriority, TechnicalFitScore } from '../../types';
+import { INITIAL_ENGINEERS } from '../../data/mockData';
+
+interface NewOpportunityModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreateOpportunity: (newOpp: Opportunity) => void;
+}
+
+export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
+  isOpen,
+  onClose,
+  onCreateOpportunity
+}) => {
+  const [name, setName] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [clientIndustry, setClientIndustry] = useState<Opportunity['clientIndustry']>('FinTech / Banking');
+  const [region, setRegion] = useState<Opportunity['region']>('North America (US-East)');
+  const [stage, setStage] = useState<OpportunityStage>('qualification');
+  const [priority, setPriority] = useState<DealPriority>('p1_high');
+  const [complexity, setComplexity] = useState<DealComplexity>('medium');
+  const [techFit, setTechFit] = useState<TechnicalFitScore>('good');
+  const [primaryTechStack, setPrimaryTechStack] = useState<CloudProvider>('AWS');
+  const [contractValue, setContractValue] = useState(650000);
+  const [arr, setArr] = useState(480000);
+  const [winProbability, setWinProbability] = useState(60);
+  const [expectedCloseDate, setExpectedCloseDate] = useState(
+    new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10)
+  );
+  const [leadSA, setLeadSA] = useState(INITIAL_ENGINEERS[0].name);
+  const [ae, setAe] = useState('Robert Sterling');
+  const [proposedArch, setProposedArch] = useState('');
+  const [techStackTags, setTechStackTags] = useState('Kubernetes, Terraform, Microservices');
+  const [legacyStack, setLegacyStack] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !clientName) return;
+
+    const matchedSA = INITIAL_ENGINEERS.find(e => e.name === leadSA);
+
+    const newOpp: Opportunity = {
+      id: `opp-${Date.now()}`,
+      code: `OPP-2025-${Math.floor(1000 + Math.random() * 9000)}`,
+      name,
+      clientName,
+      clientIndustry,
+      region,
+      stage,
+      priority,
+      dealComplexity: complexity,
+      technicalFitScore: techFit,
+      primaryTechStack,
+      technologies: techStackTags.split(',').map(s => s.trim()).filter(Boolean),
+      contractValue: Number(contractValue) || 0,
+      arr: Number(arr) || 0,
+      winProbability: Number(winProbability) || 50,
+      expectedCloseDate,
+      leadSolutionArchitect: leadSA,
+      leadArchitectAvatar: matchedSA?.avatar,
+      accountExecutive: ae,
+      currentLegacyStack: legacyStack || 'On-premise legacy monolith requiring cloud migration.',
+      proposedArchitecture: proposedArch || 'Cloud-native scalable architecture with automated CI/CD and zero-trust security mesh.',
+      keyTechnicalRequirements: [
+        'High availability multi-zone deployment with automated failover',
+        'Role-based access control and strict data encryption'
+      ],
+      complianceRequirements: ['SOC2 Type II', 'ISO 27001'],
+      securityReviewStatus: 'In Review',
+      activities: [
+        {
+          id: `act-${Date.now()}`,
+          type: 'Discovery Call',
+          title: 'Initial Technical Intake & Qualification Call',
+          timestamp: new Date().toISOString(),
+          author: leadSA,
+          summary: `Initial technical presales qualification. Customer is exploring ${primaryTechStack} infrastructure modernizations.`,
+          durationMinutes: 45,
+          attendees: [leadSA, ae, `${clientName} Tech Lead`]
+        }
+      ],
+      stakeholders: [
+        {
+          id: `stk-${Date.now()}`,
+          name: `${clientName} Sponsor`,
+          role: 'Head of Engineering',
+          department: 'Technology',
+          email: `tech@${(clientName || 'company').toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+          influence: 'high',
+          sentiment: 'supporter',
+          buyingRole: 'Technical Gatekeeper',
+          lastContactDate: new Date().toISOString().slice(0, 10)
+        }
+      ],
+      poc: {
+        status: 'not_started',
+        allocatedBudget: 5000,
+        successCriteria: [],
+        blockers: []
+      },
+      boq: {
+        items: [],
+        subtotalCost: 0,
+        subtotalListPrice: 0,
+        totalDiscountAmount: 0,
+        totalContractValue: 0,
+        annualRecurringRevenue: 0,
+        oneTimeServicesValue: 0,
+        overallMarginPercent: 0,
+        approvalStatus: 'draft',
+        version: 1
+      },
+      actionItems: [
+        {
+          id: `act-item-${Date.now()}`,
+          title: 'Conduct Technical Architecture Discovery Workshop',
+          assignedTo: leadSA,
+          assignedToRole: 'Lead Solution Architect',
+          dueDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+          isCompleted: false,
+          priority: 'p1_high',
+          category: 'Architecture'
+        }
+      ],
+      handover: {
+        isHandedOver: false,
+        technicalRunbookReady: false,
+        credentialsSecurelyTransferred: false,
+        customerTechKickoffScheduled: false,
+        knownTechnicalDebtOrRisks: [],
+        specialSLAsAgreed: []
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastContactedAt: new Date().toISOString(),
+      daysInCurrentStage: 1
+    };
+
+    onCreateOpportunity(newOpp);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+      <div 
+        className="w-full max-w-2xl bg-white border border-gray-200 rounded-lg shadow-2xl text-gray-900 flex flex-col max-h-[90vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 font-mono text-xs font-bold">
+              +
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-gray-900 font-mono">Create New Opportunity Intake</h2>
+              <p className="text-[11px] text-gray-500">Initialize technical scope, sizing baseline, and presales ownership</p>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Modal Form */}
+        <form onSubmit={handleSubmit} className="p-4 overflow-y-auto space-y-4 text-xs bg-white">
+          
+          {/* General Information */}
+          <div className="space-y-2">
+            <div className="font-mono text-gray-500 uppercase tracking-wider font-semibold text-[10px]">
+              Deal & Customer Profile
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-mono text-gray-700 mb-1">Opportunity Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Multi-Cloud Kubernetes & Zero-Trust Migration"
+                  className="w-full enterprise-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-gray-700 mb-1">Client / Enterprise Account *</label>
+                <input
+                  type="text"
+                  required
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  placeholder="e.g. Standard Chartered / Uber Technologies"
+                  className="w-full enterprise-input"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-mono text-gray-700 mb-1">Client Industry</label>
+                <select
+                  value={clientIndustry}
+                  onChange={(e) => setClientIndustry(e.target.value as any)}
+                  className="w-full enterprise-input font-mono"
+                >
+                  <option value="FinTech / Banking">FinTech / Banking</option>
+                  <option value="Healthcare / Life Sciences">Healthcare / Life Sciences</option>
+                  <option value="Enterprise SaaS">Enterprise SaaS</option>
+                  <option value="E-Commerce / Retail">E-Commerce / Retail</option>
+                  <option value="Telecom / 5G">Telecom / 5G</option>
+                  <option value="Manufacturing & IoT">Manufacturing & IoT</option>
+                  <option value="Public Sector">Public Sector</option>
+                  <option value="Energy / Utilities">Energy / Utilities</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-gray-700 mb-1">Target Cloud / Primary Stack</label>
+                <select
+                  value={primaryTechStack}
+                  onChange={(e) => setPrimaryTechStack(e.target.value as any)}
+                  className="w-full enterprise-input font-mono"
+                >
+                  <option value="AWS">AWS</option>
+                  <option value="Google Cloud">Google Cloud</option>
+                  <option value="Azure">Azure</option>
+                  <option value="Kubernetes">Kubernetes</option>
+                  <option value="AI / LLM Infra">AI / LLM Infra</option>
+                  <option value="Hybrid / On-Prem">Hybrid / On-Prem</option>
+                  <option value="Multi-Cloud">Multi-Cloud</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Technical Scope */}
+          <div className="space-y-2 pt-2 border-t border-gray-200">
+            <div className="font-mono text-gray-500 uppercase tracking-wider font-semibold text-[10px]">
+              Technical Scope & Architecture
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono text-gray-700 mb-1">Target Architecture High-Level Summary</label>
+              <textarea
+                rows={2}
+                value={proposedArch}
+                onChange={(e) => setProposedArch(e.target.value)}
+                placeholder="High-level solution architecture design, services, resilience pattern..."
+                className="w-full enterprise-input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono text-gray-700 mb-1">Technologies / Tags (comma separated)</label>
+              <input
+                type="text"
+                value={techStackTags}
+                onChange={(e) => setTechStackTags(e.target.value)}
+                placeholder="e.g. AWS EKS, Istio, Terraform, Kafka, Snowflake"
+                className="w-full enterprise-input font-mono"
+              />
+            </div>
+          </div>
+
+          {/* Commercial & Ownership */}
+          <div className="space-y-2 pt-2 border-t border-gray-200">
+            <div className="font-mono text-gray-500 uppercase tracking-wider font-semibold text-[10px]">
+              Financials & Ownership
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
+              <div>
+                <label className="block text-[11px] text-gray-700 mb-1">Contract TCV ($)</label>
+                <input
+                  type="number"
+                  value={contractValue}
+                  onChange={(e) => setContractValue(Number(e.target.value))}
+                  className="w-full enterprise-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-700 mb-1">Estimated ARR ($)</label>
+                <input
+                  type="number"
+                  value={arr}
+                  onChange={(e) => setArr(Number(e.target.value))}
+                  className="w-full enterprise-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-700 mb-1">Win Probability (%)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={winProbability}
+                  onChange={(e) => setWinProbability(Number(e.target.value))}
+                  className="w-full enterprise-input"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-mono text-gray-700 mb-1">Lead Solution Architect</label>
+                <select
+                  value={leadSA}
+                  onChange={(e) => setLeadSA(e.target.value)}
+                  className="w-full enterprise-input font-mono"
+                >
+                  {INITIAL_ENGINEERS.map(eng => (
+                    <option key={eng.id} value={eng.name}>{eng.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-gray-700 mb-1">Account Executive (AE)</label>
+                <input
+                  type="text"
+                  value={ae}
+                  onChange={(e) => setAe(e.target.value)}
+                  className="w-full enterprise-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-gray-700 mb-1">Target Close Date</label>
+                <input
+                  type="date"
+                  value={expectedCloseDate}
+                  onChange={(e) => setExpectedCloseDate(e.target.value)}
+                  className="w-full enterprise-input font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-mono text-xs transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+            >
+              Create Opportunity
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  );
+};
