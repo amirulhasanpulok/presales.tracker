@@ -93,6 +93,11 @@ server {
     root $WEB_ROOT;
     index index.html;
 
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types application/javascript application/json text/css text/plain image/svg+xml;
+
     location /api/ {
         proxy_pass http://127.0.0.1:$API_PORT/api/;
         proxy_http_version 1.1;

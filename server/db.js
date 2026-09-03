@@ -53,6 +53,9 @@ export async function initSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    CREATE INDEX IF NOT EXISTS idx_opportunities_account_executive ON opportunities ((doc->>'accountExecutive'));
+    CREATE INDEX IF NOT EXISTS idx_opportunities_lead_architect ON opportunities ((doc->>'leadSolutionArchitect'));
+    CREATE INDEX IF NOT EXISTS idx_opportunities_client_name ON opportunities ((doc->>'clientName'));
 
     CREATE TABLE IF NOT EXISTS clients (
       id TEXT PRIMARY KEY,
