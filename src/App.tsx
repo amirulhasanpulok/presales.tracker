@@ -430,6 +430,10 @@ export default function App() {
     }
   }, [roles]);
 
+  const liveCalendarEvents = useMemo(() => toLiveCalendarEvents(opportunities), [opportunities]);
+  const liveNotifications = useMemo(() => toLiveNotifications(opportunities), [opportunities]);
+  const liveCentralDocuments = useMemo(() => toLiveCentralDocuments(opportunities), [opportunities]);
+
   if (bootState === 'loading') {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 text-sm text-gray-500 font-mono">
@@ -457,10 +461,6 @@ export default function App() {
       />
     );
   }
-
-  const liveCalendarEvents = useMemo(() => toLiveCalendarEvents(opportunities), [opportunities]);
-  const liveNotifications = useMemo(() => toLiveNotifications(opportunities), [opportunities]);
-  const liveCentralDocuments = useMemo(() => toLiveCentralDocuments(opportunities), [opportunities]);
 
   return (
     <div className="h-screen overflow-hidden bg-gray-50 text-gray-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
@@ -753,6 +753,7 @@ export default function App() {
 
       {/* New Opportunity Modal */}
       <NewOpportunityModal
+        key={isNewModalOpen ? 'new-opportunity-open' : 'new-opportunity-closed'}
         isOpen={isNewModalOpen}
         onClose={() => setIsNewModalOpen(false)}
         onCreateOpportunity={handleCreateOpportunity}

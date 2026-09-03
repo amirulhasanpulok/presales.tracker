@@ -219,7 +219,7 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
                 className="w-full enterprise-input text-xs"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Publish Date</label>
                 <input
@@ -328,7 +328,7 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
 
           {outcome.outcome === 'lost' && (
             <div className="space-y-2.5 text-xs bg-red-50/50 p-3 rounded border border-red-100">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Lost Date</label>
                   <input type="date" value={outcome.lostDate || ''} onChange={(e) => setOutcome({ ...outcome, lostDate: e.target.value })} className="w-full enterprise-input text-xs" />

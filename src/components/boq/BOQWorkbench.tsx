@@ -64,6 +64,10 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [showRevisions, setShowRevisions] = useState(false);
+  const resetNewItem = () => {
+    setNewItem({ category: 'Cloud Infrastructure', itemCode: 'INF-CUSTOM', description: '', unit: 'Instances/Mo', quantity: 1, unitCost: 0, unitListPrice: 0, discountPercent: 0 });
+    setProductQuery(''); setProductDropdownOpen(false);
+  };
 
   if (!activeOpp) {
     return (
@@ -147,7 +151,8 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
       updatedAt: new Date().toISOString()
     });
 
-    setShowAddForm(false);
+     resetNewItem();
+     setShowAddForm(false);
   };
 
   const handleDeleteItem = (itemId: string) => {
@@ -253,7 +258,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
       <div className="bg-white border border-gray-200 rounded p-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
-            onClick={() => setShowAddForm(true)}
+             onClick={() => { resetNewItem(); setShowAddForm(true); }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-xs shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -490,7 +495,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
-              onClick={() => setShowAddForm(false)}
+               onClick={() => { resetNewItem(); setShowAddForm(false); }}
               className="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded font-medium text-xs"
             >
               Cancel

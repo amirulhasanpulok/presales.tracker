@@ -37,6 +37,10 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
   const [unitCost, setUnitCost] = useState(100);
   const [unitListPrice, setUnitListPrice] = useState(150);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const resetLineForm = () => {
+    setCategory('Cloud Infrastructure'); setItemCode(''); setDescription(''); setUnit('Instances/Mo');
+    setQuantity(1); setUnitCost(100); setUnitListPrice(150); setDiscountPercent(0);
+  };
 
   // Recalculate totals
   const subtotalCost = items.reduce((acc, it) => acc + (it.unitCost * it.quantity), 0);
@@ -72,8 +76,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
     setItems(updated);
     updateOpportunity(updated, approvalStatus);
 
-    setDescription('');
-    setItemCode('');
+     resetLineForm();
     setShowAddRow(false);
   };
 
@@ -226,7 +229,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
         <form onSubmit={handleAddItem} className="bg-white border border-blue-200 rounded p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-gray-100 pb-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Add BOQ Sizing Line</h4>
-            <button type="button" onClick={() => setShowAddRow(false)} className="text-xs text-gray-500 hover:text-gray-800">&times; Cancel</button>
+             <button type="button" onClick={() => { setShowAddRow(false); resetLineForm(); }} className="text-xs text-gray-500 hover:text-gray-800">&times; Cancel</button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">

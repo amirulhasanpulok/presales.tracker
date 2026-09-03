@@ -14,6 +14,7 @@ import {
   X
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/currency';
+import { DEFAULT_INDUSTRIES, getConfiguredTaxonomy } from '../../utils/taxonomy';
 
 interface ClientsDirectoryProps {
   clients: ClientAccount[];
@@ -53,6 +54,11 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
     'Branch Name': '', Category: 'BANK', Group: '', Address: '', CommisionDate: '',
   });
   const updateBankRecord = (field: keyof ClientBankRecord, value: string) => setBankRecord(current => ({ ...current, [field]: value }));
+  const resetClientForm = () => {
+    setName(''); setDomain(''); setIndustry('FinTech & Banking'); setTier('Enterprise Tier 2');
+    setPrimaryTechStack(''); setAssignedSalesKAM(''); setAssignedLeadSA(''); setHeadquarters('');
+    setBankRecord({ 'Subscriber ID': '', SLNO: '', 'Branch Code': '', 'Subscriber Name': '', 'Branch Name': '', Category: 'BANK', Group: '', Address: '', CommisionDate: '' });
+  };
 
   const handleAddClient = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,8 +94,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
     }
     setShowAddModal(false);
     setEditingClient(null);
-    setName('');
-    setDomain('');
+    resetClientForm();
   };
 
   const editClient = (client: ClientAccount) => {
@@ -141,7 +146,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
         </div>
 
                    <button
-          onClick={() => { setEditingClient(null); setShowAddModal(true); }}
+           onClick={() => { setEditingClient(null); resetClientForm(); setShowAddModal(true); }}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -281,7 +286,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                  <h3 className="text-sm font-bold text-gray-900">{editingClient ? 'Edit Client Profile' : 'Add Enterprise Client Account'}</h3>
               </div>
               <button
-                 onClick={() => { setShowAddModal(false); setEditingClient(null); }}
+                 onClick={() => { setShowAddModal(false); setEditingClient(null); resetClientForm(); }}
                 className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
@@ -309,7 +314,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Domain / Website</label>
                   <input
@@ -328,17 +333,12 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                     onChange={(e) => setIndustry(e.target.value as ClientAccount['industry'])}
                     className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
                   >
-                    <option value="FinTech & Banking">FinTech & Banking</option>
-                    <option value="Healthcare & Life Sciences">Healthcare & Life Sciences</option>
-                    <option value="E-Commerce & Retail">E-Commerce & Retail</option>
-                    <option value="SaaS & Cloud Software">SaaS & Cloud Software</option>
-                    <option value="Telecom & Media">Telecom & Media</option>
-                    <option value="Manufacturing & Logistics">Manufacturing & Logistics</option>
+                     {getConfiguredTaxonomy('industries', DEFAULT_INDUSTRIES).map(value => <option key={value} value={value}>{value}</option>)}
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Account Tier</label>
                   <select
@@ -363,7 +363,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Primary Tech Stack</label>
                   <input
@@ -383,7 +383,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
               <div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                   onClick={() => { setShowAddModal(false); setEditingClient(null); }}
+                   onClick={() => { setShowAddModal(false); setEditingClient(null); resetClientForm(); }}
                   className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded border border-gray-300"
                 >
                   Cancel

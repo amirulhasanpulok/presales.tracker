@@ -47,6 +47,10 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   const [newRole, setNewRole] = useState<UserAccount['role']>(roleOptions[0]?.value || 'presales_architect');
   const [newDepartment, setNewDepartment] = useState('Solutions Engineering');
   const [newRegion, setNewRegion] = useState('US East');
+  const resetInviteForm = () => {
+    setNewName(''); setNewEmail(''); setNewRole(roleOptions[0]?.value || 'presales_architect');
+    setNewDepartment('Solutions Engineering'); setNewRegion('');
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,8 +92,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
 
     setUsers([serverUser, ...users.filter(user => user.id !== serverUser.id)]);
     setShowInviteModal(false);
-    setNewName('');
-    setNewEmail('');
+    resetInviteForm();
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -132,7 +135,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
         </div>
 
         <button
-          onClick={() => setShowInviteModal(true)}
+           onClick={() => { resetInviteForm(); setShowInviteModal(true); }}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -262,7 +265,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 <h3 className="text-sm font-bold text-gray-900">Invite Presales Team Member</h3>
               </div>
               <button
-                onClick={() => setShowInviteModal(false)}
+                 onClick={() => { setShowInviteModal(false); resetInviteForm(); }}
                 className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
@@ -294,7 +297,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">System Role</label>
                   <select
@@ -330,7 +333,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
               <div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowInviteModal(false)}
+                   onClick={() => { setShowInviteModal(false); resetInviteForm(); }}
                   className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded border border-gray-300"
                 >
                   Cancel
@@ -390,7 +393,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Account Status</label>
                   <select

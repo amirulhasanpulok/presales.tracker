@@ -305,7 +305,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] uppercase font-semibold text-gray-500">Category *</label>
                 <input
@@ -328,7 +328,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] uppercase font-semibold text-gray-500">Model / Part Number</label>
                 <input
