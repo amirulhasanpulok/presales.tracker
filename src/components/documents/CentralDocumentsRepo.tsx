@@ -29,10 +29,10 @@ export const CentralDocumentsRepo: React.FC<CentralDocumentsRepoProps> = ({
   // New document form state
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<CentralDocument['category']>('sadd_template');
-  const [tags, setTags] = useState('AWS, Kubernetes, High-Availability');
-  const [author, setAuthor] = useState('Elena Rostova');
+  const [tags, setTags] = useState('');
+  const [author, setAuthor] = useState('');
   const [version, setVersion] = useState('v1.0');
-  const [clientName, setClientName] = useState('Global Enterprise Template');
+  const [clientName, setClientName] = useState('');
 
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();

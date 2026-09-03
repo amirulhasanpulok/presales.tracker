@@ -14,33 +14,14 @@ import {
 import { CURRENCY_STORAGE_KEY, CurrencyCode } from '../../utils/currency';
 import { api } from '../../api';
 import { ACTIVITY_TYPES_KEY, DEFAULT_ACTIVITY_TYPES } from '../../utils/activityTypes';
+import { DEFAULT_INDUSTRIES, DEFAULT_REGIONS, DEFAULT_TECH_STACKS, getConfiguredTaxonomy, saveConfiguredTaxonomy } from '../../utils/taxonomy';
 
 export const MasterConfigView: React.FC = () => {
-  const [techStacks, setTechStacks] = useState([
-    'AWS / Kubernetes',
-    'GCP / BigQuery / Vertex AI',
-    'Azure / AKS / OpenShift',
-    'Multi-Cloud / Terraform',
-    'On-Prem Hybrid / VMware'
-  ]);
+  const [techStacks, setTechStacks] = useState(() => getConfiguredTaxonomy('techStacks', DEFAULT_TECH_STACKS));
 
-  const [industries, setIndustries] = useState([
-    'FinTech & Banking',
-    'Healthcare & Life Sciences',
-    'E-Commerce & Retail',
-    'SaaS & Cloud Software',
-    'Manufacturing & Supply Chain',
-    'Energy & Utilities'
-  ]);
+  const [industries, setIndustries] = useState(() => getConfiguredTaxonomy('industries', DEFAULT_INDUSTRIES));
 
-  const [regions, setRegions] = useState([
-    'North America East',
-    'North America West',
-    'EMEA Central',
-    'EMEA UK & Nordics',
-    'APAC Singapore',
-    'LATAM Brazil'
-  ]);
+  const [regions, setRegions] = useState(() => getConfiguredTaxonomy('regions', DEFAULT_REGIONS));
 
   const [newTech, setNewTech] = useState('');
   const [newIndustry, setNewIndustry] = useState('');
@@ -90,7 +71,10 @@ export const MasterConfigView: React.FC = () => {
 
   const handleSave = () => {
     Promise.all([api.updateCurrency(currency), api.updateActivityTypes(activityTypes)]).then(() => {
-      window.localStorage.setItem(CURRENCY_STORAGE_KEY, currency);
+    window.localStorage.setItem(CURRENCY_STORAGE_KEY, currency);
+    saveConfiguredTaxonomy('techStacks', techStacks);
+    saveConfiguredTaxonomy('industries', industries);
+    saveConfiguredTaxonomy('regions', regions);
       window.localStorage.setItem(ACTIVITY_TYPES_KEY, JSON.stringify(activityTypes));
       window.dispatchEvent(new Event('presales:currency-changed'));
       window.dispatchEvent(new Event('presales:activity-types-changed'));

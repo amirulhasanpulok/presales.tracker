@@ -27,8 +27,9 @@ import {
 } from 'lucide-react';
 import { Opportunity, OpportunityStage, BOQItem, Stakeholder, ActionItem, PresalesActivity, POCStatus } from '../../types';
 import { formatCurrency } from '../../utils/currency';
-import { STAGE_CONFIG } from '../../data/mockData';
+import { STAGE_CONFIG } from '../../config/workflow';
 import { StageBadge, PriorityBadge, ComplexityBadge, POCBadge, TechFitBadge } from '../common/Badge';
+import { getActivityTypes } from '../../utils/activityTypes';
 
 interface OpportunityDetailDrawerProps {
   opportunity: Opportunity;
@@ -43,12 +44,13 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
   onUpdateOpportunity,
   onOpenFullDetail
 }) => {
+  const activityTypes = getActivityTypes();
   const [activeTab, setActiveTab] = useState<'overview' | 'activities' | 'poc' | 'boq' | 'stakeholders' | 'actions' | 'handover'>('overview');
 
   // Local Form states for adding items
   const [showAddActivity, setShowAddActivity] = useState(false);
   const [newActivity, setNewActivity] = useState<Partial<PresalesActivity>>({
-    type: 'Discovery Call',
+    type: (activityTypes[0] || 'Other') as PresalesActivity['type'],
     title: '',
     author: opportunity.leadSolutionArchitect,
     summary: '',
@@ -229,7 +231,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
       boq: {
         ...opportunity.boq,
         approvalStatus: 'approved',
-        approvedBy: 'Elena Rostova (Lead SA Signoff)',
+        approvedBy: `${opportunity.leadSolutionArchitect} (Lead SA Signoff)`,
         approvedDate: new Date().toISOString().slice(0, 10)
       },
       updatedAt: new Date().toISOString()
@@ -565,13 +567,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                         onChange={(e) => setNewActivity({ ...newActivity, type: e.target.value as any })}
                         className="w-full enterprise-input"
                       >
-                        <option value="Discovery Call">Discovery Call</option>
-                        <option value="Architectural Review">Architectural Review</option>
-                        <option value="Demo">Demo</option>
-                        <option value="Security Questionnaire">Security Questionnaire</option>
-                        <option value="RFP / RFI Response">RFP / RFI Response</option>
-                        <option value="BOQ Review">BOQ Review</option>
-                        <option value="Whiteboarding">Whiteboarding</option>
+                        {activityTypes.map(type => <option key={type} value={type}>{type}</option>)}
                       </select>
                     </div>
 

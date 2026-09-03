@@ -1,6 +1,6 @@
 import React from 'react';
 import { DealComplexity, DealPriority, OpportunityStage, POCStatus, TechnicalFitScore } from '../../types';
-import { STAGE_CONFIG } from '../../data/mockData';
+import { STAGE_CONFIG } from '../../config/workflow';
 
 interface StageBadgeProps {
   stage: OpportunityStage;
@@ -120,4 +120,3 @@ export const TechFitBadge: React.FC<{ score: TechnicalFitScore }> = ({ score }) 
     </span>
   );
 };
-

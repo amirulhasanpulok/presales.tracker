@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Opportunity, OpportunityStage, CloudProvider, DealComplexity, DealPriority } from '../../types';
 import { StageBadge, PriorityBadge, ComplexityBadge, POCBadge, TechFitBadge } from '../common/Badge';
-import { STAGE_CONFIG } from '../../data/mockData';
+import { STAGE_CONFIG } from '../../config/workflow';
 import { exportPipelineCSV } from '../../utils/exportUtils';
 import { formatCurrency } from '../../utils/currency';
 

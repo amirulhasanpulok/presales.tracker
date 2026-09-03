@@ -1,7 +1,6 @@
 import React from 'react';
 import { Users, Cpu, Award, TrendingUp, CheckCircle, Plus, AlertCircle, Database, Layers } from 'lucide-react';
 import { PresalesEngineer, Opportunity } from '../../types';
-import { INITIAL_ENGINEERS } from '../../data/mockData';
 import { formatCurrency } from '../../utils/currency';
 
 interface CapacityMatrixProps {
@@ -11,10 +10,14 @@ interface CapacityMatrixProps {
 }
 
 export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
-  engineers = INITIAL_ENGINEERS,
+  engineers = [],
   opportunities,
   onSelectOpportunity
 }) => {
+  const avgUtilization = engineers.length ? Math.round(engineers.reduce((total, engineer) => total + (engineer.utilizationPercentage || 0), 0) / engineers.length * 10) / 10 : 0;
+  const activePocLabs = opportunities.filter(o => ['active_testing', 'validating_kpis'].includes(o.poc?.status)).length;
+  const certifiedEngineers = engineers.filter(engineer => (engineer.certifications || []).length > 0).length;
+  const certificationCoverage = engineers.length ? Math.round((certifiedEngineers / engineers.length) * 100) : 0;
   return (
     <div className="space-y-4">
       
@@ -42,7 +45,7 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100 text-xs font-mono">
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Avg SA Team Utilization:</span>
-            <div className="text-sm font-bold text-emerald-700">78.4%</div>
+            <div className="text-sm font-bold text-emerald-700">{avgUtilization}%</div>
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Total Supported Pipeline:</span>
@@ -50,11 +53,11 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Total Active POC Labs:</span>
-            <div className="text-sm font-bold text-amber-800">9 Active Labs</div>
+            <div className="text-sm font-bold text-amber-800">{activePocLabs} Active Labs</div>
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Certification Coverage:</span>
-            <div className="text-sm font-bold text-blue-800">100% Pro Tier</div>
+            <div className="text-sm font-bold text-blue-800">{certificationCoverage}% Coverage</div>
           </div>
         </div>
       </div>
@@ -73,11 +76,11 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
               {/* Profile Header */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <img
+                  {eng.avatar ? <img
                     src={eng.avatar}
                     alt={eng.name}
                     className="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-xs"
-                  />
+                  /> : <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-xs">{eng.name.split(/\s+/).map(word => word[0]).slice(0, 2).join('').toUpperCase()}</div>}
                   <div>
                     <h3 className="font-bold text-sm text-gray-900">{eng.name}</h3>
                     <div className="text-xs text-blue-700 font-mono font-medium">{eng.title}</div>

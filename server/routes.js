@@ -184,7 +184,7 @@ router.get('/bootstrap', authenticate, async (req, res) => {
     can(req.role, req.user, 'sys.rbac') ? query('SELECT * FROM roles ORDER BY role_name') : Promise.resolve({ rows: [] }),
     query(opportunityQuery.text, opportunityQuery.params),
     query('SELECT * FROM clients ORDER BY updated_at DESC'),
-    can(req.role, req.user, 'sys.users') ? query('SELECT id, name, email, role, role_id, department, status, mfa_enabled, avatar, region, last_login_at, created_at FROM users ORDER BY name') : Promise.resolve({ rows: [] }),
+    can(req.role, req.user, 'sys.users') ? query('SELECT id, name, email, role, role_id, department, sales_team, status, mfa_enabled, avatar, region, last_login_at, created_at FROM users ORDER BY name') : Promise.resolve({ rows: [] }),
     can(req.role, req.user, 'sys.audit') ? query('SELECT id, actor_id, actor_email, action, target_type, target_id, meta, ip, actor_role, request_id, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 200') : Promise.resolve({ rows: [] }),
     query('SELECT id, name, category, description, status, sort_order FROM scope_catalog ORDER BY sort_order, name'),
     query('SELECT id, name, website, description, status FROM oems ORDER BY name'),
@@ -220,7 +220,7 @@ router.get('/bootstrap', authenticate, async (req, res) => {
     products: products.rows || [],
     currency: systemSettings.rows.find(s => s.setting_key === 'currency')?.setting_value || 'BDT',
     activityTypes: (() => { try { const value = JSON.parse(systemSettings.rows.find(s => s.setting_key === 'activity_types')?.setting_value || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } })(),
-    users: can(req.role, req.user, 'sys.users') ? (users.rows || []) : [],
+    users: can(req.role, req.user, 'sys.users') ? (users.rows || []) : [req.user],
     auditLogs: can(req.role, req.user, 'sys.audit') ? (auditLogs.rows || []) : [],
   });
 });
@@ -546,13 +546,13 @@ router.post('/opportunities/reset', authenticate, requirePermission('sys.integra
 // ---------------------------------------------------------------------------
 router.get('/users', authenticate, requirePermission('sys.users'), async (req, res) => {
   const { rows } = await query(
-    'SELECT id, name, email, role, role_id, department, status, mfa_enabled, avatar, region, last_login_at, created_at FROM users ORDER BY name',
+    'SELECT id, name, email, role, role_id, department, sales_team, status, mfa_enabled, avatar, region, last_login_at, created_at FROM users ORDER BY name',
   );
   res.json(rows);
 });
 
 router.post('/users', authenticate, requirePermission('sys.users'), async (req, res) => {
-  const { name, email, role, roleId, department, password } = req.body || {};
+  const { name, email, role, roleId, department, region, password } = req.body || {};
   if (!name || !email || !role || !roleId) {
     return res.status(400).json({ error: 'missing_fields' });
   }
@@ -563,16 +563,16 @@ router.post('/users', authenticate, requirePermission('sys.users'), async (req, 
   if (exists.rows.length) return res.status(409).json({ error: 'email_taken' });
   const id = `usr-${Date.now()}`;
   await query(
-    'INSERT INTO users (id, name, email, password_hash, role, role_id, department, status) VALUES ($1,$2,$3,$4,$5,$6,$7,\'Active\')',
-    [id, String(name), String(email), await hashPassword(finalPassword), String(role), String(roleId), department || null],
+    'INSERT INTO users (id, name, email, password_hash, role, role_id, department, region, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,\'Active\')',
+    [id, String(name), String(email), await hashPassword(finalPassword), String(role), String(roleId), department || null, region || null],
   );
   await audit({ req, action: 'user.create', targetType: 'user', targetId: id });
   const generated = typeof password !== 'string' || password.length < 8;
-  res.status(201).json({ id, name, email, role, roleId, department: department ?? null, status: 'Active', tempPassword: generated ? finalPassword : undefined });
+  res.status(201).json({ id, name, email, role, roleId, department: department ?? null, region: region ?? null, status: 'Active', mfaEnabled: false, tempPassword: generated ? finalPassword : undefined });
 });
 
 router.put('/users/:id', authenticate, requirePermission('sys.users'), async (req, res) => {
-  const { name, email, role, roleId, department, status, password } = req.body || {};
+  const { name, email, role, roleId, department, region, status, password } = req.body || {};
   const fields = [];
   const values = [];
   if (name !== undefined) { values.push(String(name)); fields.push(`name = $${values.length}`); }
@@ -580,6 +580,7 @@ router.put('/users/:id', authenticate, requirePermission('sys.users'), async (re
   if (role !== undefined) { values.push(String(role)); fields.push(`role = $${values.length}`); }
   if (roleId !== undefined) { values.push(String(roleId)); fields.push(`role_id = $${values.length}`); }
   if (department !== undefined) { values.push(String(department)); fields.push(`department = $${values.length}`); }
+  if (region !== undefined) { values.push(String(region)); fields.push(`region = $${values.length}`); }
   if (status !== undefined) { values.push(String(status)); fields.push(`status = $${values.length}`); }
   if (password !== undefined) {
     values.push(await hashPassword(String(password)));

@@ -59,8 +59,8 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
       author: '',
       summary: newSummary,
       durationMinutes: 60,
-      attendees: ['Customer Lead Architect'],
-      deliverables: ['Updated Architecture Blueprint Draft'],
+      attendees: [],
+      deliverables: [],
       nextAction,
       nextFollowUpDate,
     };

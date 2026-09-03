@@ -63,6 +63,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     const deadline = o.tender?.submissionDeadline ? new Date(o.tender.submissionDeadline) : null;
     return !!o.tender?.isTender && !!deadline && deadline >= now;
   }).length;
+  const pocCriteria = opportunities.flatMap(o => o.poc?.successCriteria || []);
+  const pocKpiPassRate = pocCriteria.length ? Math.round((pocCriteria.filter(criteria => criteria.verified).length / pocCriteria.length) * 100) : 0;
+  const decidedDeals = opportunities.filter(o => ['closed_won', 'closed_lost'].includes(o.stage));
+  const technicalWinRate = decidedDeals.length ? Math.round((decidedDeals.filter(o => o.stage === 'closed_won').length / decidedDeals.length) * 1000) / 10 : 0;
+  const averageStageDays = opportunities.length ? Math.round(opportunities.reduce((total, o) => total + (o.daysInCurrentStage || 0), 0) / opportunities.length) : 0;
 
   // Critical deals needing attention
   const needsAttentionDeals = opportunities.filter(o =>
@@ -141,7 +146,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <div className="flex items-center justify-between mt-1 text-[11px]">
               <span className="text-gray-500">ARR: <strong className="font-mono text-gray-700">{formatCurrency(totalARR)}</strong></span>
               <span className="text-emerald-700 font-semibold flex items-center">
-                +14.2% YoY
+                Live portfolio
               </span>
             </div>
           </div>
@@ -161,7 +166,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             </div>
             <div className="flex items-center justify-between mt-1 text-[11px]">
               <span className="text-gray-500">Sizing: <strong className="font-mono text-gray-700">{formatCurrency(activePocValue)}</strong></span>
-              <span className="text-blue-700 font-medium">92% KPI Pass</span>
+              <span className="text-blue-700 font-medium">{pocKpiPassRate}% KPI Pass</span>
             </div>
           </div>
         </div>
@@ -176,11 +181,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           </div>
           <div className="mt-2">
             <div className="text-xl font-bold font-mono text-emerald-700">
-              72.8%
+              {technicalWinRate}%
             </div>
             <div className="flex items-center justify-between mt-1 text-[11px]">
-              <span className="text-gray-500">Avg Cycle: <strong className="font-mono text-gray-700">38 Days</strong></span>
-              <span className="text-emerald-700 font-semibold">+4.1%</span>
+              <span className="text-gray-500">Avg Stage: <strong className="font-mono text-gray-700">{averageStageDays} Days</strong></span>
+              <span className="text-emerald-700 font-semibold">Live</span>
             </div>
           </div>
         </div>

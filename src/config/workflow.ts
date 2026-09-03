@@ -1,0 +1,12 @@
+export const STAGE_CONFIG: Record<string, { label: string; shortLabel: string; color: string; bg: string; borderColor: string; description: string }> = {
+  qualification: { label: '1. Technical Qualification', shortLabel: 'Qualification', color: 'text-gray-700', bg: 'bg-gray-100', borderColor: 'border-gray-300', description: 'Initial intake, technical feasibility scoring, BANT qualification' },
+  tech_discovery: { label: '2. Technical Discovery', shortLabel: 'Discovery', color: 'text-cyan-700', bg: 'bg-cyan-50', borderColor: 'border-cyan-200', description: 'Architecture deep-dive, pain points, compliance & legacy stack audit' },
+  solution_design: { label: '3. Solution Architecture', shortLabel: 'Solution Design', color: 'text-blue-700', bg: 'bg-blue-50', borderColor: 'border-blue-200', description: 'Target state diagrams, sizing models, integration feasibility specs' },
+  poc_demo: { label: '4. POC & Technical Validation', shortLabel: 'POC / Demo', color: 'text-amber-800', bg: 'bg-amber-50', borderColor: 'border-amber-200', description: 'Live lab benchmarks, customer KPI validation, blocker resolution' },
+  proposal_boq: { label: '5. Proposal & BOQ Sizing', shortLabel: 'Proposal / BOQ', color: 'text-purple-700', bg: 'bg-purple-50', borderColor: 'border-purple-200', description: 'Bill of Quantities pricing, margin governance, SOW generation' },
+  commercial_negotiation: { label: '6. Commercial & Security Signoff', shortLabel: 'Negotiation', color: 'text-indigo-700', bg: 'bg-indigo-50', borderColor: 'border-indigo-200', description: 'InfoSec clearance, MSA review, executive approval gate' },
+  closed_won: { label: '7. Closed Won (Handover)', shortLabel: 'Won / Handover', color: 'text-emerald-700', bg: 'bg-emerald-50', borderColor: 'border-emerald-200', description: 'Technical knowledge transfer to Delivery / Professional Services' },
+  closed_lost: { label: '8. Closed Lost', shortLabel: 'Closed Lost', color: 'text-rose-700', bg: 'bg-rose-50', borderColor: 'border-rose-200', description: 'Technical post-mortem, lost reason, competitor analysis' },
+  on_hold: { label: '9. On Hold', shortLabel: 'On Hold', color: 'text-amber-800', bg: 'bg-amber-50', borderColor: 'border-amber-200', description: 'Opportunity paused pending client, commercial, or technical action' },
+  cancelled: { label: '10. Cancelled', shortLabel: 'Cancelled', color: 'text-gray-500', bg: 'bg-gray-100', borderColor: 'border-gray-300', description: 'Opportunity withdrawn or no longer being pursued' },
+};

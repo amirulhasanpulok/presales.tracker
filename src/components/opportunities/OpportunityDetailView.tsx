@@ -21,7 +21,7 @@ import {
   Gavel
 } from 'lucide-react';
 import { PriorityBadge, StageBadge, TechFitBadge } from '../common/Badge';
-import { STAGE_CONFIG } from '../../data/mockData';
+import { STAGE_CONFIG } from '../../config/workflow';
 import { exportOpportunitySADDMarkdown, exportOpportunityJSON, exportBOQCSV } from '../../utils/exportUtils';
 import { formatCurrency } from '../../utils/currency';
 import { OpportunityOverview } from './subviews/OpportunityOverview';
@@ -53,18 +53,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   const [currentStage, setCurrentStage] = useState<OpportunityStage>(opportunity.stage);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-  const stagesList: OpportunityStage[] = [
-    'qualification',
-    'tech_discovery',
-    'solution_design',
-    'poc_demo',
-    'proposal_boq',
-    'commercial_negotiation',
-    'closed_won',
-    'closed_lost',
-    'on_hold',
-    'cancelled'
-  ];
+  const stagesList = Object.keys(STAGE_CONFIG) as OpportunityStage[];
 
   const handleStageChange = (newStage: OpportunityStage) => {
     setCurrentStage(newStage);

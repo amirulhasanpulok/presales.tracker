@@ -24,8 +24,8 @@ export const OpportunityImplementation: React.FC<OpportunityImplementationProps>
   onUpdateOpportunity,
 }) => {
   const [handover, setHandover] = useState<HandoverDetails>(opportunity.handover);
-  const [deliveryLead, setDeliveryLead] = useState(handover.assignedDeliveryLead || 'Carlos Mendez');
-  const [csm, setCsm] = useState(handover.assignedCustomerSuccessManager || 'Amanda Zhao');
+  const [deliveryLead, setDeliveryLead] = useState(handover.assignedDeliveryLead || '');
+  const [csm, setCsm] = useState(handover.assignedCustomerSuccessManager || '');
   const [handedOverBy, setHandedOverBy] = useState(handover.handedOverBy || '');
   const [salesKAM, setSalesKAM] = useState(handover.salesKAM || opportunity.accountExecutive || '');
   const [boqVersion, setBoqVersion] = useState(handover.boqVersion || `v${opportunity.boq?.version || 1}`);
@@ -248,11 +248,9 @@ export const OpportunityImplementation: React.FC<OpportunityImplementationProps>
               />
             </div>
 
-            <div className="pt-2 border-t border-gray-100">
-              <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-1">Known Architecture Nuances / Risks</div>
-              <p className="text-xs text-gray-600 bg-amber-50/50 p-2 rounded border border-amber-200">
-                Customer requires legacy Oracle CDC replication to EKS Kafka cluster with &lt;100ms lag guarantee during peak volume hours.
-              </p>
+              <div className="pt-2 border-t border-gray-100">
+                <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-1">Known Architecture Nuances / Risks</div>
+                {handover.knownTechnicalDebtOrRisks.length > 0 ? <div className="space-y-1">{handover.knownTechnicalDebtOrRisks.map((risk, index) => <p key={index} className="text-xs text-gray-600 bg-amber-50/50 p-2 rounded border border-amber-200">{risk}</p>)}</div> : <p className="text-xs text-gray-400 italic">No delivery risks recorded.</p>}
             </div>
           </div>
         </div>

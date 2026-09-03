@@ -1,7 +1,7 @@
 import React from 'react';
 import { Opportunity, OpportunityStage } from '../../types';
 import { formatCurrency } from '../../utils/currency';
-import { STAGE_CONFIG } from '../../data/mockData';
+import { STAGE_CONFIG } from '../../config/workflow';
 import { PriorityBadge, POCBadge, ComplexityBadge } from '../common/Badge';
 import { Clock, AlertTriangle, ArrowRight, DollarSign, User } from 'lucide-react';
 
@@ -16,18 +16,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
   onSelectOpportunity,
   onUpdateStage
 }) => {
-  const stages: OpportunityStage[] = [
-    'qualification',
-    'tech_discovery',
-    'solution_design',
-    'poc_demo',
-    'proposal_boq',
-    'commercial_negotiation',
-    'closed_won',
-    'closed_lost',
-    'on_hold',
-    'cancelled'
-  ];
+  const stages = Object.keys(STAGE_CONFIG) as OpportunityStage[];
 
   return (
     <div className="flex-1 overflow-x-auto bg-gray-100/70 p-4">

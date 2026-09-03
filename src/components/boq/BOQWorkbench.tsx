@@ -180,7 +180,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
        boq: withRevision(activeOpp.boq, {
          ...activeOpp.boq,
         approvalStatus: 'approved',
-        approvedBy: 'Elena Rostova (Lead SA Signoff)',
+         approvedBy: `${activeOpp.leadSolutionArchitect} (Lead SA Signoff)`,
         approvedDate: new Date().toISOString().slice(0, 10)
        }),
       updatedAt: new Date().toISOString()

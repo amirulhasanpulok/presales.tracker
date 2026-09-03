@@ -35,6 +35,7 @@ export async function initSchema() {
       role TEXT NOT NULL,
       role_id TEXT REFERENCES roles(id),
       department TEXT,
+      sales_team TEXT,
       status TEXT NOT NULL DEFAULT 'Active',
       mfa_enabled BOOLEAN NOT NULL DEFAULT false,
       avatar TEXT,
@@ -45,6 +46,7 @@ export async function initSchema() {
       last_login_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS sales_team TEXT;
 
     CREATE TABLE IF NOT EXISTS opportunities (
       id TEXT PRIMARY KEY,

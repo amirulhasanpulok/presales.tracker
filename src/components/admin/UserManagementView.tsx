@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserAccount } from '../../types';
+import { UserAccount, RolePermission } from '../../types';
 import { 
   Users, 
   Search, 
@@ -23,12 +23,17 @@ interface UserManagementViewProps {
     department?: string;
     region?: string;
   }) => Promise<any>;
+  onUpdateUser?: (user: UserAccount) => Promise<any>;
+  roles?: RolePermission[];
 }
 
 export const UserManagementView: React.FC<UserManagementViewProps> = ({
   users: initialUsers,
   onCreateUser,
+  onUpdateUser,
+  roles = [],
 }) => {
+  const roleOptions = roles.map(role => ({ value: role.roleName || role.name || '', label: role.name || role.roleName || '' })).filter(role => role.value);
   const [users, setUsers] = useState<UserAccount[]>(initialUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
@@ -39,7 +44,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   // New user form state
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
-  const [newRole, setNewRole] = useState<UserAccount['role']>('presales_architect');
+  const [newRole, setNewRole] = useState<UserAccount['role']>(roleOptions[0]?.value || 'presales_architect');
   const [newDepartment, setNewDepartment] = useState('Solutions Engineering');
   const [newRegion, setNewRegion] = useState('US East');
 
@@ -55,12 +60,13 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       role: newRole,
       department: newDepartment,
       region: newRegion,
-      status: 'active',
-      mfaEnabled: true,
+      status: 'Active',
+      mfaEnabled: false,
       createdAt: new Date().toISOString().split('T')[0],
       lastLoginAt: 'Just now'
     };
 
+    let serverUser: UserAccount = created;
     if (onCreateUser) {
       try {
         const resp = await onCreateUser({
@@ -73,23 +79,30 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
         if (resp?.tempPassword) {
           setNotice(`Invite created for ${newEmail}. Temporary password: ${resp.tempPassword}`);
         }
+        if (resp?.id) serverUser = { ...created, ...resp, status: resp.status || created.status, mfaEnabled: resp.mfaEnabled ?? created.mfaEnabled };
       } catch (err: any) {
         setNotice(err?.message || 'Could not create the user on the server.');
         return;
       }
     }
 
-    setUsers([created, ...users]);
+    setUsers([serverUser, ...users.filter(user => user.id !== serverUser.id)]);
     setShowInviteModal(false);
     setNewName('');
     setNewEmail('');
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
 
-    setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
+    try {
+      await onUpdateUser?.(editingUser);
+      setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
+    } catch {
+      window.alert('Could not save user changes. Please try again.');
+      return;
+    }
     setEditingUser(null);
   };
 
@@ -155,10 +168,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
           className="enterprise-select text-xs py-1.5"
         >
           <option value="all">All Roles</option>
-          <option value="presales_architect">Solutions Architect</option>
-          <option value="sales_kam">Sales KAM</option>
-          <option value="presales_lead">Presales Lead</option>
-          <option value="super_admin">Super Admin</option>
+                     {roleOptions.map(role => <option key={role.value} value={role.value}>{role.label}</option>)}
         </select>
       </div>
 
@@ -201,9 +211,9 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 </td>
                 <td className="py-2.5 px-3">
                   <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded font-mono font-semibold ${
-                    user.status === 'active' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-gray-100 text-gray-600'
+                     user.status?.toLowerCase() === 'active' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-gray-100 text-gray-600'
                   }`}>
-                    {user.status === 'active' ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <XCircle className="w-3 h-3" />}
+                     {user.status?.toLowerCase() === 'active' ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <XCircle className="w-3 h-3" />}
                     {user.status.toUpperCase()}
                   </span>
                 </td>
@@ -234,7 +244,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
          </table>
          <div className="md:hidden p-2 space-y-2">
            {filteredUsers.map(user => <article key={user.id} className="border border-gray-200 rounded p-3 bg-white space-y-2">
-             <div className="flex items-start justify-between gap-2"><div className="min-w-0"><div className="font-bold text-sm text-gray-900 break-words">{user.name}</div><div className="text-[11px] text-gray-500 font-mono break-all">{user.email}</div></div><span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${user.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>{user.status}</span></div>
+             <div className="flex items-start justify-between gap-2"><div className="min-w-0"><div className="font-bold text-sm text-gray-900 break-words">{user.name}</div><div className="text-[11px] text-gray-500 font-mono break-all">{user.email}</div></div><span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${user.status?.toLowerCase() === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>{user.status}</span></div>
              <div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="block text-gray-500">Role</span><strong>{user.role.replace(/_/g, ' ')}</strong></div><div><span className="block text-gray-500">MFA</span><strong className={user.mfaEnabled ? 'text-emerald-700' : 'text-red-600'}>{user.mfaEnabled ? 'Enabled' : 'Disabled'}</strong></div><div><span className="block text-gray-500">Department</span><strong>{user.department || '—'}</strong></div><div><span className="block text-gray-500">Last Active</span><strong className="font-mono">{user.lastLoginAt || '—'}</strong></div></div>
              <button onClick={() => setEditingUser(user)} className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded"><Edit2 className="w-3 h-3" /> Edit Access</button>
            </article>)}
@@ -292,10 +302,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                     onChange={(e) => setNewRole(e.target.value as UserAccount['role'])}
                     className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
                   >
-                    <option value="presales_architect">Solutions Architect</option>
-                    <option value="sales_kam">Sales KAM</option>
-                    <option value="presales_lead">Presales Lead</option>
-                    <option value="super_admin">Super Admin</option>
+                   {roleOptions.map(role => <option key={role.value} value={role.value}>{role.label}</option>)}
                   </select>
                 </div>
 
@@ -375,6 +382,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
                   className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
                 >
+                  {!['presales_architect', 'sales_kam', 'presales_lead', 'super_admin'].includes(editingUser.role) && <option value={editingUser.role}>{editingUser.role.replace(/_/g, ' ')}</option>}
                   <option value="presales_architect">Solutions Architect</option>
                   <option value="sales_kam">Sales KAM</option>
                   <option value="presales_lead">Presales Lead</option>

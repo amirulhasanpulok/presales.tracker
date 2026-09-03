@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ClientAccount, Opportunity } from '../../types';
+import { ClientAccount, ClientBankRecord, Opportunity } from '../../types';
 import { 
   Building2, 
   Search, 
@@ -44,10 +44,15 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
   const [domain, setDomain] = useState('');
   const [industry, setIndustry] = useState<ClientAccount['industry']>('FinTech & Banking');
   const [tier, setTier] = useState<ClientAccount['tier']>('Enterprise Tier 2');
-  const [primaryTechStack, setPrimaryTechStack] = useState('AWS & Kubernetes');
-  const [assignedSalesKAM, setAssignedSalesKAM] = useState('Sarah Jenkins');
-  const [assignedLeadSA, setAssignedLeadSA] = useState('Elena Rostova');
-  const [headquarters, setHeadquarters] = useState('New York, NY');
+  const [primaryTechStack, setPrimaryTechStack] = useState('');
+  const [assignedSalesKAM, setAssignedSalesKAM] = useState('');
+  const [assignedLeadSA, setAssignedLeadSA] = useState('');
+  const [headquarters, setHeadquarters] = useState('');
+  const [bankRecord, setBankRecord] = useState<ClientBankRecord>({
+    'Subscriber ID': '', SLNO: '', 'Branch Code': '', 'Subscriber Name': '',
+    'Branch Name': '', Category: 'BANK', Group: '', Address: '', CommisionDate: '',
+  });
+  const updateBankRecord = (field: keyof ClientBankRecord, value: string) => setBankRecord(current => ({ ...current, [field]: value }));
 
   const handleAddClient = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,13 +62,14 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
       id: `client-${Date.now()}`,
       name,
       code: `CL-${Date.now().toString().slice(-6)}`,
-      domain: domain || `${name.toLowerCase().replace(/\s+/g, '')}.com`,
+      domain: domain || '',
       industry,
       tier,
       headquarters,
       primaryTechStack,
       assignedSalesKAM,
       assignedLeadSA,
+      bankRecords: [{ ...bankRecord, 'Subscriber Name': name, Address: bankRecord.Address || headquarters }],
       totalContractedTCV: 0,
       activeOpportunitiesCount: 0,
       createdDate: new Date().toISOString().split('T')[0],
@@ -96,6 +102,10 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
     setAssignedSalesKAM(client.assignedSalesKAM || client.assignedKAM || '');
     setAssignedLeadSA(client.assignedLeadSA || '');
     setHeadquarters(client.headquarters || '');
+    setBankRecord(client.bankRecords?.[0] || {
+      'Subscriber ID': '', SLNO: '', 'Branch Code': '', 'Subscriber Name': client.name,
+      'Branch Name': '', Category: 'BANK', Group: '', Address: client.headquarters || '', CommisionDate: '',
+    });
     setShowAddModal(true);
   };
 
@@ -111,6 +121,8 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
 
   const totalContractedTCV = clientsList.reduce((acc, c) => acc + (c.totalContractedTCV ?? c.totalActiveTCV ?? 0), 0);
   const totalActiveDeals = clientsList.reduce((acc, c) => acc + (c.activeOpportunitiesCount ?? c.activeOppsCount ?? 0), 0);
+  const industryOptions = [...new Set(clientsList.map(client => client.industry).filter(Boolean))].sort();
+  const tierOptions = [...new Set(clientsList.map(client => client.tier).filter(Boolean))].sort();
 
   return (
     <div className="space-y-4">
@@ -159,10 +171,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
             className="enterprise-select text-xs py-1.5"
           >
             <option value="all">All Industries</option>
-            <option value="FinTech & Banking">FinTech & Banking</option>
-            <option value="Healthcare & Life Sciences">Healthcare & Life Sciences</option>
-            <option value="E-Commerce & Retail">E-Commerce & Retail</option>
-            <option value="SaaS & Cloud Software">SaaS & Cloud Software</option>
+             {industryOptions.map(value => <option key={value} value={value}>{value}</option>)}
           </select>
 
           <select
@@ -171,9 +180,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
             className="enterprise-select text-xs py-1.5"
           >
             <option value="all">All Account Tiers</option>
-            <option value="Strategic Tier 1">Strategic Tier 1</option>
-            <option value="Enterprise Tier 2">Enterprise Tier 2</option>
-            <option value="Commercial Tier 3">Commercial Tier 3</option>
+             {tierOptions.map(value => <option key={value} value={value}>{value}</option>)}
           </select>
         </div>
       </div>
@@ -294,6 +301,14 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                 />
               </div>
 
+              <div className="border-t border-gray-200 pt-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-2">Source / Bank Registration Fields</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(['Subscriber ID', 'SLNO', 'Branch Code', 'Branch Name', 'Category', 'Group', 'CommisionDate'] as const).map(field => <label key={field} className="block"><span className="block text-[10px] font-semibold text-gray-500 mb-1">{field}</span><input value={field === 'Subscriber ID' ? bankRecord[field] : bankRecord[field]} onChange={e => updateBankRecord(field, e.target.value)} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" placeholder={field} /></label>)}
+                  <label className="block sm:col-span-2"><span className="block text-[10px] font-semibold text-gray-500 mb-1">Address (Head Office)</span><textarea value={bankRecord.Address || headquarters} onChange={e => updateBankRecord('Address', e.target.value)} rows={2} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 resize-none" placeholder="Head office address" /></label>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Domain / Website</label>
@@ -361,17 +376,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Assigned Lead SA</label>
-                  <select
-                    value={assignedLeadSA}
-                    onChange={(e) => setAssignedLeadSA(e.target.value)}
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
-                  >
-                    <option value="Elena Rostova">Elena Rostova</option>
-                    <option value="David Chen">David Chen</option>
-                    <option value="Marcus Vance">Marcus Vance</option>
-                    <option value="Aisha Patel">Aisha Patel</option>
-                    <option value="Carlos Mendez">Carlos Mendez</option>
-                  </select>
+                   <input type="text" value={assignedLeadSA} onChange={(e) => setAssignedLeadSA(e.target.value)} placeholder="Presales engineer" className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" />
                 </div>
               </div>
 

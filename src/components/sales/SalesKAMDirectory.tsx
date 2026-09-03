@@ -37,6 +37,7 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
 
   const totalQuota = salesKAMs.reduce((acc, k) => acc + (k.quotaTarget || 0), 0);
   const totalAttainment = salesKAMs.reduce((acc, k) => acc + (k.achievedPipeline || 0), 0);
+  const territoryOptions = [...new Set(salesKAMs.map(kam => kam.region).filter(Boolean))].sort();
 
   return (
     <div className="space-y-4">
@@ -85,10 +86,7 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
           className="enterprise-select text-xs py-1.5"
         >
           <option value="all">All Territories</option>
-          <option value="North America East">North America East</option>
-          <option value="North America West">North America West</option>
-          <option value="EMEA Central">EMEA Central</option>
-          <option value="EMEA UK & Nordics">EMEA UK & Nordics</option>
+          {territoryOptions.map(region => <option key={region} value={region}>{region}</option>)}
         </select>
       </div>
 

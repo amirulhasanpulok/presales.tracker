@@ -20,6 +20,11 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
   const totalARR = opportunities.reduce((acc, o) => acc + o.arr, 0);
   const wonOpps = opportunities.filter(o => o.stage === 'closed_won');
   const wonValue = wonOpps.reduce((acc, o) => acc + o.contractValue, 0);
+  const decidedOpps = opportunities.filter(o => ['closed_won', 'closed_lost'].includes(o.stage));
+  const liveWinRate = decidedOpps.length ? Math.round((wonOpps.length / decidedOpps.length) * 1000) / 10 : 0;
+  const boqOpps = opportunities.filter(o => (o.boq?.items || []).length > 0);
+  const liveBOQMargin = boqOpps.length ? Math.round(boqOpps.reduce((total, o) => total + (o.boq?.overallMarginPercent || 0), 0) / boqOpps.length * 10) / 10 : 0;
+  const liveDiscoveryCycle = opportunities.length ? Math.round(opportunities.reduce((total, o) => total + (o.daysInCurrentStage || 0), 0) / opportunities.length * 10) / 10 : 0;
 
   // Group by Stack
   const stackBreakdown: Record<string, { count: number; value: number }> = {};
@@ -108,27 +113,27 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Total Supported TCV:</span>
             <div className="text-base font-bold text-gray-900">{formatCurrency(totalPipeline)}</div>
-            <div className="text-[10px] text-emerald-700 flex items-center gap-0.5 mt-0.5 font-sans font-semibold">
-              <TrendingUp className="w-3 h-3" /> +18.4% QoQ Growth
+               <div className="text-[10px] text-emerald-700 flex items-center gap-0.5 mt-0.5 font-sans font-semibold">
+               <TrendingUp className="w-3 h-3" /> Live portfolio value
             </div>
           </div>
 
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Technical Win Rate:</span>
-            <div className="text-base font-bold text-emerald-700">74.2%</div>
-            <div className="text-[10px] text-gray-500 font-sans">When SA assigned early</div>
+             <div className="text-base font-bold text-emerald-700">{liveWinRate}%</div>
+             <div className="text-[10px] text-gray-500 font-sans">Closed deals</div>
           </div>
 
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Avg Tech Discovery Cycle:</span>
-            <div className="text-base font-bold text-gray-900">14.8 Days</div>
-            <div className="text-[10px] text-gray-500 font-sans">Intake to SADD approval</div>
+             <div className="text-base font-bold text-gray-900">{liveDiscoveryCycle} Days</div>
+             <div className="text-[10px] text-gray-500 font-sans">Current stage average</div>
           </div>
 
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Average BOQ Margin:</span>
-            <div className="text-base font-bold text-purple-700">36.5%</div>
-            <div className="text-[10px] text-gray-500 font-sans">Exceeds 30% baseline</div>
+             <div className="text-base font-bold text-purple-700">{liveBOQMargin}%</div>
+             <div className="text-[10px] text-gray-500 font-sans">Live BOQ average</div>
           </div>
         </div>
       </div>

@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
 import { X, Plus, Layers, DollarSign, Calendar, Shield, Cpu, Search, Check } from 'lucide-react';
-import { Opportunity, OpportunityStage, CloudProvider, DealComplexity, DealPriority, TechnicalFitScore, ScopeCatalogEntry } from '../../types';
-import { INITIAL_ENGINEERS } from '../../data/mockData';
+import { Opportunity, OpportunityStage, CloudProvider, DealComplexity, DealPriority, TechnicalFitScore, ScopeCatalogEntry, UserAccount } from '../../types';
+import { CLOUD_PROVIDERS, DEFAULT_INDUSTRIES, getConfiguredTaxonomy } from '../../utils/taxonomy';
 
 interface NewOpportunityModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateOpportunity: (newOpp: Opportunity) => void;
   scopes?: ScopeCatalogEntry[];
+  users?: UserAccount[];
 }
 
 export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
   isOpen,
   onClose,
   onCreateOpportunity,
-  scopes
+  scopes,
+  users = [],
 }) => {
+  const presalesUsers = users.filter(user => user.roleId === 'role-sa' || user.department === 'Solutions Engineering');
+  const salesUsers = users.filter(user => user.roleId === 'role-kam' || user.role === 'Sales KAM');
+  const engineers = presalesUsers;
   const [name, setName] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientIndustry, setClientIndustry] = useState<Opportunity['clientIndustry']>('FinTech / Banking');
@@ -31,9 +36,9 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
   const [expectedCloseDate, setExpectedCloseDate] = useState(
     new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10)
   );
-  const [leadSA, setLeadSA] = useState(INITIAL_ENGINEERS[0].name);
+  const [leadSA, setLeadSA] = useState(engineers[0]?.name || 'Unassigned');
   const [supportingSAs, setSupportingSAs] = useState<string[]>([]);
-  const [ae, setAe] = useState('Robert Sterling');
+  const [ae, setAe] = useState(salesUsers[0]?.name || 'Unassigned');
   const [proposedArch, setProposedArch] = useState('');
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
   const [scopeQuery, setScopeQuery] = useState('');
@@ -47,7 +52,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
     e.preventDefault();
     if (!name || !clientName) return;
 
-    const matchedSA = INITIAL_ENGINEERS.find(e => e.name === leadSA);
+    const matchedSA = engineers.find(e => e.name === leadSA);
     const scopeNames = selectedScopes.length
       ? selectedScopes
       : (scopes || []).filter(s => s.status !== 'Inactive').slice(0, 3).map(s => s.name);
@@ -232,14 +237,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
                   onChange={(e) => setClientIndustry(e.target.value as any)}
                   className="w-full enterprise-input font-mono"
                 >
-                  <option value="FinTech / Banking">FinTech / Banking</option>
-                  <option value="Healthcare / Life Sciences">Healthcare / Life Sciences</option>
-                  <option value="Enterprise SaaS">Enterprise SaaS</option>
-                  <option value="E-Commerce / Retail">E-Commerce / Retail</option>
-                  <option value="Telecom / 5G">Telecom / 5G</option>
-                  <option value="Manufacturing & IoT">Manufacturing & IoT</option>
-                  <option value="Public Sector">Public Sector</option>
-                  <option value="Energy / Utilities">Energy / Utilities</option>
+                  {getConfiguredTaxonomy('industries', DEFAULT_INDUSTRIES).map(value => <option key={value} value={value}>{value}</option>)}
                 </select>
               </div>
 
@@ -250,13 +248,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
                   onChange={(e) => setPrimaryTechStack(e.target.value as any)}
                   className="w-full enterprise-input font-mono"
                 >
-                  <option value="AWS">AWS</option>
-                  <option value="Google Cloud">Google Cloud</option>
-                  <option value="Azure">Azure</option>
-                  <option value="Kubernetes">Kubernetes</option>
-                  <option value="AI / LLM Infra">AI / LLM Infra</option>
-                  <option value="Hybrid / On-Prem">Hybrid / On-Prem</option>
-                  <option value="Multi-Cloud">Multi-Cloud</option>
+                  {CLOUD_PROVIDERS.map(value => <option key={value} value={value}>{value}</option>)}
                 </select>
               </div>
             </div>
@@ -407,7 +399,8 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
                   onChange={(e) => setLeadSA(e.target.value)}
                   className="w-full enterprise-input font-mono"
                 >
-                  {INITIAL_ENGINEERS.map(eng => (
+                  {!engineers.length && <option value="Unassigned">Unassigned</option>}
+                  {engineers.map(eng => (
                     <option key={eng.id} value={eng.name}>{eng.name}</option>
                   ))}
                 </select>
@@ -415,12 +408,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
 
               <div>
                 <label className="block text-[11px] font-mono text-gray-700 mb-1">Account Executive (AE)</label>
-                <input
-                  type="text"
-                  value={ae}
-                  onChange={(e) => setAe(e.target.value)}
-                  className="w-full enterprise-input"
-                />
+                {salesUsers.length ? <select value={ae} onChange={(e) => setAe(e.target.value)} className="w-full enterprise-input">{salesUsers.map(user => <option key={user.id} value={user.name}>{user.name}</option>)}</select> : <input type="text" value={ae} onChange={(e) => setAe(e.target.value)} className="w-full enterprise-input" />}
               </div>
 
               <div>
@@ -436,7 +424,8 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
             <div>
               <label className="block text-[11px] font-mono text-gray-700 mb-1">Supporting Presales Engineers</label>
               <div className="flex flex-wrap gap-2 p-2 rounded border border-gray-300 bg-gray-50">
-                {INITIAL_ENGINEERS.filter(eng => eng.name !== leadSA).map(eng => <label key={eng.id} className="inline-flex items-center gap-1.5 text-[11px] text-gray-700"><input type="checkbox" checked={supportingSAs.includes(eng.name)} onChange={e => setSupportingSAs(current => e.target.checked ? [...current, eng.name] : current.filter(name => name !== eng.name))} className="rounded border-gray-300 text-blue-600" />{eng.name}</label>)}
+                  {engineers.filter(eng => eng.name !== leadSA).map(eng => <label key={eng.id} className="inline-flex items-center gap-1.5 text-[11px] text-gray-700"><input type="checkbox" checked={supportingSAs.includes(eng.name)} onChange={e => setSupportingSAs(current => e.target.checked ? [...current, eng.name] : current.filter(name => name !== eng.name))} className="rounded border-gray-300 text-blue-600" />{eng.name}</label>)}
+                  {!engineers.length && <span className="text-[11px] text-gray-400 italic">No presales engineers available. Add users in User Management.</span>}
               </div>
             </div>
           </div>

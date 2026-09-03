@@ -168,8 +168,11 @@ export const api = {
   /** Admin: restore the seeded demo dataset for opportunities. */
   resetData: () => request<{ ok: boolean; count: number }>('/opportunities/reset', { method: 'POST' }),
 
-  createUser: (payload: { name: string; email: string; role: string; roleId: string; department?: string; password: string }) =>
+  createUser: (payload: { name: string; email: string; role: string; roleId: string; department?: string; region?: string; password?: string }) =>
     request('/users', { method: 'POST', body: JSON.stringify(payload) }),
+
+  updateUser: (id: string, payload: { name?: string; email?: string; role?: string; roleId?: string; department?: string; region?: string; status?: string; password?: string }) =>
+    request<any>(`/users/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
 
   createRole: (payload: { roleName: string; description?: string; permissions: string[] }) =>
     request<any>('/roles', { method: 'POST', body: JSON.stringify(payload) }),

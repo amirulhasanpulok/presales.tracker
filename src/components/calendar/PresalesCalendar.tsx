@@ -27,7 +27,7 @@ export const PresalesCalendar: React.FC<PresalesCalendarProps> = ({
   onSelectOpportunity,
 }) => {
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
-  const [currentMonth, setCurrentMonth] = useState('April 2025');
+  const [currentMonth, setCurrentMonth] = useState(() => new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(initialEvents[0] || null);
   const [showBookModal, setShowBookModal] = useState<boolean>(false);
@@ -35,11 +35,11 @@ export const PresalesCalendar: React.FC<PresalesCalendarProps> = ({
   // New session form state
   const [newTitle, setNewTitle] = useState('');
   const [newType, setNewType] = useState<CalendarEvent['type']>('Architecture Workshop');
-  const [newDate, setNewDate] = useState('2025-04-15');
+  const [newDate, setNewDate] = useState(new Date().toISOString().slice(0, 10));
   const [newTime, setNewTime] = useState('14:00 - 15:30 EST');
   const [newOppCode, setNewOppCode] = useState(opportunities[0]?.code || '');
-  const [newLocation, setNewLocation] = useState('Google Meet / Enterprise Lab');
-  const [newAttendees, setNewAttendees] = useState('Lead SA, Customer VP Tech, Cloud Lead');
+  const [newLocation, setNewLocation] = useState('');
+  const [newAttendees, setNewAttendees] = useState('');
 
   const handleBookSession = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,13 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ActiveTab, Opportunity, OpportunityStage, ClientAccount, UserAccount, RolePermission, AuditLogEntry, ScopeCatalogEntry, OEMEntry, ProductCatalogEntry } from './types';
-import {
-  INITIAL_ENGINEERS,
-  MOCK_CLIENTS,
-  MOCK_SALES_KAMS,
-  MOCK_CALENDAR_EVENTS,
-  MOCK_CENTRAL_DOCUMENTS,
-  MOCK_NOTIFICATIONS,
-} from './data/mockData';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { ActiveTab, Opportunity, OpportunityStage, ClientAccount, UserAccount, RolePermission, AuditLogEntry, ScopeCatalogEntry, OEMEntry, ProductCatalogEntry, PresalesEngineer, SalesKAM, CalendarEvent, NotificationItem } from './types';
 import {
   can,
   resolveRole,
@@ -71,6 +63,7 @@ const toUserState = (u: any): UserAccount => ({
   role: u.role,
   roleId: u.role_id ?? u.roleId,
   department: u.department ?? '',
+  salesTeam: u.sales_team ?? u.salesTeam,
   status: u.status ?? 'Active',
   lastLoginAt: u.last_login_at ? new Date(u.last_login_at).toISOString() : u.lastLoginAt,
   avatar: u.avatar,
@@ -79,6 +72,72 @@ const toUserState = (u: any): UserAccount => ({
   mustChangePassword: u.must_change_password ?? u.mustChangePassword ?? false,
   createdAt: u.created_at,
 });
+
+const toPresalesEngineer = (user: UserAccount, opportunities: Opportunity[]): PresalesEngineer => {
+  const assigned = opportunities.filter(o => o.leadSolutionArchitect === user.name || o.presalesEngineerSecondary === user.name || (o.supportingPresalesEngineers || []).includes(user.name));
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    title: user.role,
+    avatar: user.avatar || '',
+    skills: [],
+    activeDealsCount: assigned.filter(o => !['closed_won', 'closed_lost', 'on_hold', 'cancelled'].includes(o.stage)).length,
+    totalPipelineValue: assigned.reduce((total, o) => total + (o.contractValue || 0), 0),
+    activePocCount: assigned.filter(o => ['active_testing', 'validating_kpis'].includes(o.poc?.status)).length,
+    utilizationPercentage: 0,
+    certifications: [],
+  };
+};
+
+const toSalesKAM = (user: UserAccount, opportunities: Opportunity[]): SalesKAM => {
+  const assigned = opportunities.filter(o => o.accountExecutive === user.name);
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    region: user.region || 'Unassigned',
+    accountsCount: new Set(assigned.map(o => o.clientName)).size,
+    quotaTarget: 0,
+    achievedPipeline: assigned.reduce((total, o) => total + (o.contractValue || 0), 0),
+    assignedLeadSA: assigned[0]?.leadSolutionArchitect || '—',
+    avatar: user.avatar || '',
+  };
+};
+
+const toLiveCalendarEvents = (opportunities: Opportunity[]): CalendarEvent[] => opportunities.flatMap(opportunity => [
+  ...(opportunity.activities || []).map(activity => {
+    const date = new Date(activity.timestamp);
+    return { id: `activity-${opportunity.id}-${activity.id}`, title: activity.title, type: activity.type, date: Number.isNaN(date.getTime()) ? opportunity.updatedAt.slice(0, 10) : date.toISOString().slice(0, 10), time: Number.isNaN(date.getTime()) ? 'Time not recorded' : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), opportunityCode: opportunity.code, clientName: opportunity.clientName, attendees: activity.attendees || [], location: 'Opportunity Timeline', status: 'Completed' } as CalendarEvent;
+  }),
+  ...(opportunity.actionItems || []).filter(action => !action.isCompleted).map(action => ({ id: `action-${opportunity.id}-${action.id}`, title: action.title, type: 'Follow-up', date: action.dueDate, time: 'All day', opportunityCode: opportunity.code, clientName: opportunity.clientName, attendees: [action.assignedTo], location: 'Action Center', status: 'Pending' } as CalendarEvent)),
+  ...(opportunity.tender?.submissionDeadline ? [{ id: `tender-${opportunity.id}`, title: `${opportunity.tender.tenderName || opportunity.name} submission deadline`, type: 'RFP Due Date', date: opportunity.tender.submissionDeadline, time: 'All day', opportunityCode: opportunity.code, clientName: opportunity.clientName, attendees: [], location: 'Tender Workspace', status: 'Pending' } as CalendarEvent] : []),
+]);
+
+const toLiveNotifications = (opportunities: Opportunity[]): NotificationItem[] => {
+  const now = new Date();
+  return opportunities.flatMap(opportunity => [
+    ...(opportunity.actionItems || []).filter(action => !action.isCompleted && new Date(action.dueDate) < now).map(action => ({ id: `alert-action-${opportunity.id}-${action.id}`, title: 'Overdue follow-up', message: `${action.title} is overdue for ${opportunity.clientName}.`, type: 'sla_breach', timestamp: action.dueDate, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem)),
+    ...(['draft', 'pending_sa_lead', 'pending_sales_vp', 'pending_finance'].includes(opportunity.boq?.approvalStatus || '') ? [{ id: `alert-boq-${opportunity.id}`, title: 'BOQ approval required', message: `${opportunity.code} is awaiting BOQ approval before commercial handoff.`, type: 'approval_required', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
+    ...(['active_testing', 'validating_kpis'].includes(opportunity.poc?.status) ? [{ id: `alert-poc-${opportunity.id}`, title: 'POC milestone active', message: `${opportunity.code} has an active POC validation milestone.`, type: 'poc_milestone', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
+    ...(opportunity.stage === 'closed_won' && !opportunity.handover?.isHandedOver ? [{ id: `alert-handover-${opportunity.id}`, title: 'Implementation handover pending', message: `${opportunity.code} is closed won and awaiting delivery handover.`, type: 'info', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
+    ...(opportunity.tender?.isTender && opportunity.tender.submissionDeadline && new Date(opportunity.tender.submissionDeadline) >= now ? [{ id: `alert-tender-${opportunity.id}`, title: 'Tender deadline upcoming', message: `${opportunity.tender.tenderName || opportunity.name} submission deadline is ${opportunity.tender.submissionDeadline}.`, type: 'info', timestamp: opportunity.tender.submissionDeadline, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
+  ]);
+};
+
+const toLiveCentralDocuments = (opportunities: Opportunity[]) => opportunities.flatMap(opportunity => (opportunity.documents || []).map(document => ({
+  id: document.id,
+  title: document.title,
+  category: document.type,
+  fileType: document.fileName?.split('.').pop()?.toUpperCase() || 'FILE',
+  fileSize: document.size,
+  author: document.uploadedBy,
+  lastUpdated: document.uploadedAt,
+  version: document.version,
+  clientName: opportunity.clientName,
+  tags: [opportunity.code, opportunity.clientName],
+  downloadCount: 0,
+})));
 
 const toAuditShape = (a: any): AuditLogEntry => ({
   id: `audit-${a.id}`,
@@ -399,6 +458,10 @@ export default function App() {
     );
   }
 
+  const liveCalendarEvents = useMemo(() => toLiveCalendarEvents(opportunities), [opportunities]);
+  const liveNotifications = useMemo(() => toLiveNotifications(opportunities), [opportunities]);
+  const liveCentralDocuments = useMemo(() => toLiveCentralDocuments(opportunities), [opportunities]);
+
   return (
     <div className="h-screen overflow-hidden bg-gray-50 text-gray-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Top Header Command Bar */}
@@ -488,7 +551,7 @@ export default function App() {
 
               {activeTab === 'calendar' && (
                 <PresalesCalendar
-                  events={MOCK_CALENDAR_EVENTS as any}
+                  events={liveCalendarEvents}
                   opportunities={opportunities}
                   onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
                 />
@@ -530,7 +593,7 @@ export default function App() {
 
               {activeTab === 'team_capacity' && (
                 <CapacityMatrix
-                  engineers={INITIAL_ENGINEERS}
+                  engineers={users.filter(user => user.roleId === 'role-sa' || user.department === 'Solutions Engineering').map(user => toPresalesEngineer(user, opportunities))}
                   opportunities={opportunities}
                   onSelectOpportunity={(opp) => setSelectedOpportunity(opp)}
                 />
@@ -538,7 +601,7 @@ export default function App() {
 
               {activeTab === 'documents' && (
                 <CentralDocumentsRepo
-                  documents={MOCK_CENTRAL_DOCUMENTS as any}
+                  documents={liveCentralDocuments}
                 />
               )}
 
@@ -550,7 +613,7 @@ export default function App() {
 
               {activeTab === 'clients' && (
                 <ClientsDirectory
-                  clients={clients.length ? clients : (MOCK_CLIENTS as any)}
+                  clients={clients}
                   opportunities={opportunities}
                   onSelectClient={(c) => setSelectedClient(c)}
                   onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
@@ -575,7 +638,7 @@ export default function App() {
 
               {activeTab === 'sales_kams' && (
                 <SalesKAMDirectory
-                  salesKAMs={MOCK_SALES_KAMS as any}
+                  salesKAMs={users.filter(user => user.roleId === 'role-kam' || user.role === 'Sales KAM').map(user => toSalesKAM(user, opportunities))}
                   opportunities={opportunities}
                   onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
                 />
@@ -583,7 +646,7 @@ export default function App() {
 
               {activeTab === 'notifications' && (
                 <NotificationCenter
-                  notifications={MOCK_NOTIFICATIONS as any}
+                  notifications={liveNotifications}
                   opportunities={opportunities}
                   onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
                 />
@@ -598,10 +661,18 @@ export default function App() {
               {activeTab === 'user_management' && (
                 <UserManagementView
                   users={users}
+                  roles={roles as RolePermission[]}
                   onCreateUser={async (payload) => {
                     const roleId = resolveRole(roles, { ...currentUser, role: payload.role, roleId: undefined })?.id ?? 'role-sa';
                     const resp = await api.createUser({ ...payload, roleId });
+                    const createdUser = toUserState(resp);
+                    setUsers(current => [createdUser, ...current.filter(user => user.id !== createdUser.id)]);
                     return resp as any;
+                  }}
+                  onUpdateUser={async (user) => {
+                    const roleId = resolveRole(roles, user)?.id ?? user.roleId ?? 'role-sa';
+                    await api.updateUser(user.id, { name: user.name, email: user.email, role: user.role, roleId, department: user.department, region: user.region, status: user.status, });
+                    setUsers(current => current.map(item => item.id === user.id ? { ...item, ...user, roleId } : item));
                   }}
                 />
               )}
@@ -686,6 +757,7 @@ export default function App() {
         onClose={() => setIsNewModalOpen(false)}
         onCreateOpportunity={handleCreateOpportunity}
         scopes={scopes}
+        users={users}
       />
 
       {/* Global Command Palette (Cmd+K) */}

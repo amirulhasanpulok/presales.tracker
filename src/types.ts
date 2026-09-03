@@ -311,6 +311,19 @@ export interface ClientAccount {
   headquarters?: string;
   notes?: string;
   keyStakeholders?: any[];
+  bankRecords?: ClientBankRecord[];
+}
+
+export interface ClientBankRecord {
+  'Subscriber ID': string;
+  SLNO: string;
+  'Branch Code': string;
+  'Subscriber Name': string;
+  'Branch Name': string;
+  Category: string;
+  Group: string;
+  Address: string;
+  CommisionDate: string;
 }
 
 export interface CalendarEvent {
@@ -377,6 +390,7 @@ export interface UserAccount {
   role: 'Presales Lead / Architect' | 'Principal Solutions Architect' | 'Sales KAM' | 'Delivery Manager' | 'System Administrator' | 'presales_architect' | 'sales_kam' | 'presales_lead' | 'super_admin' | string;
   roleId?: string;
   department: 'Solutions Engineering' | 'Sales' | 'Delivery & Services' | 'Information Security' | 'Operations' | string;
+  salesTeam?: string;
   status: 'Active' | 'Inactive' | 'Invited' | 'active' | 'inactive' | string;
   lastActive?: string;
   lastLoginAt?: string;
