@@ -119,7 +119,12 @@ else
   pm2 start "$APP_DIR/server/index.js" --name presales-api --cwd "$APP_DIR/server"
 fi
 pm2 save
-pm2 startup systemd -u "${SUDO_USER:-root}" --hp "$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)" >/tmp/presales-pm2-startup.txt || true
+PM2_USER="${DEPLOY_USER:-${SUDO_USER:-root}}"
+PM2_HOME_DIR="$(getent passwd "$PM2_USER" | cut -d: -f6)"
+PM2_STARTUP_COMMAND="$(pm2 startup systemd -u "$PM2_USER" --hp "$PM2_HOME_DIR" | awk '/^sudo env PATH=/ { sub(/^sudo /, ""); print; exit }')"
+if [[ -n "$PM2_STARTUP_COMMAND" ]]; then
+  bash -c "$PM2_STARTUP_COMMAND"
+fi
 
 if [[ "$ENABLE_TLS" == "1" && "$DOMAIN" != "_" ]]; then
   apt-get install -y certbot python3-certbot-nginx
