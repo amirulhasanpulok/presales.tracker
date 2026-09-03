@@ -11,6 +11,7 @@ import {
   Sparkles,
   Search
 } from 'lucide-react';
+import { getActivityTypes } from '../../../utils/activityTypes';
 
 interface OpportunityTimelineProps {
   opportunity: Opportunity;
@@ -25,9 +26,24 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newSummary, setNewSummary] = useState('');
-  const [newType, setNewType] = useState<PresalesActivity['type']>('Architectural Review');
+  const [nextAction, setNextAction] = useState('');
+  const [nextFollowUpDate, setNextFollowUpDate] = useState('');
+  const [newType, setNewType] = useState<PresalesActivity['type']>(getActivityTypes()[0] as PresalesActivity['type']);
+  const [activityTypes, setActivityTypes] = useState(getActivityTypes);
 
-  const filteredActivities = opportunity.activities.filter(act => 
+  React.useEffect(() => {
+    const refreshTypes = () => setActivityTypes(getActivityTypes());
+    window.addEventListener('presales:activity-types-changed', refreshTypes);
+    return () => window.removeEventListener('presales:activity-types-changed', refreshTypes);
+  }, []);
+
+  React.useEffect(() => {
+    if (activityTypes.length && !activityTypes.includes(newType)) {
+      setNewType(activityTypes[0] as PresalesActivity['type']);
+    }
+  }, [activityTypes, newType]);
+
+  const filteredActivities = (opportunity.activities || []).filter(act => 
     filterType === 'all' || act.type === filterType
   );
 
@@ -40,17 +56,20 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
       type: newType,
       title: newTitle,
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16) + ' UTC',
-      author: 'Dr. Marcus Vance',
+      author: '',
       summary: newSummary,
       durationMinutes: 60,
-      attendees: ['Customer Lead Architect', 'Dr. Marcus Vance', 'AE Lead'],
-      deliverables: ['Updated Architecture Blueprint Draft']
+      attendees: ['Customer Lead Architect'],
+      deliverables: ['Updated Architecture Blueprint Draft'],
+      nextAction,
+      nextFollowUpDate,
     };
 
     if (onAddActivity) onAddActivity(newAct);
-    opportunity.activities.unshift(newAct);
     setNewTitle('');
     setNewSummary('');
+    setNextAction('');
+    setNextFollowUpDate('');
     setShowAddForm(false);
   };
 
@@ -65,12 +84,8 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
             onChange={(e) => setFilterType(e.target.value)}
             className="enterprise-select text-xs py-1"
           >
-            <option value="all">All Presales Activities ({opportunity.activities.length})</option>
-            <option value="Architectural Review">Architectural Reviews</option>
-            <option value="Discovery Call">Discovery Calls</option>
-            <option value="Demo">Demos & PoCs</option>
-            <option value="RFP / RFI Response">RFP Responses</option>
-            <option value="BOQ Review">BOQ Pricing Reviews</option>
+            <option value="all">All Presales Activities ({(opportunity.activities || []).length})</option>
+            {activityTypes.map(type => <option key={type} value={type}>{type}</option>)}
           </select>
         </div>
 
@@ -99,13 +114,7 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
                 onChange={(e) => setNewType(e.target.value as PresalesActivity['type'])}
                 className="enterprise-select w-full text-xs"
               >
-                <option value="Architectural Review">Architectural Review</option>
-                <option value="Discovery Call">Discovery Call</option>
-                <option value="Demo">Demo</option>
-                <option value="Security Questionnaire">Security Questionnaire</option>
-                <option value="RFP / RFI Response">RFP / RFI Response</option>
-                <option value="Whiteboarding">Whiteboarding</option>
-                <option value="BOQ Review">BOQ Review</option>
+                {activityTypes.map(type => <option key={type} value={type}>{type}</option>)}
               </select>
             </div>
             <div>
@@ -130,6 +139,17 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
               className="enterprise-input w-full text-xs h-20"
               required
             />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Next Action</label>
+              <input value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="e.g. Prepare initial solution design" className="enterprise-input w-full text-xs" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Next Follow-up Date</label>
+              <input type="date" value={nextFollowUpDate} onChange={e => setNextFollowUpDate(e.target.value)} className="enterprise-input w-full text-xs" />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2">

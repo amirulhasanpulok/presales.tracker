@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Opportunity, BOQItem, ApprovalStatus } from '../../../types';
 import { exportBOQCSV } from '../../../utils/exportUtils';
+import { formatCurrency } from '../../../utils/currency';
 import { 
   Calculator, 
   DollarSign, 
@@ -23,8 +24,8 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
   opportunity,
   onUpdateBOQ,
 }) => {
-  const [items, setItems] = useState<BOQItem[]>(opportunity.boq.items);
-  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>(opportunity.boq.approvalStatus);
+  const [items, setItems] = useState<BOQItem[]>(opportunity.boq?.items ?? []);
+  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>(opportunity.boq?.approvalStatus ?? 'draft');
   const [showAddRow, setShowAddRow] = useState(false);
 
   // New item form
@@ -83,6 +84,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
   };
 
   const updateOpportunity = (newItems: BOQItem[], status: ApprovalStatus) => {
+    const previousBOQ = opportunity.boq;
     const computedCost = newItems.reduce((acc, it) => acc + (it.unitCost * it.quantity), 0);
     const computedList = newItems.reduce((acc, it) => acc + (it.unitListPrice * it.quantity), 0);
     const computedExt = newItems.reduce((acc, it) => acc + it.extendedPrice, 0);
@@ -97,11 +99,20 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
       totalDiscountAmount: computedDisc,
       totalContractValue: computedExt,
       overallMarginPercent: computedMargin,
-      approvalStatus: status
+      approvalStatus: status,
+      version: (previousBOQ.version || 0) + 1,
+      revisions: [
+        ...(previousBOQ.revisions || []),
+        {
+          id: `boq-revision-${Date.now()}`,
+          version: previousBOQ.version || 1,
+          savedAt: new Date().toISOString(),
+          status: previousBOQ.approvalStatus,
+          snapshot: { ...previousBOQ, items: [...(previousBOQ.items || [])], revisions: undefined },
+        },
+      ],
     };
-    opportunity.boq = newBOQ;
-    if (onUpdateBOQ) onUpdateBOQ(newBOQ);
-  };
+    if (onUpdateBOQ) onUpdateBOQ(newBOQ);  };
 
   const requestApproval = () => {
     setApprovalStatus('pending_sa_lead');
@@ -120,17 +131,17 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
         <div className="bg-white border border-gray-200 rounded p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Total Extended Price (TCV)</div>
           <div className="text-xl font-bold font-mono text-gray-900 mt-1">
-            ${totalExtended.toLocaleString()}
+             {formatCurrency(totalExtended)}
           </div>
           <div className="text-[11px] text-gray-500 font-mono">
-            List Price: ${subtotalList.toLocaleString()}
+             List Price: {formatCurrency(subtotalList)}
           </div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Total Discount Given</div>
           <div className="text-xl font-bold font-mono text-amber-800 mt-1">
-            ${totalDiscount.toLocaleString()}
+             {formatCurrency(totalDiscount)}
           </div>
           <div className="text-[11px] text-gray-500 font-mono">
             {subtotalList > 0 ? Math.round((totalDiscount / subtotalList) * 100) : 0}% aggregate discount
@@ -143,7 +154,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
             {overallMargin}%
           </div>
           <div className="text-[11px] text-gray-500 font-mono">
-            Direct Cost: ${subtotalCost.toLocaleString()}
+             Direct Cost: {formatCurrency(subtotalCost)}
           </div>
         </div>
 
@@ -285,7 +296,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Unit Cost ($)</label>
+              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Unit Cost</label>
               <input
                 type="number"
                 min="0"
@@ -296,7 +307,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Unit List Price ($)</label>
+              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Unit List Price</label>
               <input
                 type="number"
                 min="0"
@@ -328,8 +339,8 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
       )}
 
       {/* BOQ Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+         <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
               <th className="py-2.5 px-3">Item / SKU</th>
@@ -358,7 +369,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
                   <strong>{it.quantity}</strong> {it.unit}
                 </td>
                 <td className="py-2.5 px-3 text-right font-mono text-gray-600">
-                  ${it.unitListPrice.toLocaleString()}
+                   {formatCurrency(it.unitListPrice)}
                 </td>
                 <td className="py-2.5 px-3 text-right font-mono">
                   {it.discountPercent > 0 ? (
@@ -368,7 +379,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
                   )}
                 </td>
                 <td className="py-2.5 px-3 text-right font-mono font-bold text-gray-900">
-                  ${it.extendedPrice.toLocaleString()}
+                   {formatCurrency(it.extendedPrice)}
                 </td>
                 <td className="py-2.5 px-3 text-right font-mono font-semibold text-emerald-700">
                   {it.marginPercent}%
@@ -385,7 +396,15 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
               </tr>
             ))}
           </tbody>
-        </table>
+         </table>
+         <div className="md:hidden p-2 space-y-2">
+           {items.map(it => <article key={it.id} className="border border-gray-200 rounded p-3 bg-white space-y-2">
+             <div className="flex items-start justify-between gap-2"><div className="min-w-0"><h4 className="text-sm font-semibold text-gray-900 break-words">{it.description}</h4><div className="text-[10px] text-gray-500 font-mono">{it.itemCode}</div></div><button onClick={() => handleRemoveItem(it.id)} className="p-1.5 text-red-600 bg-red-50 rounded" title="Remove line"><Trash2 className="w-3.5 h-3.5" /></button></div>
+             <div className="flex flex-wrap gap-1.5"><span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200">{it.category}</span>{it.oem && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">{it.oem}</span>}</div>
+             <div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="block text-gray-500">Quantity</span><strong>{it.quantity} {it.unit}</strong></div><div><span className="block text-gray-500">List Price</span><strong className="font-mono">{formatCurrency(it.unitListPrice)}</strong></div><div><span className="block text-gray-500">Extended</span><strong className="font-mono">{formatCurrency(it.extendedPrice)}</strong></div><div><span className="block text-gray-500">Margin</span><strong className="font-mono text-emerald-700">{it.marginPercent}%</strong></div></div>
+           </article>)}
+           {items.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No BOQ line items configured.</div>}
+         </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Search, Bell, RefreshCw, Cpu, Database, ShieldCheck, Layers, SlidersHorizontal, Terminal, DollarSign, FlaskConical, LayoutDashboard } from 'lucide-react';
+import { Search, Bell, RefreshCw, Cpu, Database, ShieldCheck, Layers, SlidersHorizontal, Terminal, DollarSign, FlaskConical, LayoutDashboard, Menu } from 'lucide-react';
 import { Opportunity, ActiveTab } from '../../types';
+import { formatCurrency } from '../../utils/currency';
 
 interface HeaderProps {
   opportunities: Opportunity[];
@@ -8,41 +9,42 @@ interface HeaderProps {
   onOpenCommandPalette: () => void;
   onNavigateTab: (tab: ActiveTab) => void;
   onRefreshData?: () => void;
+  onToggleSidebar?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   opportunities,
   onOpenCommandPalette,
   onNavigateTab,
-  onRefreshData
+  onRefreshData,
+  onToggleSidebar,
 }) => {
   // Aggregate Metrics
-  const totalPipeline = opportunities.reduce((acc, o) => acc + (o.stage !== 'closed_lost' ? (o.contractValue || 0) : 0), 0);
-  const activePocs = opportunities.filter(o => ['active_testing', 'validating_kpis'].includes(o.poc.status)).length;
-  const pendingBoqs = opportunities.filter(o => o.boq.approvalStatus.startsWith('pending')).length;
+  const totalPipeline = opportunities.reduce((acc, o) => acc + (!['closed_lost', 'cancelled'].includes(o.stage) ? (o.contractValue || 0) : 0), 0);
+  const activePocs = opportunities.filter(o => o?.poc && ['active_testing', 'validating_kpis'].includes(o.poc.status)).length;
+  const pendingBoqs = opportunities.filter(o => o?.boq?.approvalStatus?.startsWith('pending')).length;
   const overdueActions = opportunities.reduce((acc, o) => {
-    const overdue = o.actionItems.filter(a => !a.isCompleted && new Date(a.dueDate) < new Date()).length;
+    const overdue = (o.actionItems || []).filter(a => !a.isCompleted && new Date(a.dueDate || 0) < new Date()).length;
     return acc + overdue;
   }, 0);
 
-  const formatCurrency = (num: number) => {
-    return `$${(num / 1000000).toFixed(2)}M`;
-  };
-
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-2">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
         
         {/* Brand & Context */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <button onClick={onToggleSidebar} className="md:hidden p-1.5 rounded text-gray-600 hover:bg-gray-100" aria-label="Open navigation">
+            <Menu className="w-5 h-5" />
+          </button>
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigateTab('dashboard')}>
             <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-xs">
               PT
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-xs tracking-tight text-gray-900 font-mono">PRESALES<span className="text-blue-600">TRACKER</span></span>
-                <span className="px-1.5 py-0.2 text-[9px] font-mono rounded bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                <span className="font-bold text-[11px] sm:text-xs tracking-tight text-gray-900 font-mono">PRESALES<span className="text-blue-600">TRACKER</span></span>
+                <span className="hidden sm:inline px-1.5 py-0.2 text-[9px] font-mono rounded bg-blue-50 text-blue-700 font-bold border border-blue-200">
                   ENTERPRISE
                 </span>
               </div>
@@ -95,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Global Search & Command trigger */}
-        <div className="flex-1 max-w-md mx-2">
+        <div className="order-3 sm:order-none basis-full sm:basis-auto flex-1 max-w-none sm:max-w-md mx-0 sm:mx-2">
           <button
             onClick={onOpenCommandPalette}
             type="button"

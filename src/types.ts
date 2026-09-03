@@ -6,7 +6,9 @@ export type OpportunityStage =
   | 'proposal_boq'
   | 'commercial_negotiation'
   | 'closed_won'
-  | 'closed_lost';
+  | 'closed_lost'
+  | 'on_hold'
+  | 'cancelled';
 
 export type DealComplexity = 'low' | 'medium' | 'high' | 'critical';
 export type TechnicalFitScore = 'perfect' | 'good' | 'moderate' | 'challenging';
@@ -38,6 +40,9 @@ export interface OpportunityDocument {
   uploadedAt: string;
   status: 'Approved' | 'In Review' | 'Draft' | 'Customer Signed';
   fileUrl?: string;
+  fileName?: string;
+  fileData?: string;
+  description?: string;
 }
 
 export interface BOQItem {
@@ -45,7 +50,7 @@ export interface BOQItem {
   category: 'Cloud Infrastructure' | 'Software Licenses' | 'Hardware' | 'Professional Services' | 'Managed Support' | 'Security & Compliance';
   itemCode: string;
   description: string;
-  unit: 'Instances/Mo' | 'TB/Mo' | 'Users/Yr' | 'Man-Days' | 'Core-Hrs' | 'Flat Fee' | 'License/Yr';
+  unit: 'Instances/Mo' | 'TB/Mo' | 'Users/Yr' | 'Man-Days' | 'Core-Hrs' | 'Flat Fee' | 'License/Yr' | string;
   quantity: number;
   unitCost: number;
   unitListPrice: number;
@@ -53,6 +58,20 @@ export interface BOQItem {
   extendedPrice: number;
   marginPercent: number;
   notes?: string;
+  // Section 10/11: OEM & Product references for catalog-driven BOQ
+  oem?: string;
+  productName?: string;
+  model?: string;
+  partNumber?: string;
+}
+
+export interface BOQRevision {
+  id: string;
+  version: number;
+  savedAt: string;
+  savedBy?: string;
+  status: ApprovalStatus;
+  snapshot: Omit<BOQSummary, 'revisions'>;
 }
 
 export interface BOQSummary {
@@ -68,6 +87,7 @@ export interface BOQSummary {
   approvedBy?: string;
   approvedDate?: string;
   version: number;
+  revisions?: BOQRevision[];
 }
 
 export interface POCDetails {
@@ -102,7 +122,7 @@ export interface POCDetails {
 
 export interface PresalesActivity {
   id: string;
-  type: 'Architectural Review' | 'Discovery Call' | 'Security Questionnaire' | 'Demo' | 'RFP / RFI Response' | 'Executive Briefing' | 'Whiteboarding' | 'BOQ Review';
+  type: 'Phone Call' | 'Email' | 'Client Meeting' | 'Internal Meeting' | 'Online Meeting' | 'Site Survey' | 'Requirement Gathering' | 'Technical Discussion' | 'OEM Discussion' | 'Solution Design' | 'BOQ Preparation' | 'Proposal Submission' | 'Follow-up' | 'Commercial Discussion' | 'Tender Activity' | 'Documentation' | 'Other' | 'Architectural Review' | 'Discovery Call' | 'Security Questionnaire' | 'Demo' | 'RFP / RFI Response' | 'Executive Briefing' | 'Whiteboarding' | 'BOQ Review';
   title: string;
   timestamp: string;
   author: string;
@@ -112,6 +132,10 @@ export interface PresalesActivity {
   deliverables?: string[];
   nextSteps?: string;
   attendees: string[];
+  currentStage?: string;
+  nextAction?: string;
+  nextFollowUpDate?: string;
+  attachments?: string[];
 }
 
 export interface ActionItem {
@@ -129,6 +153,12 @@ export interface ActionItem {
 export interface HandoverDetails {
   isHandedOver: boolean;
   handoverDate?: string;
+  handedOverBy?: string;
+  salesKAM?: string;
+  boqVersion?: string;
+  status?: 'pending' | 'ready' | 'handed_over';
+  technicalNotes?: string;
+  attachedDocuments?: string[];
   assignedDeliveryLead?: string;
   assignedCustomerSuccessManager?: string;
   architectureDiagramUrl?: string;
@@ -138,6 +168,37 @@ export interface HandoverDetails {
   kickoffDate?: string;
   knownTechnicalDebtOrRisks: string[];
   specialSLAsAgreed: string[];
+  notes?: string;
+}
+
+// Section 15: Tender Management
+export interface TenderInfo {
+  isTender: boolean;
+  tenderName?: string;
+  tenderReference?: string;
+  publishingOrganization?: string;
+  publishDate?: string;
+  submissionDeadline?: string;
+  complianceRequirements?: string[];
+  submissionStatus?: string;
+  result?: string;
+  tenderDocumentsSummary?: string;
+}
+
+// Section 16: Deal Outcome (won/lost capture)
+export interface DealOutcome {
+  outcome: 'open' | 'won' | 'lost' | 'on_hold' | 'cancelled';
+  wonDate?: string;
+  finalSolution?: string;
+  finalNotes?: string;
+  handoverStatus?: string;
+  lostDate?: string;
+  lostReason?: string;
+  competitor?: string;
+  commercialReason?: string;
+  technicalReason?: string;
+  clientReason?: string;
+  lessonsLearned?: string;
   notes?: string;
 }
 
@@ -155,6 +216,8 @@ export interface Opportunity {
   technicalFitScore: TechnicalFitScore;
   primaryTechStack: CloudProvider;
   technologies: string[];
+  // Section 5: selected multi-select scopes from the managed catalog
+  scopes?: string[];
   
   // Commercials
   contractValue: number;
@@ -168,6 +231,7 @@ export interface Opportunity {
   leadArchitectAvatar?: string;
   accountExecutive: string;
   presalesEngineerSecondary?: string;
+  supportingPresalesEngineers?: string[];
 
   // Technical Scope
   currentLegacyStack: string;
@@ -184,6 +248,10 @@ export interface Opportunity {
   boq: BOQSummary;
   actionItems: ActionItem[];
   handover: HandoverDetails;
+
+  // Section 15/16: Tender & Deal Outcome
+  tender?: TenderInfo;
+  outcome?: DealOutcome;
 
   // Metadata
   createdAt: string;
@@ -221,6 +289,7 @@ export interface SalesKAM {
 export interface ClientAccount {
   id: string;
   name: string;
+  code?: string;
   industry: Opportunity['clientIndustry'] | string;
   region?: string;
   domain?: string;
@@ -298,6 +367,7 @@ export interface AuditLogEntry {
   entityCode?: string;
   details: string;
   ipAddress: string;
+  requestId?: string;
 }
 
 export interface UserAccount {
@@ -310,6 +380,7 @@ export interface UserAccount {
   status: 'Active' | 'Inactive' | 'Invited' | 'active' | 'inactive' | string;
   lastActive?: string;
   lastLoginAt?: string;
+  mustChangePassword?: boolean;
   avatar?: string;
   region?: string;
   mfaEnabled?: boolean;
@@ -324,6 +395,51 @@ export interface RolePermission {
   usersCount: number;
   isSystemRole?: boolean;
   permissions: any;
+}
+
+// Scope / Solution Catalog entry (Section 5 of the master prompt). A managed,
+// centrally-categorized multi-select taxonomy used to tag opportunities.
+export interface ScopeCatalogEntry {
+  id: string;
+  name: string;
+  category: string;
+  description?: string | null;
+  status: 'Active' | 'Inactive' | string;
+  sort_order: number;
+}
+
+export const SCOPE_CATEGORIES = [
+  'NETWORK',
+  'SECURITY',
+  'SYSTEM',
+  'STORAGE & BACKUP',
+  'DATA CENTER',
+  'SURVEILLANCE',
+  'COLLABORATION & COMMUNICATION',
+] as const;
+
+// Section 10: OEM entry
+export interface OEMEntry {
+  id: string;
+  name: string;
+  website?: string | null;
+  description?: string | null;
+  status: 'Active' | 'Inactive' | string;
+}
+
+// Section 11: Product catalog entry linked to OEM
+export interface ProductCatalogEntry {
+  id: string;
+  oem_id?: string | null;
+  oem_name?: string | null;
+  name: string;
+  category: string;
+  product_line?: string | null;
+  model?: string | null;
+  part_number?: string | null;
+  description?: string | null;
+  unit?: string | null;
+  status: 'Active' | 'Inactive' | string;
 }
 
 export interface PresalesFilterState {
@@ -361,6 +477,9 @@ export type ActiveTab =
   | 'documents'
   | 'handover_queue'
   | 'notification_center'
+  | 'scope_catalog'
+  | 'oem_catalog'
+  | 'product_catalog'
   | 'audit_logs'
   | 'user_management'
   | 'role_management'
@@ -376,5 +495,5 @@ export type OpportunitySubView =
   | 'boq'
   | 'technical'
   | 'sales'
-  | 'implementation';
-
+  | 'implementation'
+  | 'tender';

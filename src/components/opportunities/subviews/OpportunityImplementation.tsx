@@ -10,7 +10,8 @@ import {
   ShieldCheck, 
   AlertTriangle,
   ArrowRight,
-  Send
+  Send,
+  Save
 } from 'lucide-react';
 
 interface OpportunityImplementationProps {
@@ -25,14 +26,19 @@ export const OpportunityImplementation: React.FC<OpportunityImplementationProps>
   const [handover, setHandover] = useState<HandoverDetails>(opportunity.handover);
   const [deliveryLead, setDeliveryLead] = useState(handover.assignedDeliveryLead || 'Carlos Mendez');
   const [csm, setCsm] = useState(handover.assignedCustomerSuccessManager || 'Amanda Zhao');
+  const [handedOverBy, setHandedOverBy] = useState(handover.handedOverBy || '');
+  const [salesKAM, setSalesKAM] = useState(handover.salesKAM || opportunity.accountExecutive || '');
+  const [boqVersion, setBoqVersion] = useState(handover.boqVersion || `v${opportunity.boq?.version || 1}`);
+  const [technicalNotes, setTechnicalNotes] = useState(handover.technicalNotes || '');
+  const [attachedDocuments, setAttachedDocuments] = useState((handover.attachedDocuments || []).join(', '));
+  const [saved, setSaved] = useState(false);
 
-  const toggleCheck = (field: keyof HandoverDetails) => {
+  const toggleCheck = (field: 'technicalRunbookReady' | 'credentialsSecurelyTransferred' | 'customerTechKickoffScheduled') => {
     const updated = {
       ...handover,
       [field]: !handover[field]
     };
     setHandover(updated);
-    opportunity.handover = updated;
     if (onUpdateOpportunity) onUpdateOpportunity({ ...opportunity, handover: updated });
   };
 
@@ -40,7 +46,13 @@ export const OpportunityImplementation: React.FC<OpportunityImplementationProps>
     const updated: HandoverDetails = {
       ...handover,
       isHandedOver: true,
+      status: 'handed_over',
       handoverDate: new Date().toISOString().split('T')[0],
+      handedOverBy: handedOverBy || opportunity.leadSolutionArchitect,
+      salesKAM,
+      boqVersion,
+      technicalNotes,
+      attachedDocuments: attachedDocuments.split(',').map(value => value.trim()).filter(Boolean),
       assignedDeliveryLead: deliveryLead,
       assignedCustomerSuccessManager: csm,
       technicalRunbookReady: true,
@@ -48,8 +60,25 @@ export const OpportunityImplementation: React.FC<OpportunityImplementationProps>
       customerTechKickoffScheduled: true
     };
     setHandover(updated);
-    opportunity.handover = updated;
     if (onUpdateOpportunity) onUpdateOpportunity({ ...opportunity, handover: updated });
+  };
+
+  const saveHandover = () => {
+    const updated: HandoverDetails = {
+      ...handover,
+      status: handover.isHandedOver ? 'handed_over' : 'ready',
+      assignedDeliveryLead: deliveryLead,
+      assignedCustomerSuccessManager: csm,
+      handedOverBy,
+      salesKAM,
+      boqVersion,
+      technicalNotes,
+      attachedDocuments: attachedDocuments.split(',').map(value => value.trim()).filter(Boolean),
+    };
+    setHandover(updated);
+    if (onUpdateOpportunity) onUpdateOpportunity({ ...opportunity, handover: updated, updatedAt: new Date().toISOString() });
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 2000);
   };
 
   return (
@@ -88,6 +117,52 @@ export const OpportunityImplementation: React.FC<OpportunityImplementationProps>
             Complete Formal Handover
           </button>
         )}
+      </div>
+
+      {/* Sales handover record */}
+      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">Sales Handover Record</h4>
+          <span className="text-[10px] uppercase font-mono text-gray-500">Presales to Sales</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+          <label>
+            <span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Handed Over By</span>
+            <input value={handedOverBy} onChange={e => setHandedOverBy(e.target.value)} className="enterprise-input w-full text-xs" placeholder="Presales engineer" />
+          </label>
+          <label>
+            <span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Sales KAM</span>
+            <input value={salesKAM} onChange={e => setSalesKAM(e.target.value)} className="enterprise-input w-full text-xs" placeholder="Account executive" />
+          </label>
+          <label>
+            <span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">BOQ Version</span>
+            <input value={boqVersion} onChange={e => setBoqVersion(e.target.value)} className="enterprise-input w-full text-xs font-mono" placeholder="v1" />
+          </label>
+          <label>
+            <span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Status</span>
+            <select value={handover.status || (handover.isHandedOver ? 'handed_over' : 'pending')} onChange={e => setHandover({ ...handover, status: e.target.value as HandoverDetails['status'] })} className="enterprise-select w-full text-xs">
+              <option value="pending">Pending</option>
+              <option value="ready">Ready for Handover</option>
+              <option value="handed_over">Handed Over</option>
+            </select>
+          </label>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 text-xs">
+          <label>
+            <span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Technical Notes</span>
+            <textarea value={technicalNotes} onChange={e => setTechnicalNotes(e.target.value)} rows={3} className="enterprise-input w-full text-xs resize-none" placeholder="Technical context and sales handoff notes..." />
+          </label>
+          <label>
+            <span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Attached Documents</span>
+            <textarea value={attachedDocuments} onChange={e => setAttachedDocuments(e.target.value)} rows={3} className="enterprise-input w-full text-xs resize-none" placeholder="Document names or IDs, comma separated" />
+          </label>
+        </div>
+        <div className="flex justify-end items-center gap-2">
+          {saved && <span className="text-xs text-emerald-700 font-semibold">Saved</span>}
+          <button type="button" onClick={saveHandover} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded">
+            <Save className="w-3.5 h-3.5" /> Save Handover Record
+          </button>
+        </div>
       </div>
 
       {/* Handover Checklist and Delivery Assignments */}

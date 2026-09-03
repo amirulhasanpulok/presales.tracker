@@ -134,8 +134,8 @@ export const CentralDocumentsRepo: React.FC<CentralDocumentsRepoProps> = ({
       </div>
 
       {/* Documents Grid / Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+         <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
               <th className="py-2.5 px-3">Document Title</th>
@@ -197,7 +197,15 @@ export const CentralDocumentsRepo: React.FC<CentralDocumentsRepoProps> = ({
               </tr>
             ))}
           </tbody>
-        </table>
+         </table>
+         <div className="md:hidden p-2 space-y-2">
+           {filteredDocs.map(doc => <article key={doc.id} className="border border-gray-200 rounded p-3 space-y-2 bg-white">
+             <div className="flex items-start gap-2"><div className="p-1.5 rounded bg-blue-50 text-blue-700 border border-blue-200"><FileText className="w-4 h-4" /></div><div className="min-w-0 flex-1"><h3 className="text-sm font-semibold text-gray-900 break-words">{doc.title}</h3><div className="text-[10px] text-gray-500">{doc.category.replace(/_/g, ' ')} · {doc.version}</div></div></div>
+             <div className="flex flex-wrap gap-1">{doc.tags.map((tag, idx) => <span key={idx} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">#{tag}</span>)}</div>
+             <div className="flex items-center justify-between text-[11px] text-gray-500"><span>{doc.author} · {doc.fileSize}</span><button onClick={() => handleDownload(doc)} className="inline-flex items-center gap-1 px-2 py-1 text-blue-700 bg-blue-50 border border-blue-200 rounded font-semibold"><Download className="w-3 h-3" /> Download</button></div>
+           </article>)}
+           {filteredDocs.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No documents match your filters.</div>}
+         </div>
       </div>
 
       {/* Upload Central Asset Modal */}

@@ -25,10 +25,11 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
 
   const filteredLogs = logs.filter(log => {
     const q = (searchTerm || '').toLowerCase();
-    const matchesSearch = (log.actorName || '').toLowerCase().includes(q) ||
-                          (log.entityCode || '').toLowerCase().includes(q) ||
+     const matchesSearch = (log.actorName || log.actor || '').toLowerCase().includes(q) ||
+                           (log.entityCode || log.targetName || log.targetId || '').toLowerCase().includes(q) ||
                           (log.details || '').toLowerCase().includes(q) ||
-                          (log.ipAddress || '').toLowerCase().includes(q);
+                           (log.ipAddress || '').toLowerCase().includes(q) ||
+                           (log.requestId || '').toLowerCase().includes(q);
     const matchesAction = filterAction === 'all' || log.action === filterAction;
     return matchesSearch && matchesAction;
   });
@@ -37,10 +38,10 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
     const headers = ['Timestamp', 'Actor Name', 'Actor Role', 'Action', 'Entity Code', 'Details', 'IP Address'];
     const rows = filteredLogs.map(log => [
       `"${log.timestamp}"`,
-      `"${log.actorName}"`,
+       `"${log.actorName || log.actor || ''}"`,
       `"${log.actorRole}"`,
       `"${log.action}"`,
-      `"${log.entityCode}"`,
+       `"${log.entityCode || log.targetName || log.targetId || ''}"`,
       `"${(log.details || '').replace(/"/g, '""')}"`,
       `"${log.ipAddress}"`
     ]);
@@ -110,8 +111,8 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
       </div>
 
       {/* Audit Log Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+         <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
               <th className="py-2.5 px-3">Timestamp (UTC)</th>
@@ -119,7 +120,7 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
               <th className="py-2.5 px-3">Action Type</th>
               <th className="py-2.5 px-3">Entity</th>
               <th className="py-2.5 px-3">Audit Details</th>
-              <th className="py-2.5 px-3 font-mono">IP / Session</th>
+               <th className="py-2.5 px-3 font-mono">IP / Request</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 text-gray-800 font-mono text-[11px]">
@@ -129,7 +130,7 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
                   {log.timestamp}
                 </td>
                 <td className="py-2 px-3 font-sans">
-                  <div className="font-bold text-gray-900 text-xs">{log.actorName}</div>
+                   <div className="font-bold text-gray-900 text-xs">{log.actorName || log.actor || 'Unknown'}</div>
                   <div className="text-[10px] text-gray-500 font-mono">{log.actorRole}</div>
                 </td>
                 <td className="py-2 px-3">
@@ -138,18 +139,28 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
                   </span>
                 </td>
                 <td className="py-2 px-3 font-bold text-blue-700">
-                  {log.entityCode}
+                   {log.entityCode || log.targetName || log.targetId || log.targetType || 'System'}
                 </td>
                 <td className="py-2 px-3 font-sans text-xs text-gray-700">
                   {log.details}
                 </td>
                 <td className="py-2 px-3 text-gray-500 font-mono text-[10px]">
-                  {log.ipAddress}
+                   <div>{log.ipAddress}</div>
+                   {log.requestId && <div className="text-[9px] text-gray-400" title={log.requestId}>req:{log.requestId.slice(0, 8)}</div>}
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
+         </table>
+         <div className="md:hidden p-2 space-y-2">
+           {filteredLogs.map(log => <article key={log.id} className="border border-gray-200 rounded p-3 space-y-2 bg-white">
+             <div className="flex items-start justify-between gap-2"><div><div className="font-bold text-xs text-gray-900">{log.actorName || log.actor || 'Unknown'}</div><div className="text-[10px] text-gray-500">{log.actorRole || '—'}</div></div><span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 font-mono">{log.action}</span></div>
+             <div className="text-[11px] text-blue-700 font-mono">{log.entityCode || log.targetName || log.targetId || log.targetType || 'System'}</div>
+             <p className="text-xs text-gray-700 break-words">{log.details || 'No additional details'}</p>
+             <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono"><span>{log.timestamp}</span><span>{log.requestId ? `req:${log.requestId.slice(0, 8)}` : log.ipAddress}</span></div>
+           </article>)}
+           {filteredLogs.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No audit records match your filters.</div>}
+         </div>
       </div>
     </div>
   );

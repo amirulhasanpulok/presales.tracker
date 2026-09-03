@@ -31,6 +31,9 @@ export const PERMISSION_CATALOG: PermissionDef[] = [
   { key: 'sys.rbac', name: 'Modify RBAC Policy Matrix', module: 'System Configuration & Governance' },
   { key: 'sys.audit', name: 'Access Immutable Audit Trail', module: 'System Configuration & Governance' },
   { key: 'sys.integrations', name: 'Configure CRM / ERP / Cloud Integrations', module: 'System Configuration & Governance' },
+  // Master Data & Taxonomy
+  { key: 'manage_scope_catalog', name: 'Manage Scope / Solution Catalog', module: 'Master Data & Taxonomy' },
+  { key: 'manage_oem_catalog', name: 'Manage OEM & Product Catalog', module: 'Master Data & Taxonomy' },
 ];
 
 // Minimum permission required to open each navigation tab.
@@ -54,6 +57,9 @@ export const TAB_PERMISSIONS: Record<string, string> = {
   role_permissions: 'sys.rbac',
   master_config: 'sys.integrations',
   system_settings: 'sys.integrations',
+  scope_catalog: 'manage_scope_catalog',
+  oem_catalog: 'manage_oem_catalog',
+  product_catalog: 'manage_oem_catalog',
 };
 
 export interface RbacRole {

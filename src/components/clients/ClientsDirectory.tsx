@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   X
 } from 'lucide-react';
+import { formatCurrency } from '../../utils/currency';
 
 interface ClientsDirectoryProps {
   clients: ClientAccount[];
@@ -20,6 +21,7 @@ interface ClientsDirectoryProps {
   onSelectClient: (client: ClientAccount) => void;
   onSelectOpportunity?: (opp: Opportunity) => void;
   onAddClient?: (client: ClientAccount) => void;
+  onUpdateClient?: (client: ClientAccount) => void;
 }
 
 export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
@@ -28,12 +30,14 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
   onSelectClient,
   onSelectOpportunity,
   onAddClient,
+  onUpdateClient,
 }) => {
   const [clientsList, setClientsList] = useState<ClientAccount[]>(initialClients);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterIndustry, setFilterIndustry] = useState<string>('all');
   const [filterTier, setFilterTier] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [editingClient, setEditingClient] = useState<ClientAccount | null>(null);
 
   // New client form state
   const [name, setName] = useState('');
@@ -52,6 +56,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
     const newClient: ClientAccount = {
       id: `client-${Date.now()}`,
       name,
+      code: `CL-${Date.now().toString().slice(-6)}`,
       domain: domain || `${name.toLowerCase().replace(/\s+/g, '')}.com`,
       industry,
       tier,
@@ -66,26 +71,46 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
       notes: 'Newly onboarded enterprise client profile.'
     };
 
-    const updated = [newClient, ...clientsList];
-    setClientsList(updated);
-    if (onAddClient) onAddClient(newClient);
+    if (editingClient) {
+      const updatedClient = { ...editingClient, ...newClient, id: editingClient.id, code: editingClient.code };
+      setClientsList(current => current.map(client => client.id === editingClient.id ? updatedClient : client));
+      onUpdateClient?.(updatedClient);
+    } else {
+      const updated = [newClient, ...clientsList];
+      setClientsList(updated);
+      onAddClient?.(newClient);
+    }
     setShowAddModal(false);
+    setEditingClient(null);
     setName('');
     setDomain('');
+  };
+
+  const editClient = (client: ClientAccount) => {
+    setEditingClient(client);
+    setName(client.name);
+    setDomain(client.domain || '');
+    setIndustry(client.industry);
+    setTier(client.tier);
+    setPrimaryTechStack(client.primaryTechStack || '');
+    setAssignedSalesKAM(client.assignedSalesKAM || client.assignedKAM || '');
+    setAssignedLeadSA(client.assignedLeadSA || '');
+    setHeadquarters(client.headquarters || '');
+    setShowAddModal(true);
   };
 
   const filteredClients = clientsList.filter(c => {
     const q = (searchTerm || '').toLowerCase();
     const matchesSearch = (c.name || '').toLowerCase().includes(q) || 
                           (c.domain || '').toLowerCase().includes(q) ||
-                          (c.assignedSalesKAM || '').toLowerCase().includes(q);
+                          (c.assignedSalesKAM ?? c.assignedKAM ?? '').toLowerCase().includes(q);
     const matchesIndustry = filterIndustry === 'all' || c.industry === filterIndustry;
     const matchesTier = filterTier === 'all' || c.tier === filterTier;
     return matchesSearch && matchesIndustry && matchesTier;
   });
 
-  const totalContractedTCV = clientsList.reduce((acc, c) => acc + c.totalContractedTCV, 0);
-  const totalActiveDeals = clientsList.reduce((acc, c) => acc + c.activeOpportunitiesCount, 0);
+  const totalContractedTCV = clientsList.reduce((acc, c) => acc + (c.totalContractedTCV ?? c.totalActiveTCV ?? 0), 0);
+  const totalActiveDeals = clientsList.reduce((acc, c) => acc + (c.activeOpportunitiesCount ?? c.activeOppsCount ?? 0), 0);
 
   return (
     <div className="space-y-4">
@@ -103,8 +128,8 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={() => setShowAddModal(true)}
+                   <button
+          onClick={() => { setEditingClient(null); setShowAddModal(true); }}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -154,8 +179,8 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
       </div>
 
       {/* Clients Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+        <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
               <th className="py-2.5 px-3">Client Enterprise</th>
@@ -201,16 +226,16 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                   </span>
                 </td>
                 <td className="py-2.5 px-3 font-medium text-gray-900">
-                  {client.assignedSalesKAM}
+                  {client.assignedSalesKAM ?? client.assignedKAM ?? '—'}
                 </td>
                 <td className="py-2.5 px-3 font-medium text-gray-900">
-                  {client.assignedLeadSA}
+                  {client.assignedLeadSA ?? '—'}
                 </td>
                 <td className="py-2.5 px-3 text-center font-mono font-bold text-blue-700">
-                  {client.activeOpportunitiesCount}
+                  {client.activeOpportunitiesCount ?? client.activeOppsCount ?? 0}
                 </td>
                 <td className="py-2.5 px-3 text-right font-mono font-bold text-gray-900">
-                  ${(client.totalContractedTCV / 1000000).toFixed(2)}M
+                  {formatCurrency(client.totalContractedTCV ?? client.totalActiveTCV ?? 0)}
                 </td>
                 <td className="py-2.5 px-3 text-center">
                   <button
@@ -221,13 +246,22 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                     className="p-1 rounded text-gray-400 hover:text-blue-700 hover:bg-gray-100"
                     title="View Client Details"
                   >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                     <ChevronRight className="w-4 h-4" />
+                   </button>
+                   <button onClick={(e) => { e.stopPropagation(); editClient(client); }} className="px-2 py-1 text-[10px] font-semibold text-blue-700 bg-blue-50 rounded border border-blue-200">Edit</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        <div className="md:hidden p-2 space-y-2">
+           {filteredClients.map(client => <article key={client.id} onClick={() => onSelectClient(client)} className="border border-gray-200 rounded p-3 bg-white space-y-2">
+            <div className="flex items-start justify-between gap-2"><div className="min-w-0"><h3 className="font-bold text-sm text-gray-900 break-words">{client.name}</h3><div className="text-xs text-gray-500 break-words">{client.domain || client.headquarters || 'No domain recorded'}</div></div><span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">{client.tier}</span></div>
+            <div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="text-gray-500 block">Sales KAM</span><strong>{client.assignedSalesKAM || client.assignedKAM || '—'}</strong></div><div><span className="text-gray-500 block">Active Deals</span><strong className="font-mono text-blue-700">{client.activeOpportunitiesCount ?? client.activeOppsCount ?? 0}</strong></div></div>
+             <div className="flex items-center justify-between text-[11px] text-gray-500"><span>{client.industry}</span><div className="flex items-center gap-2"><span className="font-mono font-semibold text-gray-900">{formatCurrency(client.totalContractedTCV ?? client.totalActiveTCV ?? 0)}</span><button onClick={(e) => { e.stopPropagation(); editClient(client); }} className="px-2 py-1 text-[10px] font-semibold text-blue-700 bg-blue-50 rounded">Edit</button></div></div>
+          </article>)}
+          {filteredClients.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No clients match the current filters.</div>}
+        </div>
       </div>
 
       {/* Add Client Account Modal */}
@@ -237,10 +271,10 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-600" />
-                <h3 className="text-sm font-bold text-gray-900">Add Enterprise Client Account</h3>
+                 <h3 className="text-sm font-bold text-gray-900">{editingClient ? 'Edit Client Profile' : 'Add Enterprise Client Account'}</h3>
               </div>
               <button
-                onClick={() => setShowAddModal(false)}
+                 onClick={() => { setShowAddModal(false); setEditingClient(null); }}
                 className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
@@ -344,7 +378,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
               <div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                   onClick={() => { setShowAddModal(false); setEditingClient(null); }}
                   className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded border border-gray-300"
                 >
                   Cancel
@@ -353,7 +387,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                   type="submit"
                   className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
                 >
-                  Create Client Account
+                   {editingClient ? 'Save Client Changes' : 'Create Client Account'}
                 </button>
               </div>
             </form>

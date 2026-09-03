@@ -15,6 +15,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { PriorityBadge, StageBadge } from '../common/Badge';
+import { formatCurrency } from '../../utils/currency';
 
 interface ClientDetailsViewProps {
   client: ClientAccount;
@@ -30,6 +31,12 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
   onSelectOpportunity,
 }) => {
   const clientDeals = opportunities.filter(o => o.clientName === client.name);
+  const activeDeals = clientDeals.filter(o => !['closed_won', 'closed_lost', 'on_hold', 'cancelled'].includes(o.stage));
+  const wonDeals = clientDeals.filter(o => o.stage === 'closed_won' || o.outcome?.outcome === 'won');
+  const lostDeals = clientDeals.filter(o => o.stage === 'closed_lost' || o.outcome?.outcome === 'lost');
+  const clientActivities = clientDeals.flatMap(opportunity => (opportunity.activities || []).map(activity => ({ opportunity, activity }))).sort((a, b) => new Date(b.activity.timestamp || 0).getTime() - new Date(a.activity.timestamp || 0).getTime());
+  const boqCount = clientDeals.filter(o => (o.boq?.items || []).length > 0).length;
+  const documentCount = clientDeals.reduce((total, o) => total + (o.documents || []).length, 0);
 
   return (
     <div className="space-y-4">
@@ -75,8 +82,8 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
           <div className="flex items-center gap-4 bg-gray-50 p-2.5 rounded border border-gray-200">
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">Contracted TCV</div>
-              <div className="text-base font-bold font-mono text-gray-900">
-                ${(client.totalContractedTCV / 1000000).toFixed(2)}M
+              <div className="text-xs font-bold font-mono text-gray-900">
+                {formatCurrency((client as any).totalContractedTCV ?? (client as any).totalActiveTCV ?? 0)}
               </div>
             </div>
             <div className="h-7 w-[1px] bg-gray-300" />
@@ -90,6 +97,23 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
         </div>
       </div>
 
+      {/* Client 360 KPI Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          { label: 'All Opportunities', value: clientDeals.length, tone: 'text-gray-900' },
+          { label: 'Active', value: activeDeals.length, tone: 'text-blue-700' },
+          { label: 'Won / Matured', value: wonDeals.length, tone: 'text-emerald-700' },
+          { label: 'Lost', value: lostDeals.length, tone: 'text-red-700' },
+          { label: 'BOQs', value: boqCount, tone: 'text-purple-700' },
+          { label: 'Documents', value: documentCount, tone: 'text-amber-700' },
+        ].map(metric => (
+          <div key={metric.label} className="bg-white border border-gray-200 rounded p-3">
+            <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">{metric.label}</div>
+            <div className={`text-xl font-bold font-mono mt-1 ${metric.tone}`}>{metric.value}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Account Info Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left 2 Cols: Active Opportunities Pipeline for Client */}
@@ -100,11 +124,11 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
                 Active Architectural Opportunities ({clientDeals.length})
               </h3>
               <span className="text-[11px] font-mono text-gray-500">
-                Total Sizing: ${(clientDeals.reduce((a, c) => a + c.contractValue, 0) / 1000).toLocaleString()}k
+                Total Sizing: {formatCurrency(clientDeals.reduce((a, c) => a + c.contractValue, 0))}
               </span>
             </div>
 
-            <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200">
               {clientDeals.map(opp => (
                 <div 
                   key={opp.id}
@@ -129,7 +153,7 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
 
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <div className="text-xs font-bold font-mono text-gray-900">${(opp.contractValue / 1000).toLocaleString()}k</div>
+                      <div className="text-xs font-bold font-mono text-gray-900">{formatCurrency(opp.contractValue)}</div>
                       <StageBadge stage={opp.stage} size="sm" />
                     </div>
                     <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -150,19 +174,19 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
             <div className="mt-3 space-y-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Assigned Sales KAM:</span>
-                <strong className="text-gray-900">{client.assignedSalesKAM}</strong>
+                <strong className="text-gray-900">{(client as any).assignedSalesKAM ?? (client as any).assignedKAM ?? '—'}</strong>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Assigned Lead SA:</span>
-                <strong className="text-gray-900">{client.assignedLeadSA}</strong>
+                <strong className="text-gray-900">{(client as any).assignedLeadSA ?? '—'}</strong>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Primary Cloud Platform:</span>
-                <span className="font-mono text-blue-700 font-semibold">{client.primaryTechStack}</span>
+                <span className="font-mono text-blue-700 font-semibold">{(client as any).primaryTechStack ?? '—'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Contract Renewal Date:</span>
-                <span className="font-mono text-gray-800">{client.contractRenewalDate}</span>
+                <span className="font-mono text-gray-800">{(client as any).contractRenewalDate ?? '—'}</span>
               </div>
             </div>
           </div>
@@ -173,7 +197,7 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
             </h3>
 
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {client.complianceCertifications.map((cert, idx) => (
+              {((client as any).complianceCertifications || []).map((cert: string, idx: number) => (
                 <span key={idx} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono font-medium">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
                   {cert}
@@ -181,6 +205,35 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Work & Update History: step-by-step, who + when */}
+      <div className="bg-white border border-gray-200 rounded">
+        <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
+            Work & Update History
+          </h3>
+          <span className="text-[11px] font-mono text-gray-500">
+            {clientDeals.reduce((n, o) => n + (o.activities ? o.activities.length : 0), 0)} recorded updates
+          </span>
+        </div>
+
+        <div className="divide-y divide-gray-200">
+          {clientActivities.length === 0 ? <div className="p-6 text-center text-xs text-gray-400">No project history recorded for this client yet.</div> : clientActivities.slice(0, 50).map(({ opportunity, activity }) => (
+            <div key={`${opportunity.id}-${activity.id}`} className="p-4 relative pl-8">
+              <span className="absolute left-4 top-5 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white" />
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-mono font-semibold uppercase">{activity.type || 'Update'}</span>
+                  <button onClick={() => onSelectOpportunity(opportunity)} className="text-[11px] font-semibold text-gray-800 hover:text-blue-700">{opportunity.name} ({opportunity.code})</button>
+                </div>
+                <span className="text-[10px] font-mono text-gray-400">{new Date(activity.timestamp).toLocaleString()}</span>
+              </div>
+              <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-500"><Users className="w-3 h-3 text-gray-400" /><span>By <strong className="text-gray-700">{activity.author || 'Unknown'}</strong></span></div>
+              {activity.summary && <p className="mt-1 text-xs text-gray-600">{activity.summary}</p>}
+            </div>
+          ))}
         </div>
       </div>
     </div>

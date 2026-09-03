@@ -12,6 +12,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { StageBadge, PriorityBadge } from '../../common/Badge';
+import { formatCurrency } from '../../../utils/currency';
 
 interface OpportunitySalesProps {
   opportunity: Opportunity;
@@ -29,7 +30,7 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
         <div className="bg-white border border-gray-200 rounded p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Total Contract Value (TCV)</div>
           <div className="text-xl font-bold font-mono text-gray-900 mt-1">
-            ${(opportunity.contractValue / 1000).toLocaleString()}k
+            {formatCurrency(opportunity.contractValue)}
           </div>
           <div className="text-[11px] text-gray-500 mt-0.5">Multi-year enterprise scope</div>
         </div>
@@ -37,7 +38,7 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
         <div className="bg-white border border-gray-200 rounded p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Annual Recurring Revenue (ARR)</div>
           <div className="text-xl font-bold font-mono text-blue-700 mt-1">
-            ${(opportunity.arr / 1000).toLocaleString()}k/yr
+            {formatCurrency(opportunity.arr)}/yr
           </div>
           <div className="text-[11px] text-gray-500 mt-0.5">Platform software & support</div>
         </div>
@@ -47,7 +48,7 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
           <div className="text-xl font-bold font-mono text-emerald-700 mt-1">
             {opportunity.winProbability}%
           </div>
-          <div className="text-[11px] text-gray-500 mt-0.5">Weighted: ${(opportunity.contractValue * opportunity.winProbability / 100000).toFixed(0)}k</div>
+          <div className="text-[11px] text-gray-500 mt-0.5">Weighted: {formatCurrency(opportunity.contractValue * opportunity.winProbability / 100)}</div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded p-3">

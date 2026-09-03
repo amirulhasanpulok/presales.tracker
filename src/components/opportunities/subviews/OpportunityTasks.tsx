@@ -200,8 +200,8 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
       )}
 
       {/* Task List Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+         <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
               <th className="py-2.5 px-3 w-10 text-center">Status</th>
@@ -255,7 +255,17 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
               );
             })}
           </tbody>
-        </table>
+         </table>
+
+         <div className="md:hidden p-2 space-y-2">
+           {filteredTasks.map(task => {
+             const isOverdue = !task.isCompleted && new Date(task.dueDate) < new Date();
+             return <article key={task.id} onClick={() => toggleTask(task.id)} className={`border rounded p-3 space-y-2 ${task.isCompleted ? 'bg-gray-50 opacity-60 border-gray-200' : 'bg-white border-gray-200'}`}>
+               <div className="flex items-start gap-2"><button onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }} className="mt-0.5">{task.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Circle className="w-4 h-4 text-gray-400" />}</button><div className="min-w-0 flex-1"><div className={`font-semibold text-sm break-words ${task.isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}>{task.title}</div><div className="text-[11px] text-gray-500 mt-1">{task.assignedTo}</div></div><PriorityBadge priority={task.priority} /></div>
+               <div className="flex items-center justify-between gap-2 text-[10px]"><span className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 font-mono">{task.category}</span><span className={isOverdue ? 'text-red-700 font-bold' : 'text-gray-600'}>{task.dueDate}{isOverdue ? ' · OVERDUE' : ''}</span></div>
+             </article>;
+           })}
+         </div>
 
         {filteredTasks.length === 0 && (
           <div className="p-8 text-center text-xs text-gray-500">

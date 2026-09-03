@@ -16,6 +16,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { ComplexityBadge, PriorityBadge, StageBadge, TechFitBadge } from '../../common/Badge';
+import { formatCurrency } from '../../../utils/currency';
 
 interface OpportunityOverviewProps {
   opportunity: Opportunity;
@@ -28,10 +29,14 @@ export const OpportunityOverview: React.FC<OpportunityOverviewProps> = ({
   onAdvanceStage,
   onNavigateSubView,
 }) => {
-  const pendingActions = opportunity.actionItems.filter(a => !a.isCompleted);
-  const openBlockers = opportunity.poc.blockers.filter(b => !b.resolved);
-  const verifiedKPIs = opportunity.poc.successCriteria.filter(k => k.verified).length;
-  const totalKPIs = opportunity.poc.successCriteria.length;
+  const supportingEngineers = Array.from(new Set([
+    ...(opportunity.supportingPresalesEngineers || []),
+    ...(opportunity.presalesEngineerSecondary ? [opportunity.presalesEngineerSecondary] : []),
+  ].filter(name => name && name !== opportunity.leadSolutionArchitect)));
+  const pendingActions = (opportunity.actionItems || []).filter(a => !a.isCompleted);
+  const openBlockers = (opportunity.poc?.blockers || []).filter(b => !b.resolved);
+  const verifiedKPIs = (opportunity.poc?.successCriteria || []).filter(k => k.verified).length;
+  const totalKPIs = (opportunity.poc?.successCriteria || []).length;
 
   return (
     <div className="space-y-4">
@@ -40,10 +45,10 @@ export const OpportunityOverview: React.FC<OpportunityOverviewProps> = ({
         <div className="bg-white border border-gray-200 rounded p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Total Contract Value</div>
           <div className="text-xl font-bold font-mono text-gray-900 mt-1">
-            ${(opportunity.contractValue / 1000).toLocaleString()}k
+            {formatCurrency(opportunity.contractValue)}
           </div>
           <div className="text-[11px] text-gray-500 font-mono mt-0.5">
-            ARR: ${(opportunity.arr / 1000).toLocaleString()}k/yr
+            ARR: {formatCurrency(opportunity.arr)}/yr
           </div>
         </div>
 
@@ -114,6 +119,22 @@ export const OpportunityOverview: React.FC<OpportunityOverviewProps> = ({
               </div>
             </div>
 
+            {(opportunity.scopes && opportunity.scopes.length > 0) && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                  <Layers className="w-3 h-3 text-purple-500" />
+                  Solution Scopes
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {opportunity.scopes.map((scope, idx) => (
+                    <span key={idx} className="px-2 py-0.5 text-xs rounded bg-purple-50 text-purple-700 border border-purple-200">
+                      {scope}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-3 pt-3 border-t border-gray-100">
               <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Legacy / Existing Baseline</div>
               <p className="text-xs text-gray-600 mt-1 font-mono bg-gray-50 p-2 rounded border border-gray-200">
@@ -165,6 +186,7 @@ export const OpportunityOverview: React.FC<OpportunityOverviewProps> = ({
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase font-semibold">Lead Solution Architect</div>
                   <div className="font-bold text-gray-900">{opportunity.leadSolutionArchitect}</div>
+                  {supportingEngineers.length > 0 && <div className="text-[11px] text-gray-500 mt-0.5">+ {supportingEngineers.join(', ')}</div>}
                 </div>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
                   Technical Lead
@@ -229,22 +251,22 @@ export const OpportunityOverview: React.FC<OpportunityOverviewProps> = ({
             <div className="mt-3 space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">BOQ Items Configured:</span>
-                <strong className="font-mono text-gray-900">{opportunity.boq.items.length} line items</strong>
+                <strong className="font-mono text-gray-900">{(opportunity.boq?.items || []).length} line items</strong>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Blended Margin:</span>
-                <strong className="font-mono text-emerald-700 font-bold">{opportunity.boq.overallMarginPercent}%</strong>
+                <strong className="font-mono text-emerald-700 font-bold">{opportunity.boq?.overallMarginPercent || 0}%</strong>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">BOQ Approval:</span>
                 <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase font-semibold">
-                  {opportunity.boq.approvalStatus}
+                  {opportunity.boq?.approvalStatus || 'draft'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Runbook Ready:</span>
-                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold ${opportunity.handover.technicalRunbookReady ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
-                  {opportunity.handover.technicalRunbookReady ? 'YES' : 'IN DRAFT'}
+                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold ${opportunity.handover?.technicalRunbookReady ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+                  {opportunity.handover?.technicalRunbookReady ? 'YES' : 'IN DRAFT'}
                 </span>
               </div>
             </div>

@@ -12,21 +12,38 @@ import {
   TrendingUp, 
   Percent, 
   Check,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Search
 } from 'lucide-react';
-import { Opportunity, BOQItem } from '../../types';
+import { Opportunity, BOQItem, BOQSummary, ProductCatalogEntry, OEMEntry } from '../../types';
 import { exportBOQCSV } from '../../utils/exportUtils';
+import { formatCurrency } from '../../utils/currency';
+
+// Map a product catalog category to a BOQ line-item category bucket.
+function mapProductCategory(cat: string): BOQItem['category'] {
+  const c = (cat || '').toLowerCase();
+  if (c.includes('security')) return 'Security & Compliance';
+  if (c.includes('software') || c.includes('license')) return 'Software Licenses';
+  if (c.includes('hardware') || c.includes('server') || c.includes('storage') || c.includes('networking') || c.includes('switch') || c.includes('firewall')) return 'Hardware';
+  if (c.includes('service') || c.includes('managed')) return 'Managed Support';
+  if (c.includes('pro')) return 'Professional Services';
+  return 'Cloud Infrastructure';
+}
 
 interface BOQWorkbenchProps {
   opportunities: Opportunity[];
   onUpdateOpportunity: (opp: Opportunity) => void;
   onSelectOpportunity: (opp: Opportunity) => void;
+  products?: ProductCatalogEntry[];
+  oems?: OEMEntry[];
 }
 
 export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
   opportunities,
   onUpdateOpportunity,
-  onSelectOpportunity
+  onSelectOpportunity,
+  products = [],
+  oems = []
 }) => {
   // Select active opportunity for BOQ modeling
   const [selectedOppId, setSelectedOppId] = useState<string>(opportunities[0]?.id || '');
@@ -37,13 +54,16 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
     itemCode: 'INF-CUSTOM',
     description: '',
     unit: 'Instances/Mo',
-    quantity: 12,
-    unitCost: 800,
-    unitListPrice: 1200,
-    discountPercent: 10
+    quantity: 1,
+    unitCost: 0,
+    unitListPrice: 0,
+    discountPercent: 0
   });
+  const [productQuery, setProductQuery] = useState('');
+  const [productDropdownOpen, setProductDropdownOpen] = useState(false);
 
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showRevisions, setShowRevisions] = useState(false);
 
   if (!activeOpp) {
     return (
@@ -52,6 +72,26 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
       </div>
     );
   }
+
+  const snapshotBOQ = (boq: BOQSummary): BOQSummary => ({
+    ...boq,
+    items: [...(boq.items || [])],
+    revisions: undefined,
+  });
+
+  const withRevision = (previous: BOQSummary, next: BOQSummary): BOQSummary => ({
+    ...next,
+    revisions: [
+      ...(previous.revisions || []),
+      {
+        id: `boq-revision-${Date.now()}`,
+        version: previous.version || 1,
+        savedAt: new Date().toISOString(),
+        status: previous.approvalStatus,
+        snapshot: snapshotBOQ(previous),
+      },
+    ],
+  });
 
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,10 +118,14 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
       unitListPrice: listPrice,
       discountPercent: discount,
       extendedPrice: Math.round(extendedPrice),
-      marginPercent: Math.round(marginPercent * 10) / 10
+      marginPercent: Math.round(marginPercent * 10) / 10,
+      oem: newItem.oem,
+      productName: newItem.productName,
+      model: newItem.model,
+      partNumber: newItem.partNumber
     };
 
-    const updatedItems = [...activeOpp.boq.items, item];
+    const updatedItems = [...(activeOpp.boq?.items || []), item];
     const subtotalCost = updatedItems.reduce((acc, i) => acc + (i.unitCost * i.quantity), 0);
     const subtotalListPrice = updatedItems.reduce((acc, i) => acc + (i.unitListPrice * i.quantity), 0);
     const totalContractValue = updatedItems.reduce((acc, i) => acc + i.extendedPrice, 0);
@@ -90,16 +134,16 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
     onUpdateOpportunity({
       ...activeOpp,
-      boq: {
-        ...activeOpp.boq,
+       boq: withRevision(activeOpp.boq, {
+         ...activeOpp.boq,
         items: updatedItems,
         subtotalCost,
         subtotalListPrice,
         totalContractValue,
         totalDiscountAmount,
         overallMarginPercent,
-        version: activeOpp.boq.version + 1
-      },
+         version: (activeOpp.boq?.version || 0) + 1
+       }),
       updatedAt: new Date().toISOString()
     });
 
@@ -107,7 +151,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
   };
 
   const handleDeleteItem = (itemId: string) => {
-    const updatedItems = activeOpp.boq.items.filter(i => i.id !== itemId);
+    const updatedItems = (activeOpp.boq?.items || []).filter(i => i.id !== itemId);
     const subtotalCost = updatedItems.reduce((acc, i) => acc + (i.unitCost * i.quantity), 0);
     const subtotalListPrice = updatedItems.reduce((acc, i) => acc + (i.unitListPrice * i.quantity), 0);
     const totalContractValue = updatedItems.reduce((acc, i) => acc + i.extendedPrice, 0);
@@ -116,16 +160,16 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
     onUpdateOpportunity({
       ...activeOpp,
-      boq: {
-        ...activeOpp.boq,
+       boq: withRevision(activeOpp.boq, {
+         ...activeOpp.boq,
         items: updatedItems,
         subtotalCost,
         subtotalListPrice,
         totalContractValue,
         totalDiscountAmount,
         overallMarginPercent,
-        version: activeOpp.boq.version + 1
-      },
+         version: (activeOpp.boq?.version || 0) + 1
+       }),
       updatedAt: new Date().toISOString()
     });
   };
@@ -133,12 +177,12 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
   const handleApprove = () => {
     onUpdateOpportunity({
       ...activeOpp,
-      boq: {
-        ...activeOpp.boq,
+       boq: withRevision(activeOpp.boq, {
+         ...activeOpp.boq,
         approvalStatus: 'approved',
         approvedBy: 'Elena Rostova (Lead SA Signoff)',
         approvedDate: new Date().toISOString().slice(0, 10)
-      },
+       }),
       updatedAt: new Date().toISOString()
     });
   };
@@ -168,7 +212,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
             >
               {opportunities.map(o => (
                 <option key={o.id} value={o.id}>
-                  {o.code} - {o.clientName} (${o.contractValue.toLocaleString()})
+                  {o.code} - {o.clientName} ({formatCurrency(o.contractValue)})
                 </option>
               ))}
             </select>
@@ -179,8 +223,8 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100 text-xs font-mono">
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Active Opportunity TCV:</span>
-            <div className="text-base font-bold text-gray-900">${activeOpp.boq.totalContractValue.toLocaleString()}</div>
-            <div className="text-[10px] text-gray-500">List: ${activeOpp.boq.subtotalListPrice.toLocaleString()}</div>
+            <div className="text-base font-bold text-gray-900">{formatCurrency(activeOpp.boq.totalContractValue)}</div>
+            <div className="text-[10px] text-gray-500">List: {formatCurrency(activeOpp.boq.subtotalListPrice)}</div>
           </div>
 
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
@@ -191,7 +235,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Discount Concession:</span>
-            <div className="text-base font-bold text-amber-800">${activeOpp.boq.totalDiscountAmount.toLocaleString()}</div>
+            <div className="text-base font-bold text-amber-800">{formatCurrency(activeOpp.boq.totalDiscountAmount)}</div>
             <div className="text-[10px] text-gray-500">
               {activeOpp.boq.subtotalListPrice > 0 ? ((activeOpp.boq.totalDiscountAmount / activeOpp.boq.subtotalListPrice) * 100).toFixed(1) : 0}% aggregate discount
             </div>
@@ -207,13 +251,21 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
       {/* Action Controls */}
       <div className="bg-white border border-gray-200 rounded p-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => setShowAddForm(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-xs shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add BOQ Line Item</span>
+          </button>
+
+          <button
+            onClick={() => setShowRevisions(value => !value)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded font-medium text-xs shadow-2xs"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-purple-600" />
+            <span>Revision History ({activeOpp.boq.revisions?.length || 0})</span>
           </button>
 
           <button
@@ -244,10 +296,101 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
         </button>
       </div>
 
+      {showRevisions && (
+        <div className="bg-white border border-purple-200 rounded p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">BOQ Revision History</h3>
+            <span className="text-[11px] text-gray-500">Current: v{activeOpp.boq.version}</span>
+          </div>
+          {(activeOpp.boq.revisions || []).length === 0 ? (
+            <p className="text-xs text-gray-500">No previous revisions are recorded yet. Future edits will preserve the prior BOQ snapshot here.</p>
+          ) : (
+            <div className="space-y-2">
+              {[...(activeOpp.boq.revisions || [])].reverse().map(revision => (
+                <div key={revision.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-gray-50 border border-gray-200 rounded text-xs">
+                  <div><span className="font-mono font-bold text-purple-700">v{revision.version}</span><span className="ml-2 text-gray-700">{revision.snapshot.items.length} line items</span><span className="ml-2 text-gray-500">{new Date(revision.savedAt).toLocaleString()}</span></div>
+                  <div className="flex items-center gap-3"><span className="uppercase font-mono text-[10px] text-gray-500">{revision.status.replace(/_/g, ' ')}</span><span className="font-mono font-semibold text-gray-800">{formatCurrency(revision.snapshot.totalContractValue)}</span></div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Add Form */}
       {showAddForm && (
         <form onSubmit={handleAddItem} className="bg-white border border-blue-200 rounded p-4 space-y-3 shadow-sm">
           <div className="font-bold text-gray-900 text-xs">Add New BOQ Item to {activeOpp.code} ({activeOpp.clientName})</div>
+
+          {/* Catalog-driven product search (Section 11) */}
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-600 mb-1">Search Product Catalog (optional)</label>
+            <div className="relative">
+              <div
+                className="w-full enterprise-input cursor-pointer flex items-center gap-2 text-xs"
+                onClick={() => setProductDropdownOpen(v => !v)}
+              >
+                <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <span className="flex-1 truncate text-gray-700">
+                  {newItem.productName
+                    ? `${newItem.oem || ''} ${newItem.productName}${newItem.model ? ` (${newItem.model})` : ''}`
+                    : 'Select from catalog or enter manually...'}
+                </span>
+                <span className="text-gray-400">{productDropdownOpen ? '▲' : '▼'}</span>
+              </div>
+              {productDropdownOpen && (
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-y-auto">
+                  <input
+                    value={productQuery}
+                    onChange={(e) => setProductQuery(e.target.value)}
+                    placeholder="Search by product, model, part #, OEM..."
+                    className="w-full px-3 py-2 border-b border-gray-200 text-xs font-mono focus:outline-none"
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  {(products || [])
+                    .filter(p => p.status !== 'Inactive')
+                    .filter(p => !productQuery.trim()
+                      || p.name.toLowerCase().includes(productQuery.trim().toLowerCase())
+                      || (p.model || '').toLowerCase().includes(productQuery.trim().toLowerCase())
+                      || (p.part_number || '').toLowerCase().includes(productQuery.trim().toLowerCase())
+                      || (p.oem_name || '').toLowerCase().includes(productQuery.trim().toLowerCase()))
+                    .map(p => (
+                      <button
+                        type="button"
+                        key={p.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setNewItem({
+                            ...newItem,
+                            oem: p.oem_name || undefined,
+                            productName: p.name,
+                            model: p.model || undefined,
+                            partNumber: p.part_number || undefined,
+                            description: p.description || p.name,
+                            category: mapProductCategory(p.category),
+                            unit: (p.unit as any) || newItem.unit,
+                            itemCode: p.part_number || p.model || undefined
+                          });
+                          setProductDropdownOpen(false);
+                          setProductQuery('');
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-blue-50 transition-colors"
+                      >
+                        <span className="flex-1 min-w-0">
+                          <span className="block font-medium text-gray-800 truncate">{p.oem_name} {p.name}</span>
+                          <span className="block text-[10px] text-gray-400">{p.model} · {p.part_number}</span>
+                        </span>
+                        <span className="text-[9px] font-mono uppercase text-gray-400">{p.category}</span>
+                      </button>
+                    ))}
+                  {(products || []).length === 0 && (
+                    <div className="p-3 text-[11px] text-gray-400">No products in catalog yet.</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
             <div>
@@ -316,7 +459,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
               />
             </div>
             <div>
-              <label className="block text-[11px] text-gray-600 mb-1 font-sans font-medium">Unit Cost ($)</label>
+                  <label className="block text-[11px] text-gray-600 mb-1 font-sans font-medium">Unit Cost</label>
               <input
                 type="number"
                 value={newItem.unitCost}
@@ -325,7 +468,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
               />
             </div>
             <div>
-              <label className="block text-[11px] text-gray-600 mb-1 font-sans font-medium">Unit List Price ($)</label>
+                  <label className="block text-[11px] text-gray-600 mb-1 font-sans font-medium">Unit List Price</label>
               <input
                 type="number"
                 value={newItem.unitListPrice}
@@ -363,13 +506,13 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
       )}
 
       {/* BOQ Line Items Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
         <div className="bg-gray-50 px-3.5 py-2.5 border-b border-gray-200 flex items-center justify-between">
           <div className="text-xs font-bold text-gray-900 font-mono">
-            {activeOpp.code} Line Item Sizing ({activeOpp.boq.items.length} items)
+            {activeOpp.code} Line Item Sizing ({(activeOpp.boq?.items || []).length} items)
           </div>
           <div className="text-[11px] text-gray-500 font-mono">
-            Direct Cost: ${activeOpp.boq.subtotalCost.toLocaleString()} | TCV: ${activeOpp.boq.totalContractValue.toLocaleString()}
+             Direct Cost: {formatCurrency(activeOpp.boq?.subtotalCost || 0)} | TCV: {formatCurrency(activeOpp.boq?.totalContractValue || 0)}
           </div>
         </div>
 
@@ -388,11 +531,17 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-800">
-              {activeOpp.boq.items.map(it => (
+              {(activeOpp.boq?.items || []).map(it => (
                 <tr key={it.id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-2.5 px-3">
                     <div className="font-semibold text-gray-900">{it.description}</div>
                     <div className="text-[11px] font-mono text-gray-500">{it.itemCode}</div>
+                    {it.oem && (
+                      <div className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100 font-semibold">{it.oem}</span>
+                        {it.model && <span className="font-mono">{it.model}</span>}
+                      </div>
+                    )}
                   </td>
                   <td className="py-2.5 px-3">
                     <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-800 font-mono border border-gray-200">
@@ -403,7 +552,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
                     <strong>{it.quantity}</strong> {it.unit}
                   </td>
                   <td className="py-2.5 px-3 text-right font-mono text-gray-600">
-                    ${it.unitListPrice.toLocaleString()}
+                     {formatCurrency(it.unitListPrice)}
                   </td>
                   <td className="py-2.5 px-3 text-right font-mono">
                     {it.discountPercent > 0 ? (
@@ -413,7 +562,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
                     )}
                   </td>
                   <td className="py-2.5 px-3 text-right font-mono font-bold text-gray-900">
-                    ${it.extendedPrice.toLocaleString()}
+                     {formatCurrency(it.extendedPrice)}
                   </td>
                   <td className="py-2.5 px-3 text-right font-mono font-semibold text-emerald-700">
                     {it.marginPercent}%

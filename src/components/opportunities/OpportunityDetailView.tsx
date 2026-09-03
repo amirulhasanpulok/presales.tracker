@@ -17,11 +17,13 @@ import {
   Calculator,
   Cpu,
   TrendingUp,
-  ShieldCheck
+  ShieldCheck,
+  Gavel
 } from 'lucide-react';
 import { PriorityBadge, StageBadge, TechFitBadge } from '../common/Badge';
 import { STAGE_CONFIG } from '../../data/mockData';
 import { exportOpportunitySADDMarkdown, exportOpportunityJSON, exportBOQCSV } from '../../utils/exportUtils';
+import { formatCurrency } from '../../utils/currency';
 import { OpportunityOverview } from './subviews/OpportunityOverview';
 import { OpportunityTimeline } from './subviews/OpportunityTimeline';
 import { OpportunityTasks } from './subviews/OpportunityTasks';
@@ -31,6 +33,8 @@ import { OpportunityBOQ } from './subviews/OpportunityBOQ';
 import { OpportunityTechnical } from './subviews/OpportunityTechnical';
 import { OpportunitySales } from './subviews/OpportunitySales';
 import { OpportunityImplementation } from './subviews/OpportunityImplementation';
+import { TenderAndOutcome } from './subviews/TenderAndOutcome';
+import { api } from '../../api';
 
 interface OpportunityDetailViewProps {
   opportunity: Opportunity;
@@ -56,7 +60,10 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
     'poc_demo',
     'proposal_boq',
     'commercial_negotiation',
-    'closed_won'
+    'closed_won',
+    'closed_lost',
+    'on_hold',
+    'cancelled'
   ];
 
   const handleStageChange = (newStage: OpportunityStage) => {
@@ -74,7 +81,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
     { id: 'boq', label: 'BOQ / BOM Sizing', icon: Calculator },
     { id: 'technical', label: 'Technical & POC', icon: Cpu },
     { id: 'sales', label: 'Sales & Forecast', icon: TrendingUp },
-    { id: 'implementation', label: 'Implementation Handover', icon: ShieldCheck }
+    { id: 'implementation', label: 'Implementation Handover', icon: ShieldCheck },
+    { id: 'tender', label: 'Tender & Outcome', icon: Gavel }
   ];
 
   return (
@@ -83,7 +91,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
         {/* Navigation Breadcrumb & Back */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={onBack}
               className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-blue-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
@@ -166,7 +174,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2 border-t border-gray-100">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-gray-900 tracking-tight">{opportunity.name}</h1>
+              <h1 className="text-lg font-bold text-gray-900 tracking-tight break-words">{opportunity.name}</h1>
               <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-semibold border border-blue-200">
                 {opportunity.primaryTechStack}
               </span>
@@ -185,15 +193,15 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-4 bg-gray-50 p-2.5 rounded border border-gray-200 flex-shrink-0">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 bg-gray-50 p-2.5 rounded border border-gray-200 flex-shrink-0">
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">Contract Value (TCV)</div>
-              <div className="text-base font-bold font-mono text-gray-900">${(opportunity.contractValue / 1000).toLocaleString()}k</div>
+               <div className="text-base font-bold font-mono text-gray-900">{formatCurrency(opportunity.contractValue)}</div>
             </div>
             <div className="h-7 w-[1px] bg-gray-300" />
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">ARR Value</div>
-              <div className="text-base font-bold font-mono text-blue-700">${(opportunity.arr / 1000).toLocaleString()}k/yr</div>
+               <div className="text-base font-bold font-mono text-blue-700">{formatCurrency(opportunity.arr)}/yr</div>
             </div>
             <div className="h-7 w-[1px] bg-gray-300" />
             <div className="text-right">
@@ -270,8 +278,13 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
           />
         )}
         {activeSubView === 'timeline' && (
-          <OpportunityTimeline 
-            opportunity={opportunity} 
+          <OpportunityTimeline
+            opportunity={opportunity}
+            onAddActivity={(activity) => {
+              api.addActivity(opportunity.id, activity)
+                .then(updated => onUpdateOpportunity?.(updated))
+                .catch(() => window.alert('Could not save the activity. Please try again.'));
+            }}
           />
         )}
         {activeSubView === 'tasks' && (
@@ -302,11 +315,11 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
         )}
         {activeSubView === 'documents' && (
           <OpportunityDocuments 
-            opportunity={opportunity} 
+            opportunity={opportunity}
             onUploadDoc={(doc) => {
-              if (onUpdateOpportunity) {
-                onUpdateOpportunity({ ...opportunity, documents: [doc, ...(opportunity.documents || [])] });
-              }
+              api.uploadDocument(opportunity.id, doc)
+                .then(updated => onUpdateOpportunity?.(updated))
+                .catch(() => window.alert('Could not upload the document. Please try again.'));
             }}
           />
         )}
@@ -333,6 +346,12 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
         )}
         {activeSubView === 'implementation' && (
           <OpportunityImplementation 
+            opportunity={opportunity} 
+            onUpdateOpportunity={onUpdateOpportunity}
+          />
+        )}
+        {activeSubView === 'tender' && (
+          <TenderAndOutcome 
             opportunity={opportunity} 
             onUpdateOpportunity={onUpdateOpportunity}
           />

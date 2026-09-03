@@ -21,6 +21,7 @@ import { Opportunity, OpportunityStage, CloudProvider, DealComplexity, DealPrior
 import { StageBadge, PriorityBadge, ComplexityBadge, POCBadge, TechFitBadge } from '../common/Badge';
 import { STAGE_CONFIG } from '../../data/mockData';
 import { exportPipelineCSV } from '../../utils/exportUtils';
+import { formatCurrency } from '../../utils/currency';
 
 interface OpportunityTableProps {
   opportunities: Opportunity[];
@@ -164,7 +165,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           
           {/* Search Box */}
-          <div className="relative flex-1 min-w-[260px] max-w-md">
+          <div className="relative flex-1 min-w-0 w-full sm:min-w-[260px] max-w-md">
             <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
@@ -313,7 +314,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
 
       {/* Table Container */}
       <div className="flex-1 overflow-auto bg-white">
-        <table className="w-full text-left border-collapse text-gray-900">
+        <table className="hidden md:table w-full text-left border-collapse text-gray-900">
           <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 text-[11px] font-mono text-gray-500 uppercase select-none">
             <tr>
               <th className="w-8 py-2.5 px-3 text-center">
@@ -355,7 +356,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                 className="py-2.5 px-3 cursor-pointer hover:text-gray-900 transition-colors text-right"
               >
                 <div className="flex items-center justify-end gap-1">
-                  <span>TCV ($)</span>
+                   <span>TCV</span>
                   {sortField === 'contractValue' && (sortAsc ? <ArrowUp className="w-3 h-3 text-blue-600" /> : <ArrowDown className="w-3 h-3 text-blue-600" />)}
                 </div>
               </th>
@@ -409,7 +410,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
               filteredOpportunities.map((opp) => {
                 const isSelected = selectedIds.includes(opp.id);
                 const hasOverdueActions = opp.actionItems.some(a => !a.isCompleted && new Date(a.dueDate) < new Date());
-                const formatTCV = (val: number) => `$${val.toLocaleString()}`;
+                 const formatTCV = (val: number) => formatCurrency(val);
 
                 return (
                   <tr
@@ -554,6 +555,28 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             )}
           </tbody>
         </table>
+        <div className="md:hidden p-2 space-y-2">
+          {filteredOpportunities.length === 0 ? (
+            <div className="py-10 text-center text-xs text-gray-500">No opportunities match the current criteria.</div>
+          ) : filteredOpportunities.map(opp => {
+            const isSelected = selectedIds.includes(opp.id);
+            const overdue = (opp.actionItems || []).some(a => !a.isCompleted && new Date(a.dueDate) < new Date());
+            return <article key={opp.id} onClick={() => onSelectOpportunity(opp)} className={`border rounded p-3 space-y-2 ${isSelected ? 'border-blue-300 bg-blue-50/50' : 'border-gray-200 bg-white'}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 min-w-0">
+                  <input type="checkbox" checked={isSelected} onChange={() => {}} onClick={e => toggleSelectOne(opp.id, e)} className="mt-1 rounded border-gray-300 text-blue-600" aria-label={`Select opportunity ${opp.code}`} />
+                  <div className="min-w-0"><div className="text-[10px] font-mono font-bold text-blue-700">{opp.code}</div><h3 className="font-bold text-sm text-gray-900 break-words">{opp.name}</h3><div className="text-xs text-gray-500 break-words">{opp.clientName}</div></div>
+                </div>
+                <PriorityBadge priority={opp.priority} />
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div><div className="text-gray-500 uppercase text-[9px] font-semibold">Stage</div><select value={opp.stage} onChange={e => { e.stopPropagation(); onUpdateStage(opp.id, e.target.value as OpportunityStage); }} onClick={e => e.stopPropagation()} className="enterprise-select w-full text-[11px] py-1">{Object.entries(STAGE_CONFIG).map(([key, value]) => <option key={key} value={key}>{value.shortLabel}</option>)}</select></div>
+                <div><div className="text-gray-500 uppercase text-[9px] font-semibold">TCV / Win</div><div className="font-mono font-bold text-gray-900">{formatCurrency(opp.contractValue)}</div><div className="text-emerald-700 font-mono">{opp.winProbability}% win</div></div>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-gray-500"><span className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 font-mono">{opp.primaryTechStack}</span><span>SA: {opp.leadSolutionArchitect}</span>{overdue && <span className="text-rose-700 font-semibold">SLA Risk</span>}</div>
+            </article>;
+          })}
+        </div>
       </div>
 
       {/* Table Footer Telemetry */}
@@ -561,7 +584,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
         <div className="flex items-center gap-4">
           <span>Showing {filteredOpportunities.length} of {opportunities.length} Total Opportunities</span>
           <span>•</span>
-          <span>Filtered Total Value: <strong className="text-gray-900">${(filteredOpportunities.reduce((acc, o) => acc + o.contractValue, 0) / 1000000).toFixed(2)}M</strong></span>
+           <span>Filtered Total Value: <strong className="text-gray-900">{formatCurrency(filteredOpportunities.reduce((acc, o) => acc + o.contractValue, 0))}</strong></span>
         </div>
         <div className="hidden sm:block">
           <span>Click any row to open full technical inspector & BOQ</span>

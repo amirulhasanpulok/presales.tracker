@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, TableProperties, Kanban, Calculator, FlaskConical, CheckSquare, ArrowRightLeft, Users, BarChart3, Plus, X } from 'lucide-react';
 import { ActiveTab, Opportunity } from '../../types';
+import { formatCurrency } from '../../utils/currency';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -41,10 +42,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   if (!isOpen) return null;
 
   const filteredOpps = opportunities.filter(o => 
-    (o.name || '').toLowerCase().includes((query || '').toLowerCase()) ||
-    (o.clientName || '').toLowerCase().includes((query || '').toLowerCase()) ||
-    (o.code || '').toLowerCase().includes((query || '').toLowerCase()) ||
-    (o.primaryTechStack || '').toLowerCase().includes((query || '').toLowerCase())
+    [
+      o.name,
+      o.clientName,
+      o.code,
+      o.primaryTechStack,
+      o.accountExecutive,
+      o.leadSolutionArchitect,
+      o.tender?.tenderReference,
+      o.tender?.tenderName,
+      ...(o.scopes || []),
+      ...(o.technologies || []),
+      ...(o.stakeholders || []).flatMap(s => [s.name, s.email, s.role]),
+      ...(o.documents || []).flatMap(d => [d.title, d.type, d.version]),
+      ...(o.boq?.items || []).flatMap(item => [item.oem, item.productName, item.model, item.partNumber, item.itemCode, item.description]),
+    ].filter(Boolean).join(' ').toLowerCase().includes((query || '').toLowerCase())
   );
 
   const quickNav = [
@@ -131,7 +143,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               Opportunities ({filteredOpps.length})
             </div>
             {filteredOpps.length === 0 ? (
-              <div className="px-2 py-2 text-gray-400 italic">No matching deals found</div>
+               <div className="px-2 py-2 text-gray-400 italic">No matching clients, opportunities, scopes, products, BOQs, or tender references found</div>
             ) : (
               <div className="space-y-1">
                 {filteredOpps.map(opp => (
@@ -154,7 +166,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     </div>
 
                     <div className="text-right font-mono text-xs flex-shrink-0">
-                      <div className="text-gray-900 font-bold">${opp.contractValue.toLocaleString()}</div>
+                      <div className="text-gray-900 font-bold">{formatCurrency(opp.contractValue)}</div>
                       <div className="text-emerald-700 text-[10px] font-semibold">{opp.winProbability}% Win</div>
                     </div>
                   </button>

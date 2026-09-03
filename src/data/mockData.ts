@@ -524,7 +524,7 @@ export const INITIAL_OPPORTUNITIES: Opportunity[] = [
     leadArchitectAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
     accountExecutive: 'Julian Fox',
     presalesEngineerSecondary: 'Tariq Al-Mansoor',
-    currentLegacyStack: 'Splunk on-premise cluster with surging license cost ($4M/yr) and inability to query raw cell tower metrics in real-time.',
+    currentLegacyStack: 'Splunk on-premise cluster with surging license cost (BDT 4,000,000/yr) and inability to query raw cell tower metrics in real-time.',
     proposedArchitecture: 'Decoupled edge telemetry collectors using eBPF streaming into high-throughput Kafka clusters with ClickHouse storage tier yielding 85% TCO reduction.',
     keyTechnicalRequirements: [
       'Ingest 4.5 million network telemetry events per second across 12,000 cellular nodes',
@@ -1071,6 +1071,22 @@ export const STAGE_CONFIG: Record<string, { label: string; shortLabel: string; c
     bg: 'bg-rose-50',
     borderColor: 'border-rose-200',
     description: 'Technical post-mortem, lost reason, competitor analysis'
+  },
+  on_hold: {
+    label: '9. On Hold',
+    shortLabel: 'On Hold',
+    color: 'text-amber-800',
+    bg: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+    description: 'Opportunity paused pending client, commercial, or technical action'
+  },
+  cancelled: {
+    label: '10. Cancelled',
+    shortLabel: 'Cancelled',
+    color: 'text-gray-500',
+    bg: 'bg-gray-100',
+    borderColor: 'border-gray-300',
+    description: 'Opportunity withdrawn or no longer being pursued'
   }
 };
 
@@ -1349,7 +1365,7 @@ export const MOCK_NOTIFICATIONS = [
   {
     id: 'notif-003',
     title: 'New High-Value Opportunity Assigned',
-    message: 'Nordic Retail Group Core Cloud Modernization ($3.1M TCV) assigned to Vikram Mehta.',
+    message: 'Nordic Retail Group Core Cloud Modernization (BDT 3,100,000 TCV) assigned to Vikram Mehta.',
     type: 'deal_assigned' as const,
     timestamp: '5 hours ago',
     read: true,
@@ -1508,7 +1524,7 @@ export const MOCK_MASTER_CONFIG = {
 
 export const MOCK_SYSTEM_SETTINGS = {
   companyName: 'PresalesHQ Global Solutions Corp',
-  defaultCurrency: 'USD ($)',
+    defaultCurrency: 'BDT (৳)',
   fiscalYearStart: 'January 1st',
   timezone: 'America/New_York (UTC-5)',
   sessionTimeoutMinutes: 60,
@@ -1517,4 +1533,3 @@ export const MOCK_SYSTEM_SETTINGS = {
   allowExecutiveOverride: false,
   webhookEndpoint: 'https://api.presaleshq.io/v1/webhooks/crm-sync'
 };
-

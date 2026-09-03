@@ -2,6 +2,7 @@ import React from 'react';
 import { FlaskConical, CheckCircle2, AlertTriangle, ExternalLink, Clock, ShieldCheck, Plus, Check } from 'lucide-react';
 import { Opportunity, POCStatus } from '../../types';
 import { POCBadge } from '../common/Badge';
+import { formatCurrency } from '../../utils/currency';
 
 interface POCTrackerProps {
   opportunities: Opportunity[];
@@ -14,19 +15,19 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
   onSelectOpportunity,
   onUpdateOpportunity
 }) => {
-  const pocOpps = opportunities.filter(o => o.poc.status !== 'not_started');
+  const pocOpps = opportunities.filter(o => o?.poc && o.poc.status !== 'not_started');
   
-  const activeCount = opportunities.filter(o => ['active_testing', 'scoping', 'provisioning', 'validating_kpis'].includes(o.poc.status)).length;
-  const passedCount = opportunities.filter(o => o.poc.status === 'passed').length;
-  const totalBudget = opportunities.reduce((acc, o) => acc + (o.poc.allocatedBudget || 0), 0);
+  const activeCount = opportunities.filter(o => o?.poc && ['active_testing', 'scoping', 'provisioning', 'validating_kpis'].includes(o.poc.status)).length;
+  const passedCount = opportunities.filter(o => o?.poc && o.poc.status === 'passed').length;
+  const totalBudget = opportunities.reduce((acc, o) => acc + ((o.poc?.allocatedBudget) || 0), 0);
 
   const handleToggleCriterion = (opp: Opportunity, critId: string) => {
-    const updatedCrit = opp.poc.successCriteria.map(c => 
+    const updatedCrit = (opp.poc?.successCriteria || []).map(c => 
       c.id === critId ? { ...c, verified: !c.verified, verifiedByCustomer: !c.verified ? opp.leadSolutionArchitect : undefined } : c
     );
     onUpdateOpportunity({
       ...opp,
-      poc: { ...opp.poc, successCriteria: updatedCrit },
+      poc: { ...(opp.poc || {}), successCriteria: updatedCrit },
       updatedAt: new Date().toISOString()
     });
   };
@@ -61,7 +62,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-gray-100 text-xs font-mono">
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Total Lab Budget Allocated:</span>
-            <div className="text-sm font-bold text-gray-900">${totalBudget.toLocaleString()}</div>
+            <div className="text-sm font-bold text-gray-900">{formatCurrency(totalBudget)}</div>
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Average Validation Duration:</span>
@@ -82,9 +83,9 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
           </div>
         ) : (
           pocOpps.map((opp) => {
-            const passedCriteria = opp.poc.successCriteria.filter(c => c.verified).length;
-            const totalCriteria = opp.poc.successCriteria.length;
-            const hasBlocker = opp.poc.blockers.some(b => !b.resolved);
+            const passedCriteria = (opp.poc?.successCriteria || []).filter(c => c.verified).length;
+            const totalCriteria = (opp.poc?.successCriteria || []).length;
+            const hasBlocker = (opp.poc?.blockers || []).some(b => !b.resolved);
 
             return (
               <div
@@ -136,7 +137,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
                   </div>
                   <div>
                     <span className="text-gray-500 font-sans font-medium">Cloud Lab Budget:</span>
-                    <div className="text-emerald-700 font-bold mt-0.5">${opp.poc.allocatedBudget?.toLocaleString()}</div>
+                    <div className="text-emerald-700 font-bold mt-0.5">{formatCurrency(opp.poc.allocatedBudget || 0)}</div>
                   </div>
                 </div>
 
@@ -157,7 +158,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-                    {opp.poc.successCriteria.map((crit) => (
+                    {(opp.poc?.successCriteria || []).map((crit) => (
                       <div
                         key={crit.id}
                         onClick={() => handleToggleCriterion(opp, crit.id)}

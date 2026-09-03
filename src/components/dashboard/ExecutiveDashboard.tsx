@@ -18,6 +18,7 @@ import {
   Cpu
 } from 'lucide-react';
 import { PriorityBadge, StageBadge } from '../common/Badge';
+import { formatCurrency } from '../../utils/currency';
 
 interface ExecutiveDashboardProps {
   opportunities: Opportunity[];
@@ -32,24 +33,43 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   onNavigateTab,
 }) => {
   // Calculations
-  const totalPipelineTCV = opportunities.reduce((acc, o) => acc + (o.stage !== 'closed_lost' ? o.contractValue : 0), 0);
-  const totalARR = opportunities.reduce((acc, o) => acc + (o.stage !== 'closed_lost' ? o.arr : 0), 0);
-  const activePocCount = opportunities.filter(o => o.poc.status === 'active_testing' || o.poc.status === 'validating_kpis').length;
+  const totalPipelineTCV = opportunities.reduce((acc, o) => acc + (!['closed_lost', 'cancelled'].includes(o?.stage) ? (o.contractValue || 0) : 0), 0);
+  const totalARR = opportunities.reduce((acc, o) => acc + (!['closed_lost', 'cancelled'].includes(o?.stage) ? (o.arr || 0) : 0), 0);
+  const activePocCount = opportunities.filter(o => o?.poc && (o.poc.status === 'active_testing' || o.poc.status === 'validating_kpis')).length;
   const activePocValue = opportunities
-    .filter(o => o.poc.status === 'active_testing' || o.poc.status === 'validating_kpis')
-    .reduce((acc, o) => acc + o.contractValue, 0);
+    .filter(o => o?.poc && (o.poc.status === 'active_testing' || o.poc.status === 'validating_kpis'))
+    .reduce((acc, o) => acc + (o.contractValue || 0), 0);
 
-  const pendingHandoverCount = opportunities.filter(o => o.stage === 'closed_won' && !o.handover.isHandedOver).length;
+  const pendingHandoverCount = opportunities.filter(o => o?.stage === 'closed_won' && o?.handover && !o.handover.isHandedOver).length;
   const pendingHandoverValue = opportunities
-    .filter(o => o.stage === 'closed_won' && !o.handover.isHandedOver)
-    .reduce((acc, o) => acc + o.contractValue, 0);
+    .filter(o => o?.stage === 'closed_won' && o?.handover && !o.handover.isHandedOver)
+    .reduce((acc, o) => acc + (o.contractValue || 0), 0);
+
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const totalClients = new Set(opportunities.map(o => o.clientName).filter(Boolean)).size;
+  const newOpportunitiesThisMonth = opportunities.filter(o => new Date(o.createdAt) >= monthStart).length;
+  const activeOpportunities = opportunities.filter(o => !['closed_won', 'closed_lost', 'on_hold', 'cancelled'].includes(o.stage)).length;
+  const wonOpportunities = opportunities.filter(o => o.stage === 'closed_won' || o.outcome?.outcome === 'won').length;
+  const lostOpportunities = opportunities.filter(o => o.stage === 'closed_lost' || o.outcome?.outcome === 'lost').length;
+  const onHoldOpportunities = opportunities.filter(o => o.outcome?.outcome === 'on_hold').length;
+  const pendingFollowUps = opportunities.reduce((total, o) => total + (o.actionItems || []).filter(a => !a.isCompleted).length, 0);
+  const pendingBOQs = opportunities.filter(o => ['draft', 'pending_sa_lead', 'pending_sales_vp', 'pending_finance'].includes(o.boq?.approvalStatus || '')).length;
+  const completedBOQs = opportunities.filter(o => o.boq?.approvalStatus === 'approved').length;
+  const proposalsSubmitted = opportunities.filter(o => (o.activities || []).some(a => a.type === 'RFP / RFI Response') || ['commercial_negotiation', 'closed_won', 'closed_lost'].includes(o.stage)).length;
+  const upcomingTenderDeadlines = opportunities.filter(o => {
+    const deadline = o.tender?.submissionDeadline ? new Date(o.tender.submissionDeadline) : null;
+    return !!o.tender?.isTender && !!deadline && deadline >= now;
+  }).length;
 
   // Critical deals needing attention
-  const needsAttentionDeals = opportunities.filter(o => 
-    o.priority === 'p0_urgent' || 
-    o.daysInCurrentStage > 14 || 
-    o.poc.blockers.some(b => !b.resolved) ||
-    o.actionItems.some(a => !a.isCompleted && new Date(a.dueDate) < new Date())
+  const needsAttentionDeals = opportunities.filter(o =>
+    o.priority === 'p0_urgent' ||
+    (o.daysInCurrentStage || 0) > 14 ||
+    (o.poc?.blockers || []).some(b => !b.resolved) ||
+    (o.actionItems || []).some(a => !a.isCompleted && new Date(a.dueDate || 0) < new Date())
   );
 
   // Domain breakdown
@@ -116,10 +136,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           </div>
           <div className="mt-2">
             <div className="text-xl font-bold font-mono text-gray-900">
-              ${(totalPipelineTCV / 1000000).toFixed(2)}M
+              {formatCurrency(totalPipelineTCV)}
             </div>
             <div className="flex items-center justify-between mt-1 text-[11px]">
-              <span className="text-gray-500">ARR: <strong className="font-mono text-gray-700">${(totalARR / 1000000).toFixed(2)}M</strong></span>
+              <span className="text-gray-500">ARR: <strong className="font-mono text-gray-700">{formatCurrency(totalARR)}</strong></span>
               <span className="text-emerald-700 font-semibold flex items-center">
                 +14.2% YoY
               </span>
@@ -140,7 +160,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               {activePocCount} <span className="text-xs font-normal text-gray-500 font-sans">Engagements</span>
             </div>
             <div className="flex items-center justify-between mt-1 text-[11px]">
-              <span className="text-gray-500">Sizing: <strong className="font-mono text-gray-700">${(activePocValue / 1000000).toFixed(2)}M</strong></span>
+              <span className="text-gray-500">Sizing: <strong className="font-mono text-gray-700">{formatCurrency(activePocValue)}</strong></span>
               <span className="text-blue-700 font-medium">92% KPI Pass</span>
             </div>
           </div>
@@ -178,7 +198,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               {pendingHandoverCount} <span className="text-xs font-normal text-gray-500 font-sans">Pending</span>
             </div>
             <div className="flex items-center justify-between mt-1 text-[11px]">
-              <span className="text-gray-500">Value: <strong className="font-mono text-gray-700">${(pendingHandoverValue / 1000000).toFixed(2)}M</strong></span>
+              <span className="text-gray-500">Value: <strong className="font-mono text-gray-700">{formatCurrency(pendingHandoverValue)}</strong></span>
               <button 
                 onClick={() => onNavigateTab('handover_queue')}
                 className="text-purple-700 hover:underline font-semibold"
@@ -211,6 +231,34 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Portfolio KPI Snapshot */}
+      <div className="bg-white border border-gray-200 rounded p-4">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-2.5">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800">Presales Portfolio Snapshot</h2>
+          <span className="text-[10px] uppercase tracking-wider font-mono text-gray-500">Live from opportunity records</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mt-3">
+          {[
+            { label: 'Total Clients', value: totalClients, tone: 'text-gray-900' },
+            { label: 'New This Month', value: newOpportunitiesThisMonth, tone: 'text-blue-700' },
+            { label: 'Active Opportunities', value: activeOpportunities, tone: 'text-blue-700' },
+            { label: 'Won / Matured', value: wonOpportunities, tone: 'text-emerald-700' },
+            { label: 'Lost', value: lostOpportunities, tone: 'text-red-700' },
+            { label: 'On Hold', value: onHoldOpportunities, tone: 'text-amber-700' },
+            { label: 'Pending Follow-ups', value: pendingFollowUps, tone: 'text-amber-700' },
+            { label: 'Pending BOQs', value: pendingBOQs, tone: 'text-purple-700' },
+            { label: 'BOQs Completed', value: completedBOQs, tone: 'text-emerald-700' },
+            { label: 'Proposals Submitted', value: proposalsSubmitted, tone: 'text-blue-700' },
+            { label: 'Tender Deadlines', value: upcomingTenderDeadlines, tone: 'text-red-700' },
+          ].map(metric => (
+            <div key={metric.label} className="bg-gray-50 border border-gray-200 rounded p-2.5">
+              <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">{metric.label}</div>
+              <div className={`text-xl font-bold font-mono mt-1 ${metric.tone}`}>{metric.value}</div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -276,8 +324,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                       </span>
                     </td>
                     <td className="py-2 px-3 text-right font-mono">
-                      <div className="font-bold text-gray-900">${(opp.contractValue / 1000).toLocaleString()}k</div>
-                      <div className="text-[10px] text-gray-500">${(opp.arr / 1000).toLocaleString()}k/yr</div>
+                      <div className="font-bold text-gray-900">{formatCurrency(opp.contractValue)}</div>
+                      <div className="text-[10px] text-gray-500">{formatCurrency(opp.arr)}/yr</div>
                     </td>
                     <td className="py-2 px-3">
                       <div className="text-[11px] font-medium text-gray-900">{opp.leadSolutionArchitect}</div>
@@ -331,7 +379,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                   <div key={stack} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium text-gray-800">{stack} ({data.count})</span>
-                      <span className="font-mono text-gray-600 font-bold">${(data.tcv / 1000000).toFixed(2)}M ({percent}%)</span>
+                       <span className="font-mono text-gray-600 font-bold">{formatCurrency(data.tcv)} ({percent}%)</span>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                       <div 

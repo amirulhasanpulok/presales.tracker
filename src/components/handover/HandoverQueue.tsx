@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRightLeft, CheckCircle2, Clock, AlertTriangle, ExternalLink, ShieldCheck, Check, UserCheck } from 'lucide-react';
 import { Opportunity } from '../../types';
+import { formatCurrency } from '../../utils/currency';
 
 interface HandoverQueueProps {
   opportunities: Opportunity[];
@@ -93,7 +94,7 @@ export const HandoverQueue: React.FC<HandoverQueueProps> = ({
                         {isHandedOver ? 'HANDOVER COMPLETED' : 'HANDOVER IN PROGRESS'}
                       </span>
                       <span className="text-[11px] font-mono px-1.5 py-0.2 rounded bg-gray-100 text-gray-700 border border-gray-200">
-                        ${opp.contractValue.toLocaleString()} TCV
+                         {formatCurrency(opp.contractValue)} TCV
                       </span>
                     </div>
 

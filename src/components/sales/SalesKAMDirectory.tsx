@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SalesKAM, Opportunity } from '../../types';
+import { formatCurrency } from '../../utils/currency';
 import { 
   Briefcase, 
   Search, 
@@ -30,13 +31,12 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
     const q = (searchTerm || '').toLowerCase();
     const matchesSearch = (kam.name || '').toLowerCase().includes(q) ||
                           (kam.email || '').toLowerCase().includes(q);
-    const matchesTerritory = filterTerritory === 'all' || kam.territory === filterTerritory;
+    const matchesTerritory = filterTerritory === 'all' || kam.region === filterTerritory;
     return matchesSearch && matchesTerritory;
   });
 
-  const totalQuota = salesKAMs.reduce((acc, k) => acc + k.annualQuota, 0);
-  const totalAttainment = salesKAMs.reduce((acc, k) => acc + k.currentAttainment, 0);
-  const totalPipeline = salesKAMs.reduce((acc, k) => acc + k.pipelineValue, 0);
+  const totalQuota = salesKAMs.reduce((acc, k) => acc + (k.quotaTarget || 0), 0);
+  const totalAttainment = salesKAMs.reduce((acc, k) => acc + (k.achievedPipeline || 0), 0);
 
   return (
     <div className="space-y-4">
@@ -58,7 +58,7 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
           <div className="text-right">
             <div className="text-[10px] uppercase font-semibold text-gray-500">Total Quota Attainment</div>
             <div className="text-sm font-bold font-mono text-emerald-700">
-              {Math.round((totalAttainment / totalQuota) * 100)}% (${(totalAttainment / 1000000).toFixed(1)}M / ${(totalQuota / 1000000).toFixed(1)}M)
+              {Math.round((totalAttainment / totalQuota) * 100)}% ({formatCurrency(totalAttainment)} / {formatCurrency(totalQuota)})
             </div>
           </div>
         </div>
@@ -95,16 +95,16 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
       {/* KAM Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredKAMs.map(kam => {
-          const attainmentPercent = Math.round((kam.currentAttainment / kam.annualQuota) * 100);
+          const attainmentPercent = kam.quotaTarget > 0 ? Math.round((kam.achievedPipeline / kam.quotaTarget) * 100) : 0;
           return (
             <div key={kam.id} className="bg-white border border-gray-200 rounded p-4 space-y-3 hover:border-gray-300 transition-colors">
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-xs font-bold text-gray-900">{kam.name}</h3>
-                  <div className="text-[11px] text-gray-500 font-mono">{kam.territory}</div>
+                  <div className="text-[11px] text-gray-500 font-mono">{kam.region}</div>
                 </div>
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-200">
-                  {kam.activeDealsCount} Active Deals
+                  {kam.accountsCount} Accounts
                 </span>
               </div>
 
@@ -121,19 +121,19 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
                   />
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono mt-0.5">
-                  <span>${(kam.currentAttainment / 1000000).toFixed(2)}M Won</span>
-                  <span>Target: ${(kam.annualQuota / 1000000).toFixed(2)}M</span>
+                  <span>{formatCurrency(kam.achievedPipeline || 0)} Won</span>
+                  <span>Target: {formatCurrency(kam.quotaTarget || 0)}</span>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-gray-100 space-y-1.5 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Presales SA Partner:</span>
-                  <strong className="text-gray-900 font-semibold">{kam.assignedPresalesArchitect}</strong>
+                  <strong className="text-gray-900 font-semibold">{kam.assignedLeadSA}</strong>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Active Pipeline TCV:</span>
-                  <strong className="font-mono text-gray-900">${(kam.pipelineValue / 1000000).toFixed(2)}M</strong>
+                  <strong className="font-mono text-gray-900">{formatCurrency(kam.achievedPipeline || 0)}</strong>
                 </div>
               </div>
 
@@ -146,7 +146,7 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
                 {onSelectOpportunity && (
                   <button
                     onClick={() => {
-                      const kamDeals = opportunities.filter(o => o.salesKAM === kam.name);
+                      const kamDeals = opportunities.filter(o => o.accountExecutive === kam.name);
                       if (kamDeals.length > 0) {
                         onSelectOpportunity(kamDeals[0]);
                       }

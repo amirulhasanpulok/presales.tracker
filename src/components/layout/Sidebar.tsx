@@ -19,7 +19,11 @@ import {
   KeyRound,
   Sliders,
   Settings,
-  Plus
+  Layers,
+  Factory,
+  Boxes,
+  Plus,
+  LogOut
 } from 'lucide-react';
 import { ActiveTab, Opportunity, UserAccount } from '../../types';
 
@@ -32,8 +36,9 @@ interface SidebarProps {
   canCreateOpportunity: boolean;
   currentUser: UserAccount;
   currentRoleName?: string | null;
-  demoUsers: UserAccount[];
-  onSwitchUser: (user: UserAccount) => void;
+  onLogout: () => void;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -45,8 +50,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   canCreateOpportunity,
   currentUser,
   currentRoleName,
-  demoUsers,
-  onSwitchUser,
+  onLogout,
+  isMobileOpen = false,
+  onMobileClose,
 }) => {
   interface NavItem {
     id: ActiveTab;
@@ -63,10 +69,10 @@ interface NavSection {
 
   // Compute contextual badge counts
   const totalOpps = opportunities.length;
-  const activePocs = opportunities.filter(o => ['active_testing', 'scoping', 'provisioning', 'validating_kpis'].includes(o.poc.status)).length;
-  const pendingBoqs = opportunities.filter(o => o.boq.approvalStatus.startsWith('pending')).length;
-  const openActions = opportunities.reduce((acc, o) => acc + o.actionItems.filter(a => !a.isCompleted).length, 0);
-  const pendingHandovers = opportunities.filter(o => o.stage === 'closed_won' && !o.handover.isHandedOver).length;
+  const activePocs = opportunities.filter(o => o?.poc && ['active_testing', 'scoping', 'provisioning', 'validating_kpis'].includes(o.poc.status)).length;
+  const pendingBoqs = opportunities.filter(o => o?.boq?.approvalStatus?.startsWith('pending')).length;
+  const openActions = opportunities.reduce((acc, o) => acc + (o.actionItems || []).filter(a => !a.isCompleted).length, 0);
+  const pendingHandovers = opportunities.filter(o => o.stage === 'closed_won' && o?.handover && !o.handover.isHandedOver).length;
 
   const sections: NavSection[] = [
     {
@@ -104,14 +110,24 @@ interface NavSection {
         { id: 'audit_logs' as ActiveTab, label: 'Audit Logs', icon: ShieldCheck, perm: 'sys.audit' },
         { id: 'user_management' as ActiveTab, label: 'User Management', icon: UserCheck, perm: 'sys.users' },
         { id: 'role_permissions' as ActiveTab, label: 'Role & Permissions', icon: KeyRound, perm: 'sys.rbac' },
+        { id: 'scope_catalog' as ActiveTab, label: 'Scope Catalog', icon: Layers, perm: 'manage_scope_catalog' },
+        { id: 'oem_catalog' as ActiveTab, label: 'OEM Catalog', icon: Factory, perm: 'manage_oem_catalog' },
+        { id: 'product_catalog' as ActiveTab, label: 'Product Catalog', icon: Boxes, perm: 'manage_oem_catalog' },
         { id: 'master_config' as ActiveTab, label: 'Master Configuration', icon: Sliders, perm: 'sys.integrations' },
         { id: 'system_settings' as ActiveTab, label: 'System Settings', icon: Settings, perm: 'sys.integrations' },
       ]
     }
   ];
 
+  const navigate = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    onMobileClose?.();
+  };
+
   return (
-    <aside className="w-60 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col h-full min-h-0 select-none">
+    <>
+    {isMobileOpen && <button aria-label="Close navigation" onClick={onMobileClose} className="fixed inset-0 z-40 bg-black/35 md:hidden" />}
+    <aside className={`fixed inset-y-0 left-0 z-50 w-72 transform bg-white border-r border-gray-200 flex flex-col h-full min-h-0 select-none transition-transform duration-200 md:static md:z-auto md:w-60 md:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Quick Action Button */}
       <div className="p-3 border-b border-gray-200">
         <button
@@ -148,7 +164,7 @@ interface NavSection {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                   onClick={() => navigate(item.id)}
                   className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs transition-colors text-left group ${
                     isActive
                       ? 'bg-blue-50 text-blue-700 font-semibold border border-blue-200 shadow-2xs'
@@ -203,25 +219,18 @@ interface NavSection {
           </div>
         </div>
 
-        <div className="mt-2">
-          <label className="text-[9px] font-mono uppercase tracking-wider text-gray-400 font-bold">
-            Demo User / Role
-          </label>
-          <select
-            value={currentUser.id}
-            onChange={(e) => {
-              const next = demoUsers.find(u => u.id === e.target.value);
-              if (next) onSwitchUser(next);
-            }}
-            className="w-full mt-1 text-[11px] font-mono bg-white border border-gray-300 rounded px-1.5 py-1 text-gray-800 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            title="Switch demo user to validate role-based access control"
+        <div className="mt-2 pt-2 border-t border-gray-200">
+          <button
+            onClick={onLogout}
+            className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold text-gray-700 hover:text-red-700 hover:bg-red-50 border border-gray-200 rounded transition-colors"
+            title="End your session"
           >
-            {demoUsers.map(u => (
-              <option key={u.id} value={u.id}>{u.name} — {u.role}</option>
-            ))}
-          </select>
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
+          </button>
         </div>
       </div>
     </aside>
+    </>
   );
 };

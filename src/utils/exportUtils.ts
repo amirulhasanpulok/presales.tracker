@@ -1,4 +1,5 @@
 import { Opportunity } from '../types';
+import { formatCurrency, getCurrencyCode } from './currency';
 
 /**
  * Trigger a browser download of a text blob
@@ -25,7 +26,7 @@ export function exportOpportunitySADDMarkdown(opp: Opportunity) {
 **Lead Solution Architect:** ${opp.leadSolutionArchitect}
 **Sales Account Executive (KAM):** ${opp.accountExecutive}
 **Document Generated:** ${new Date().toISOString().slice(0, 10)}
-**Deal Stage:** ${opp.stage.toUpperCase()} | **Contract Value (TCV):** $${opp.contractValue.toLocaleString()} | **ARR:** $${opp.arr.toLocaleString()}
+**Deal Stage:** ${opp.stage.toUpperCase()} | **Contract Value (TCV ${getCurrencyCode()}):** ${formatCurrency(opp.contractValue)} | **ARR:** ${formatCurrency(opp.arr)}
 
 ---
 
@@ -52,21 +53,21 @@ ${(opp.keyTechnicalRequirements || []).map(req => `- ${req}`).join('\n')}
 ${(opp.stakeholders || []).map(s => `| ${s.name} | ${s.role} | ${s.department} | ${s.sentiment} | ${s.influence} | ${s.buyingRole} |`).join('\n')}
 
 ### 6. Bill of Quantities (BOQ) Summary (v${opp.boq?.version || 1})
-- **Total List Price:** $${(opp.boq?.subtotalListPrice || 0).toLocaleString()}
-- **Total Extended Price (TCV):** $${(opp.boq?.totalContractValue || 0).toLocaleString()}
-- **Direct Cost:** $${(opp.boq?.subtotalCost || 0).toLocaleString()}
-- **Total Concessions/Discount:** $${(opp.boq?.totalDiscountAmount || 0).toLocaleString()}
+- **Total List Price (${getCurrencyCode()}):** ${formatCurrency(opp.boq?.subtotalListPrice || 0)}
+- **Total Extended Price (TCV ${getCurrencyCode()}):** ${formatCurrency(opp.boq?.totalContractValue || 0)}
+- **Direct Cost (${getCurrencyCode()}):** ${formatCurrency(opp.boq?.subtotalCost || 0)}
+- **Total Concessions/Discount (${getCurrencyCode()}):** ${formatCurrency(opp.boq?.totalDiscountAmount || 0)}
 - **Realized Margin:** ${opp.boq?.overallMarginPercent || 0}%
 - **Margin Governance Status:** ${(opp.boq?.approvalStatus || 'pending').toUpperCase()}
 
 #### Detailed Line Items
-| SKU / Item Code | Description | Category | Qty & Unit | Unit List | Disc % | Extended Price | Margin |
+| SKU / Item Code | Description | Category | Qty & Unit | Unit List (${getCurrencyCode()}) | Disc % | Extended Price (${getCurrencyCode()}) | Margin |
 |-----------------|-------------|----------|------------|-----------|--------|----------------|--------|
-${(opp.boq?.items || []).map(item => `| ${item.itemCode} | ${item.description} | ${item.category} | ${item.quantity} ${item.unit} | $${item.unitListPrice} | ${item.discountPercent}% | $${(item.extendedPrice || 0).toLocaleString()} | ${item.marginPercent}% |`).join('\n')}
+${(opp.boq?.items || []).map(item => `| ${item.itemCode} | ${item.description} | ${item.category} | ${item.quantity} ${item.unit} | ${formatCurrency(item.unitListPrice)} | ${item.discountPercent}% | ${formatCurrency(item.extendedPrice || 0)} | ${item.marginPercent}% |`).join('\n')}
 
 ### 7. Proof of Concept (POC) Validation
 - **POC Status:** ${(opp.poc?.status || 'not_started').toUpperCase()}
-- **Allocated Sandbox Budget:** $${(opp.poc?.allocatedBudget || 0).toLocaleString()}
+- **Allocated Sandbox Budget (${getCurrencyCode()}):** ${formatCurrency(opp.poc?.allocatedBudget || 0)}
 ${(opp.poc?.successCriteria || []).length > 0 ? `\n#### Success Criteria & KPI Gates:\n${opp.poc.successCriteria.map(sc => `- [${sc.verified ? 'X' : ' '}] **${sc.category}**: ${sc.description} (Target: ${sc.targetMetric})`).join('\n')}` : ''}
 ${opp.poc?.blockers && opp.poc.blockers.length > 0 ? `\n#### Technical Blockers:\n${opp.poc.blockers.map(b => `- [${b.resolved ? 'RESOLVED' : 'ACTIVE'}] **${b.severity.toUpperCase()}**: ${b.description}`).join('\n')}` : ''}
 
@@ -95,8 +96,9 @@ export function exportOpportunityJSON(opp: Opportunity) {
  * Export BOQ to CSV spreadsheet
  */
 export function exportBOQCSV(opp: Opportunity) {
-  const headers = ['SKU Code', 'Description', 'Category', 'Quantity', 'Unit', 'Unit Cost ($)', 'Unit List Price ($)', 'Discount (%)', 'Extended Price ($)', 'Margin (%)'];
-  const rows = opp.boq.items.map(item => [
+  const currency = getCurrencyCode();
+  const headers = ['SKU Code', 'Description', 'Category', 'Quantity', 'Unit', `Unit Cost (${currency})`, `Unit List Price (${currency})`, 'Discount (%)', `Extended Price (${currency})`, 'Margin (%)'];
+  const rows = (opp.boq?.items || []).map(item => [
     `"${item.itemCode}"`,
     `"${item.description.replace(/"/g, '""')}"`,
     `"${item.category}"`,
@@ -110,14 +112,15 @@ export function exportBOQCSV(opp: Opportunity) {
   ]);
 
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  downloadBlob(csv, `${opp.code}_BOQ_Pricing_v${opp.boq.version}.csv`, 'text/csv;charset=utf-8;');
+  downloadBlob(csv, `${opp.code}_BOQ_Pricing_v${opp.boq?.version || 1}.csv`, 'text/csv;charset=utf-8;');
 }
 
 /**
  * Export full pipeline table to CSV
  */
 export function exportPipelineCSV(opportunities: Opportunity[]) {
-  const headers = ['Code', 'Opportunity Name', 'Client', 'Industry', 'Region', 'Stage', 'Priority', 'TCV ($)', 'ARR ($)', 'Win Probability (%)', 'Tech Stack', 'Lead Architect', 'Sales KAM', 'POC Status', 'BOQ Margin (%)'];
+  const currency = getCurrencyCode();
+  const headers = ['Code', 'Opportunity Name', 'Client', 'Industry', 'Region', 'Stage', 'Priority', `TCV (${currency})`, `ARR (${currency})`, 'Win Probability (%)', 'Tech Stack', 'Lead Architect', 'Sales KAM', 'POC Status', 'BOQ Margin (%)'];
   const rows = opportunities.map(o => [
     `"${o.code}"`,
     `"${o.name.replace(/"/g, '""')}"`,
@@ -132,8 +135,8 @@ export function exportPipelineCSV(opportunities: Opportunity[]) {
     `"${o.primaryTechStack}"`,
     `"${o.leadSolutionArchitect}"`,
     `"${o.accountExecutive}"`,
-    `"${o.poc.status}"`,
-    o.boq.overallMarginPercent
+    `"${o.poc?.status || 'not_started'}"`,
+    o.boq?.overallMarginPercent || 0
   ]);
 
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');

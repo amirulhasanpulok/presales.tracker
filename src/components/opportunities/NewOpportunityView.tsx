@@ -140,6 +140,12 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
       },
       handover: {
         isHandedOver: false,
+        handedOverBy: '',
+        salesKAM: accountExecutive,
+        boqVersion: 'v1',
+        status: 'pending',
+        technicalNotes: '',
+        attachedDocuments: [],
         technicalRunbookReady: false,
         credentialsSecurelyTransferred: false,
         customerTechKickoffScheduled: false,
@@ -266,7 +272,7 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
             <div>
-              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Total Contract Value (TCV $)</label>
+              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Total Contract Value (TCV)</label>
               <input
                 type="number"
                 min="0"
@@ -278,7 +284,7 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Annual Recurring Revenue (ARR $)</label>
+              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Annual Recurring Revenue (ARR)</label>
               <input
                 type="number"
                 min="0"

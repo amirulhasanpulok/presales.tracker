@@ -22,7 +22,12 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
   opportunity,
   onUpdateOpportunity,
 }) => {
-  const [poc, setPoc] = useState(opportunity.poc);
+  const [poc, setPoc] = useState(() => ({
+    status: 'not_started',
+    successCriteria: [],
+    blockers: [],
+    ...(opportunity.poc || {}),
+  }));
   const [secReviewStatus, setSecReviewStatus] = useState(opportunity.securityReviewStatus);
 
   const toggleKPI = (kpiId: string) => {
@@ -31,7 +36,6 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
     );
     const updatedPOC = { ...poc, successCriteria: updatedCriteria };
     setPoc(updatedPOC);
-    opportunity.poc = updatedPOC;
     if (onUpdateOpportunity) onUpdateOpportunity({ ...opportunity, poc: updatedPOC });
   };
 
@@ -41,7 +45,6 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
     );
     const updatedPOC = { ...poc, blockers: updatedBlockers };
     setPoc(updatedPOC);
-    opportunity.poc = updatedPOC;
     if (onUpdateOpportunity) onUpdateOpportunity({ ...opportunity, poc: updatedPOC });
   };
 
@@ -130,8 +133,8 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
         </div>
 
         {/* Success Criteria Items */}
-        <div className="mt-3 overflow-hidden border border-gray-200 rounded">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="mt-3 overflow-x-auto border border-gray-200 rounded">
+           <table className="hidden md:table w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
                 <th className="py-2 px-3 w-10 text-center">Verified</th>
@@ -173,7 +176,13 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
                 </tr>
               ))}
             </tbody>
-          </table>
+           </table>
+           <div className="md:hidden p-2 space-y-2">
+             {poc.successCriteria.map(kpi => <article key={kpi.id} onClick={() => toggleKPI(kpi.id)} className={`border rounded p-3 space-y-2 ${kpi.verified ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-gray-200'}`}>
+               <div className="flex items-start gap-2"><input type="checkbox" checked={kpi.verified} onChange={() => toggleKPI(kpi.id)} onClick={e => e.stopPropagation()} className="mt-0.5 rounded border-gray-300 text-blue-600" /><div className="min-w-0 flex-1"><div className="text-[10px] uppercase text-gray-500 font-mono">{kpi.category}</div><div className="text-xs font-semibold text-gray-900 break-words">{kpi.description}</div></div></div>
+               <div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="block text-gray-500">Target</span><strong className="font-mono">{kpi.targetMetric}</strong></div><div><span className="block text-gray-500">Result</span><strong className="font-mono text-emerald-700">{kpi.actualMetric || (kpi.verified ? 'Passed' : 'In Progress')}</strong></div></div>
+             </article>)}
+           </div>
         </div>
 
         {/* POC Blockers */}

@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, Cpu, Award, TrendingUp, CheckCircle, Plus, AlertCircle, Database, Layers } from 'lucide-react';
 import { PresalesEngineer, Opportunity } from '../../types';
 import { INITIAL_ENGINEERS } from '../../data/mockData';
+import { formatCurrency } from '../../utils/currency';
 
 interface CapacityMatrixProps {
   engineers?: PresalesEngineer[];
@@ -45,7 +46,7 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Total Supported Pipeline:</span>
-            <div className="text-sm font-bold text-gray-900">${(opportunities.reduce((acc, o) => acc + o.contractValue, 0)/1000000).toFixed(2)}M</div>
+            <div className="text-sm font-bold text-gray-900">{formatCurrency(opportunities.reduce((acc, o) => acc + o.contractValue, 0))}</div>
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Total Active POC Labs:</span>
@@ -124,7 +125,7 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
               <div className="pt-2 border-t border-gray-100 space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-gray-600">
                   <span className="font-semibold">Assigned Active Deals ({assignedOpps.length})</span>
-                  <span className="font-mono text-gray-900 font-bold">${(totalVal / 1000000).toFixed(2)}M Pipeline</span>
+                  <span className="font-mono text-gray-900 font-bold">{formatCurrency(totalVal)} Pipeline</span>
                 </div>
 
                 <div className="space-y-1">
@@ -139,7 +140,7 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
                         <span className="text-gray-900 font-medium truncate">{opp.clientName}</span>
                       </div>
                       <span className="font-mono text-gray-600 text-[11px] font-semibold whitespace-nowrap">
-                        ${(opp.contractValue / 1000).toFixed(0)}k
+                        {formatCurrency(opp.contractValue)}
                       </span>
                     </div>
                   ))}

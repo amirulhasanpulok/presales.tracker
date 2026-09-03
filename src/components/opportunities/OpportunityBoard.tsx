@@ -1,5 +1,6 @@
 import React from 'react';
 import { Opportunity, OpportunityStage } from '../../types';
+import { formatCurrency } from '../../utils/currency';
 import { STAGE_CONFIG } from '../../data/mockData';
 import { PriorityBadge, POCBadge, ComplexityBadge } from '../common/Badge';
 import { Clock, AlertTriangle, ArrowRight, DollarSign, User } from 'lucide-react';
@@ -22,13 +23,11 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
     'poc_demo',
     'proposal_boq',
     'commercial_negotiation',
-    'closed_won'
+    'closed_won',
+    'closed_lost',
+    'on_hold',
+    'cancelled'
   ];
-
-  const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(2)}M`;
-    return `$${(amount / 1000).toFixed(0)}k`;
-  };
 
   return (
     <div className="flex-1 overflow-x-auto bg-gray-100/70 p-4">
@@ -113,7 +112,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
                         {/* Financials & Win % */}
                         <div className="flex items-center justify-between pt-2 mt-2 border-t border-gray-100 text-[11px] font-mono">
                           <div className="font-semibold text-gray-900">
-                            ${opp.contractValue.toLocaleString()}
+                            {formatCurrency(opp.contractValue)}
                           </div>
                           <div className="text-emerald-700 font-semibold">
                             {opp.winProbability}% Win

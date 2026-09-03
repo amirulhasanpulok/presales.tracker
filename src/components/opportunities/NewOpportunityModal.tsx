@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { X, Plus, Layers, DollarSign, Calendar, Shield, Cpu } from 'lucide-react';
-import { Opportunity, OpportunityStage, CloudProvider, DealComplexity, DealPriority, TechnicalFitScore } from '../../types';
+import { X, Plus, Layers, DollarSign, Calendar, Shield, Cpu, Search, Check } from 'lucide-react';
+import { Opportunity, OpportunityStage, CloudProvider, DealComplexity, DealPriority, TechnicalFitScore, ScopeCatalogEntry } from '../../types';
 import { INITIAL_ENGINEERS } from '../../data/mockData';
 
 interface NewOpportunityModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateOpportunity: (newOpp: Opportunity) => void;
+  scopes?: ScopeCatalogEntry[];
 }
 
 export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
   isOpen,
   onClose,
-  onCreateOpportunity
+  onCreateOpportunity,
+  scopes
 }) => {
   const [name, setName] = useState('');
   const [clientName, setClientName] = useState('');
@@ -30,9 +32,13 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
     new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10)
   );
   const [leadSA, setLeadSA] = useState(INITIAL_ENGINEERS[0].name);
+  const [supportingSAs, setSupportingSAs] = useState<string[]>([]);
   const [ae, setAe] = useState('Robert Sterling');
   const [proposedArch, setProposedArch] = useState('');
-  const [techStackTags, setTechStackTags] = useState('Kubernetes, Terraform, Microservices');
+  const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
+  const [scopeQuery, setScopeQuery] = useState('');
+  const [scopeDropdownOpen, setScopeDropdownOpen] = useState(false);
+  const [extraTags, setExtraTags] = useState('Kubernetes, Terraform, Microservices');
   const [legacyStack, setLegacyStack] = useState('');
 
   if (!isOpen) return null;
@@ -42,6 +48,11 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
     if (!name || !clientName) return;
 
     const matchedSA = INITIAL_ENGINEERS.find(e => e.name === leadSA);
+    const scopeNames = selectedScopes.length
+      ? selectedScopes
+      : (scopes || []).filter(s => s.status !== 'Inactive').slice(0, 3).map(s => s.name);
+    const techTags = extraTags.split(',').map(s => s.trim()).filter(Boolean);
+    const technologies = Array.from(new Set([...scopeNames, ...techTags]));
 
     const newOpp: Opportunity = {
       id: `opp-${Date.now()}`,
@@ -55,12 +66,14 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
       dealComplexity: complexity,
       technicalFitScore: techFit,
       primaryTechStack,
-      technologies: techStackTags.split(',').map(s => s.trim()).filter(Boolean),
+      technologies,
+      scopes: scopeNames,
       contractValue: Number(contractValue) || 0,
       arr: Number(arr) || 0,
       winProbability: Number(winProbability) || 50,
       expectedCloseDate,
       leadSolutionArchitect: leadSA,
+      supportingPresalesEngineers: supportingSAs,
       leadArchitectAvatar: matchedSA?.avatar,
       accountExecutive: ae,
       currentLegacyStack: legacyStack || 'On-premise legacy monolith requiring cloud migration.',
@@ -128,6 +141,12 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
       ],
       handover: {
         isHandedOver: false,
+        handedOverBy: '',
+        salesKAM: ae,
+        boqVersion: 'v1',
+        status: 'pending',
+        technicalNotes: '',
+        attachedDocuments: [],
         technicalRunbookReady: false,
         credentialsSecurelyTransferred: false,
         customerTechKickoffScheduled: false,
@@ -261,12 +280,80 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-gray-700 mb-1">Technologies / Tags (comma separated)</label>
+              <label className="block text-[11px] font-mono text-gray-700 mb-1">
+                Solution Scopes (multi-select) <span className="text-gray-400">· {selectedScopes.length} selected</span>
+              </label>
+              <div className="relative">
+                <div
+                  className="w-full enterprise-input cursor-pointer flex items-center gap-2"
+                  onClick={() => setScopeDropdownOpen(v => !v)}
+                >
+                  <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                  <span className="flex-1 truncate text-gray-700">
+                    {selectedScopes.length === 0 ? 'Search & select scopes (e.g. Firewall, LAN, Server)...' : selectedScopes.join(', ')}
+                  </span>
+                  <span className="text-gray-400">{scopeDropdownOpen ? '▲' : '▼'}</span>
+                </div>
+                {scopeDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded shadow-lg max-h-56 overflow-y-auto">
+                    <input
+                      value={scopeQuery}
+                      onChange={(e) => setScopeQuery(e.target.value)}
+                      placeholder="Search scopes..."
+                      className="w-full px-3 py-2 border-b border-gray-200 text-xs font-mono focus:outline-none"
+                      autoFocus
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    {(scopes || [])
+                      .filter(s => s.status !== 'Inactive')
+                      .filter(s => !scopeQuery.trim() || s.name.toLowerCase().includes(scopeQuery.trim().toLowerCase()) || s.category.toLowerCase().includes(scopeQuery.trim().toLowerCase()))
+                      .map(s => {
+                        const checked = selectedScopes.includes(s.name);
+                        return (
+                          <button
+                            type="button"
+                            key={s.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedScopes(prev => checked ? prev.filter(n => n !== s.name) : [...prev, s.name]);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-blue-50 transition-colors"
+                          >
+                            <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 ${checked ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300'}`}>
+                              {checked && <Check className="w-2.5 h-2.5" />}
+                            </span>
+                            <span className="flex-1 font-medium text-gray-800">{s.name}</span>
+                            <span className="text-[9px] font-mono uppercase text-gray-400">{s.category}</span>
+                          </button>
+                        );
+                      })}
+                    {(scopes || []).filter(s => s.status !== 'Inactive').length === 0 && (
+                      <div className="p-3 text-[11px] text-gray-400">No scopes in catalog yet.</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {selectedScopes.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {selectedScopes.map(s => (
+                    <span key={s} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-mono font-medium">
+                      {s}
+                      <button type="button" onClick={() => setSelectedScopes(prev => prev.filter(n => n !== s))} className="text-blue-400 hover:text-blue-700">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono text-gray-700 mb-1">Additional Technologies / Tags (comma separated)</label>
               <input
                 type="text"
-                value={techStackTags}
-                onChange={(e) => setTechStackTags(e.target.value)}
-                placeholder="e.g. AWS EKS, Istio, Terraform, Kafka, Snowflake"
+                value={extraTags}
+                onChange={(e) => setExtraTags(e.target.value)}
+                placeholder="e.g. AWS EKS, Istio, Terraform, Kafka"
                 className="w-full enterprise-input font-mono"
               />
             </div>
@@ -280,7 +367,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
               <div>
-                <label className="block text-[11px] text-gray-700 mb-1">Contract TCV ($)</label>
+                <label className="block text-[11px] text-gray-700 mb-1">Contract TCV</label>
                 <input
                   type="number"
                   value={contractValue}
@@ -290,7 +377,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] text-gray-700 mb-1">Estimated ARR ($)</label>
+                <label className="block text-[11px] text-gray-700 mb-1">Estimated ARR</label>
                 <input
                   type="number"
                   value={arr}
@@ -344,6 +431,12 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
                   onChange={(e) => setExpectedCloseDate(e.target.value)}
                   className="w-full enterprise-input font-mono"
                 />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[11px] font-mono text-gray-700 mb-1">Supporting Presales Engineers</label>
+              <div className="flex flex-wrap gap-2 p-2 rounded border border-gray-300 bg-gray-50">
+                {INITIAL_ENGINEERS.filter(eng => eng.name !== leadSA).map(eng => <label key={eng.id} className="inline-flex items-center gap-1.5 text-[11px] text-gray-700"><input type="checkbox" checked={supportingSAs.includes(eng.name)} onChange={e => setSupportingSAs(current => e.target.checked ? [...current, eng.name] : current.filter(name => name !== eng.name))} className="rounded border-gray-300 text-blue-600" />{eng.name}</label>)}
               </div>
             </div>
           </div>

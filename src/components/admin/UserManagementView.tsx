@@ -16,16 +16,25 @@ import {
 
 interface UserManagementViewProps {
   users: UserAccount[];
+  onCreateUser?: (payload: {
+    name: string;
+    email: string;
+    role: string;
+    department?: string;
+    region?: string;
+  }) => Promise<any>;
 }
 
 export const UserManagementView: React.FC<UserManagementViewProps> = ({
   users: initialUsers,
+  onCreateUser,
 }) => {
   const [users, setUsers] = useState<UserAccount[]>(initialUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // New user form state
   const [newName, setNewName] = useState('');
@@ -34,9 +43,10 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   const [newDepartment, setNewDepartment] = useState('Solutions Engineering');
   const [newRegion, setNewRegion] = useState('US East');
 
-  const handleInvite = (e: React.FormEvent) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !newEmail.trim()) return;
+    setNotice(null);
 
     const created: UserAccount = {
       id: `user-${Date.now()}`,
@@ -50,6 +60,24 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       createdAt: new Date().toISOString().split('T')[0],
       lastLoginAt: 'Just now'
     };
+
+    if (onCreateUser) {
+      try {
+        const resp = await onCreateUser({
+          name: newName,
+          email: newEmail,
+          role: newRole,
+          department: newDepartment,
+          region: newRegion,
+        });
+        if (resp?.tempPassword) {
+          setNotice(`Invite created for ${newEmail}. Temporary password: ${resp.tempPassword}`);
+        }
+      } catch (err: any) {
+        setNotice(err?.message || 'Could not create the user on the server.');
+        return;
+      }
+    }
 
     setUsers([created, ...users]);
     setShowInviteModal(false);
@@ -99,6 +127,13 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
         </button>
       </div>
 
+      {notice && (
+        <div className="p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded text-xs flex items-center gap-2">
+          <span>{notice}</span>
+          <button onClick={() => setNotice(null)} className="ml-auto text-blue-400 hover:text-blue-700">✕</button>
+        </div>
+      )}
+
       {/* Filter Bar */}
       <div className="bg-white border border-gray-200 rounded p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 max-w-sm">
@@ -128,8 +163,8 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       </div>
 
       {/* Users Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+         <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
               <th className="py-2.5 px-3">User</th>
@@ -196,7 +231,15 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
               </tr>
             ))}
           </tbody>
-        </table>
+         </table>
+         <div className="md:hidden p-2 space-y-2">
+           {filteredUsers.map(user => <article key={user.id} className="border border-gray-200 rounded p-3 bg-white space-y-2">
+             <div className="flex items-start justify-between gap-2"><div className="min-w-0"><div className="font-bold text-sm text-gray-900 break-words">{user.name}</div><div className="text-[11px] text-gray-500 font-mono break-all">{user.email}</div></div><span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${user.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>{user.status}</span></div>
+             <div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="block text-gray-500">Role</span><strong>{user.role.replace(/_/g, ' ')}</strong></div><div><span className="block text-gray-500">MFA</span><strong className={user.mfaEnabled ? 'text-emerald-700' : 'text-red-600'}>{user.mfaEnabled ? 'Enabled' : 'Disabled'}</strong></div><div><span className="block text-gray-500">Department</span><strong>{user.department || '—'}</strong></div><div><span className="block text-gray-500">Last Active</span><strong className="font-mono">{user.lastLoginAt || '—'}</strong></div></div>
+             <button onClick={() => setEditingUser(user)} className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded"><Edit2 className="w-3 h-3" /> Edit Access</button>
+           </article>)}
+           {filteredUsers.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No users match your filters.</div>}
+         </div>
       </div>
 
       {/* Invite Member Modal */}

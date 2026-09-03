@@ -26,6 +26,7 @@ import {
   Globe
 } from 'lucide-react';
 import { Opportunity, OpportunityStage, BOQItem, Stakeholder, ActionItem, PresalesActivity, POCStatus } from '../../types';
+import { formatCurrency } from '../../utils/currency';
 import { STAGE_CONFIG } from '../../data/mockData';
 import { StageBadge, PriorityBadge, ComplexityBadge, POCBadge, TechFitBadge } from '../common/Badge';
 
@@ -102,12 +103,12 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
   };
 
   const handleTogglePCCCriterion = (criterionId: string) => {
-    const updatedCriteria = opportunity.poc.successCriteria.map(c => 
+    const updatedCriteria = (opportunity.poc?.successCriteria || []).map(c => 
       c.id === criterionId ? { ...c, verified: !c.verified, verifiedByCustomer: !c.verified ? opportunity.leadSolutionArchitect : undefined } : c
     );
     onUpdateOpportunity({
       ...opportunity,
-      poc: { ...opportunity.poc, successCriteria: updatedCriteria },
+      poc: { ...(opportunity.poc || {}), successCriteria: updatedCriteria },
       updatedAt: new Date().toISOString()
     });
   };
@@ -130,7 +131,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
 
     onUpdateOpportunity({
       ...opportunity,
-      activities: [activity, ...opportunity.activities],
+      activities: [{ ...activity, _clientAdded: true }, ...opportunity.activities],
       lastContactedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
@@ -173,7 +174,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
       marginPercent: Math.round(marginPercent * 10) / 10
     };
 
-    const updatedItems = [...opportunity.boq.items, item];
+    const updatedItems = [...(opportunity.boq?.items || []), item];
     const subtotalCost = updatedItems.reduce((acc, i) => acc + (i.unitCost * i.quantity), 0);
     const subtotalListPrice = updatedItems.reduce((acc, i) => acc + (i.unitListPrice * i.quantity), 0);
     const totalContractValue = updatedItems.reduce((acc, i) => acc + i.extendedPrice, 0);
@@ -190,7 +191,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
         totalContractValue,
         totalDiscountAmount,
         overallMarginPercent,
-        version: opportunity.boq.version + 1
+        version: (opportunity.boq?.version || 0) + 1
       },
       updatedAt: new Date().toISOString()
     });
@@ -199,7 +200,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
   };
 
   const handleDeleteBOQItem = (itemId: string) => {
-    const updatedItems = opportunity.boq.items.filter(i => i.id !== itemId);
+    const updatedItems = (opportunity.boq?.items || []).filter(i => i.id !== itemId);
     const subtotalCost = updatedItems.reduce((acc, i) => acc + (i.unitCost * i.quantity), 0);
     const subtotalListPrice = updatedItems.reduce((acc, i) => acc + (i.unitListPrice * i.quantity), 0);
     const totalContractValue = updatedItems.reduce((acc, i) => acc + i.extendedPrice, 0);
@@ -216,7 +217,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
         totalContractValue,
         totalDiscountAmount,
         overallMarginPercent,
-        version: opportunity.boq.version + 1
+        version: (opportunity.boq?.version || 0) + 1
       },
       updatedAt: new Date().toISOString()
     });
@@ -309,7 +310,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
         <div className="p-4 bg-gray-50 border-b border-gray-200 space-y-3">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                   {opportunity.code}
                 </span>
@@ -317,7 +318,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                 <PriorityBadge priority={opportunity.priority} />
                 <ComplexityBadge complexity={opportunity.dealComplexity} />
               </div>
-              <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+              <h2 className="text-lg font-bold text-gray-900 tracking-tight break-words">
                 {opportunity.name}
               </h2>
               <div className="flex items-center gap-3 text-xs text-gray-500 font-mono mt-1">
@@ -357,7 +358,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-gray-200 text-xs font-mono">
             <div className="bg-white p-2 rounded border border-gray-200">
               <span className="text-gray-500 text-[11px]">Total Contract (TCV):</span>
-              <div className="text-sm font-bold text-gray-900">${opportunity.contractValue.toLocaleString()}</div>
+                <div className="text-sm font-bold text-gray-900">{formatCurrency(opportunity.contractValue)}</div>
             </div>
             <div className="bg-white p-2 rounded border border-gray-200">
               <span className="text-gray-500 text-[11px]">Win Probability:</span>
@@ -379,7 +380,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
               { id: 'overview', label: 'Technical Scope', icon: Layers },
               { id: 'activities', label: `Activities (${opportunity.activities.length})`, icon: FileText },
               { id: 'poc', label: 'POC & Lab Benchmarks', icon: FlaskConical },
-              { id: 'boq', label: `Proposal & BOQ ($${(opportunity.boq.totalContractValue/1000).toFixed(0)}k)`, icon: Calculator },
+                { id: 'boq', label: `Proposal & BOQ (${formatCurrency(opportunity.boq.totalContractValue)})`, icon: Calculator },
               { id: 'stakeholders', label: `Stakeholders (${opportunity.stakeholders.length})`, icon: Users },
               { id: 'actions', label: `Actions (${opportunity.actionItems.filter(a=>!a.isCompleted).length})`, icon: CheckSquare },
               { id: 'handover', label: 'Implementation Handover', icon: ArrowRightLeft }
@@ -675,7 +676,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                   </div>
                   <div className="bg-gray-50 p-2 rounded border border-gray-200">
                     <span className="text-gray-500">Allocated Cloud Budget:</span>
-                    <div className="text-gray-900 font-bold mt-0.5">${opportunity.poc.allocatedBudget?.toLocaleString() || 0}</div>
+                    <div className="text-gray-900 font-bold mt-0.5">{formatCurrency(opportunity.poc.allocatedBudget || 0)}</div>
                   </div>
                   <div className="bg-gray-50 p-2 rounded border border-gray-200">
                     <span className="text-gray-500">Customer Sign-Off:</span>
@@ -688,15 +689,15 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
               <div className="bg-white border border-gray-200 rounded-md p-3.5 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-mono font-bold text-gray-900">
-                    Customer Validation Criteria ({opportunity.poc.successCriteria.filter(c=>c.verified).length}/{opportunity.poc.successCriteria.length} Passed)
+                    Customer Validation Criteria ({(opportunity.poc?.successCriteria || []).filter(c=>c.verified).length}/{(opportunity.poc?.successCriteria || []).length} Passed)
                   </h3>
                 </div>
 
                 <div className="space-y-2">
-                  {opportunity.poc.successCriteria.length === 0 ? (
+                  {(opportunity.poc?.successCriteria || []).length === 0 ? (
                     <div className="text-gray-400 italic py-2">No success criteria defined yet for this POC.</div>
                   ) : (
-                    opportunity.poc.successCriteria.map((crit) => (
+                    (opportunity.poc?.successCriteria || []).map((crit) => (
                       <div
                         key={crit.id}
                         onClick={() => handleTogglePCCCriterion(crit.id)}
@@ -740,10 +741,10 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                   </h3>
                 </div>
 
-                {opportunity.poc.blockers.length === 0 ? (
+                {(opportunity.poc?.blockers || []).length === 0 ? (
                   <div className="text-gray-400 text-xs py-1">No active blockers. POC running smoothly.</div>
                 ) : (
-                  opportunity.poc.blockers.map((blk) => (
+                  (opportunity.poc?.blockers || []).map((blk) => (
                     <div key={blk.id} className="bg-amber-50/50 p-2.5 rounded border border-amber-200 flex items-center justify-between">
                       <div>
                         <div className="font-semibold text-gray-900">{blk.description}</div>
@@ -774,7 +775,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                   <div>
                     <h3 className="font-mono font-bold text-gray-900 flex items-center gap-2">
                       <Calculator className="w-4 h-4 text-purple-600" />
-                      Bill of Quantities (BOQ) & Commercial Schedule (v{opportunity.boq.version})
+                      Bill of Quantities (BOQ) & Commercial Schedule (v{opportunity.boq?.version || 1})
                     </h3>
                     <div className="text-[11px] text-gray-500 font-mono">
                       Governance Approval: <strong className="text-purple-700 uppercase font-semibold">{opportunity.boq.approvalStatus}</strong>
@@ -810,15 +811,15 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs font-mono">
                   <div className="bg-gray-50 p-2 rounded border border-gray-200">
                     <span className="text-gray-500 text-[11px]">List Price (Pre-Discount):</span>
-                    <div className="font-bold text-gray-900">${opportunity.boq.subtotalListPrice.toLocaleString()}</div>
+                    <div className="font-bold text-gray-900">{formatCurrency(opportunity.boq.subtotalListPrice)}</div>
                   </div>
                   <div className="bg-gray-50 p-2 rounded border border-gray-200">
                     <span className="text-gray-500 text-[11px]">Contract TCV:</span>
-                    <div className="font-bold text-blue-700">${opportunity.boq.totalContractValue.toLocaleString()}</div>
+                    <div className="font-bold text-blue-700">{formatCurrency(opportunity.boq.totalContractValue)}</div>
                   </div>
                   <div className="bg-gray-50 p-2 rounded border border-gray-200">
                     <span className="text-gray-500 text-[11px]">Total Cost of Delivery:</span>
-                    <div className="font-bold text-gray-600">${opportunity.boq.subtotalCost.toLocaleString()}</div>
+                    <div className="font-bold text-gray-600">{formatCurrency(opportunity.boq.subtotalCost)}</div>
                   </div>
                   <div className="bg-gray-50 p-2 rounded border border-gray-200">
                     <span className="text-gray-500 text-[11px]">Realized Gross Margin:</span>
@@ -899,7 +900,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-gray-600 mb-1">Unit Cost ($)</label>
+                      <label className="block text-[11px] text-gray-600 mb-1">Unit Cost</label>
                       <input
                         type="number"
                         value={newBOQItem.unitCost}
@@ -908,7 +909,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-gray-600 mb-1">Unit List Price ($)</label>
+                      <label className="block text-[11px] text-gray-600 mb-1">Unit List Price</label>
                       <input
                         type="number"
                         value={newBOQItem.unitListPrice}
@@ -961,14 +962,14 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 font-sans">
-                    {opportunity.boq.items.length === 0 ? (
+                    {(opportunity.boq?.items || []).length === 0 ? (
                       <tr>
                         <td colSpan={8} className="py-6 text-center text-gray-400 font-mono">
                           No line items in this proposal BOQ yet. Click "Add Line Item" to start sizing.
                         </td>
                       </tr>
                     ) : (
-                      opportunity.boq.items.map((item) => (
+                      (opportunity.boq?.items || []).map((item) => (
                         <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
                           <td className="py-2 px-3 font-mono font-bold text-purple-700 whitespace-nowrap">
                             {item.itemCode}
@@ -981,13 +982,13 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                             {item.quantity}
                           </td>
                           <td className="py-2 px-3 text-right font-mono text-gray-500">
-                            ${item.unitListPrice.toLocaleString()}
+                            {formatCurrency(item.unitListPrice)}
                           </td>
                           <td className="py-2 px-3 text-center font-mono text-amber-700 font-medium">
                             {item.discountPercent}%
                           </td>
                           <td className="py-2 px-3 text-right font-mono font-bold text-gray-900">
-                            ${item.extendedPrice.toLocaleString()}
+                            {formatCurrency(item.extendedPrice)}
                           </td>
                           <td className="py-2 px-3 text-right font-mono font-semibold text-emerald-700">
                             {item.marginPercent}%
@@ -1320,11 +1321,11 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                     Post-Sales Implementation & Handover Gate
                   </h3>
                   <span className={`text-[11px] font-mono px-2 py-0.5 rounded border font-semibold ${
-                    opportunity.handover.isHandedOver 
+                    opportunity.handover?.isHandedOver 
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                       : 'bg-amber-50 text-amber-800 border-amber-200'
                   }`}>
-                    {opportunity.handover.isHandedOver ? 'HANDED OVER TO PS' : 'PRESALES OWNED'}
+                    {opportunity.handover?.isHandedOver ? 'HANDED OVER TO PS' : 'PRESALES OWNED'}
                   </span>
                 </div>
 
@@ -1332,7 +1333,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                   <div className="bg-gray-50 p-2 rounded border border-gray-200">
                     <span className="text-gray-500">Assigned Delivery Lead:</span>
                     <div className="text-gray-900 font-semibold mt-0.5">
-                      {opportunity.handover.assignedDeliveryLead || 'Unassigned (Pending Closed-Won)'}
+                      {opportunity.handover?.assignedDeliveryLead || 'Unassigned (Pending Closed-Won)'}
                     </div>
                   </div>
                   <div className="bg-gray-50 p-2 rounded border border-gray-200">

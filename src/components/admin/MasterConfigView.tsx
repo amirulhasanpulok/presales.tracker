@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Settings, 
   Layers, 
@@ -11,6 +11,9 @@ import {
   CheckCircle2,
   ShieldCheck
 } from 'lucide-react';
+import { CURRENCY_STORAGE_KEY, CurrencyCode } from '../../utils/currency';
+import { api } from '../../api';
+import { ACTIVITY_TYPES_KEY, DEFAULT_ACTIVITY_TYPES } from '../../utils/activityTypes';
 
 export const MasterConfigView: React.FC = () => {
   const [techStacks, setTechStacks] = useState([
@@ -43,6 +46,26 @@ export const MasterConfigView: React.FC = () => {
   const [newIndustry, setNewIndustry] = useState('');
   const [newRegion, setNewRegion] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [currency, setCurrency] = useState<CurrencyCode>(() => {
+    const stored = window.localStorage.getItem(CURRENCY_STORAGE_KEY);
+    return stored === 'USD' || stored === 'EUR' ? stored : 'BDT';
+  });
+  const [activityTypes, setActivityTypes] = useState<string[]>(() => {
+    try {
+      const value = JSON.parse(window.localStorage.getItem(ACTIVITY_TYPES_KEY) || 'null');
+      return Array.isArray(value) && value.length ? value : DEFAULT_ACTIVITY_TYPES;
+    } catch { return DEFAULT_ACTIVITY_TYPES; }
+  });
+  const [newActivityType, setNewActivityType] = useState('');
+
+  useEffect(() => {
+    const onCurrencyChange = () => {
+      const stored = window.localStorage.getItem(CURRENCY_STORAGE_KEY);
+      if (stored === 'BDT' || stored === 'USD' || stored === 'EUR') setCurrency(stored);
+    };
+    window.addEventListener('presales:currency-changed', onCurrencyChange);
+    return () => window.removeEventListener('presales:currency-changed', onCurrencyChange);
+  }, []);
 
   const handleAddTech = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,8 +89,14 @@ export const MasterConfigView: React.FC = () => {
   };
 
   const handleSave = () => {
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    Promise.all([api.updateCurrency(currency), api.updateActivityTypes(activityTypes)]).then(() => {
+      window.localStorage.setItem(CURRENCY_STORAGE_KEY, currency);
+      window.localStorage.setItem(ACTIVITY_TYPES_KEY, JSON.stringify(activityTypes));
+      window.dispatchEvent(new Event('presales:currency-changed'));
+      window.dispatchEvent(new Event('presales:activity-types-changed'));
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    }).catch(() => setSavedSuccess(false));
   };
 
   return (
@@ -95,6 +124,12 @@ export const MasterConfigView: React.FC = () => {
         </button>
       </div>
 
+      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div><h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Activity Types</h3><p className="text-[11px] text-gray-500 mt-0.5">These options appear in every Opportunity Activity Timeline.</p></div>
+        <div className="flex flex-wrap gap-1.5">{activityTypes.map(type => <span key={type} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-gray-50 border border-gray-200">{type}<button type="button" onClick={() => setActivityTypes(current => current.filter(item => item !== type))} className="text-gray-400 hover:text-red-600" aria-label={`Remove ${type}`}>×</button></span>)}</div>
+        <div className="flex gap-2"><input value={newActivityType} onChange={e => setNewActivityType(e.target.value)} placeholder="Add activity type..." className="enterprise-input flex-1 text-xs" /><button type="button" onClick={() => { const value = newActivityType.trim(); if (value && !activityTypes.includes(value)) { setActivityTypes([...activityTypes, value]); setNewActivityType(''); } }} className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded">Add</button></div>
+      </div>
+
       {savedSuccess && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800 font-medium flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -103,6 +138,18 @@ export const MasterConfigView: React.FC = () => {
       )}
 
       {/* Grid: 3 Taxonomy Panels */}
+      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Default Currency</h3>
+          <p className="text-[11px] text-gray-500 mt-0.5">Applied to pricing, pipeline values, BOQs, reports, and exports. This changes display labels only.</p>
+        </div>
+        <select value={currency} onChange={e => setCurrency(e.target.value as CurrencyCode)} className="enterprise-select text-xs w-full sm:w-40">
+          <option value="BDT">BDT</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Panel 1: Primary Cloud & Tech Stacks */}
         <div className="bg-white border border-gray-200 rounded p-4 space-y-3">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Opportunity, OpportunityDocument } from '../../../types';
+import { api } from '../../../api';
 import { 
   FileText, 
   Upload, 
@@ -21,64 +22,37 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
   opportunity,
   onUploadDoc,
 }) => {
-  const defaultDocs: OpportunityDocument[] = opportunity.documents || [
-    {
-      id: 'doc-1',
-      title: `${opportunity.name} - Solution Architecture Design Document (SADD)`,
-      type: 'SADD Blueprint',
-      version: 'v2.1',
-      size: '8.4 MB',
-      uploadedBy: opportunity.leadSolutionArchitect,
-      uploadedAt: '2025-03-22',
-      status: 'Approved'
-    },
-    {
-      id: 'doc-2',
-      title: 'Target State Multi-Region Network Topology Diagram',
-      type: 'Architecture Diagram',
-      version: 'v1.4',
-      size: '12.8 MB',
-      uploadedBy: opportunity.leadSolutionArchitect,
-      uploadedAt: '2025-03-18',
-      status: 'Customer Signed'
-    },
-    {
-      id: 'doc-3',
-      title: 'Security, Encryption & Regulatory Compliance Whitepaper',
-      type: 'Security Whitepaper',
-      version: 'v1.0',
-      size: '3.1 MB',
-      uploadedBy: 'Sarah Jenkins',
-      uploadedAt: '2025-03-15',
-      status: 'Approved'
-    },
-    {
-      id: 'doc-4',
-      title: 'Draft SOW & Professional Services Engagement Charter',
-      type: 'SOW Draft',
-      version: 'v0.9',
-      size: '1.9 MB',
-      uploadedBy: opportunity.accountExecutive,
-      uploadedAt: '2025-03-20',
-      status: 'In Review'
-    }
-  ];
+  const defaultDocs: OpportunityDocument[] = opportunity.documents || [];
 
   const [docs, setDocs] = useState<OpportunityDocument[]>(defaultDocs);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newType, setNewType] = useState<OpportunityDocument['type']>('SADD Blueprint');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleUpload = (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
+    if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
+      window.alert('Please choose a file smaller than 5 MB.');
+      return;
+    }
+
+    const fileData = selectedFile ? await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(selectedFile);
+    }) : undefined;
 
     const newDoc: OpportunityDocument = {
       id: `doc-${Date.now()}`,
       title: newTitle,
       type: newType,
       version: 'v1.0',
-      size: '4.2 MB',
+      size: selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : 'Metadata only',
+      fileName: selectedFile?.name,
+      fileData,
       uploadedBy: opportunity.leadSolutionArchitect,
       uploadedAt: new Date().toISOString().split('T')[0],
       status: 'In Review'
@@ -86,11 +60,25 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
 
     const updated = [newDoc, ...docs];
     setDocs(updated);
-    opportunity.documents = updated;
     if (onUploadDoc) onUploadDoc(newDoc);
 
     setNewTitle('');
+    setSelectedFile(null);
     setShowUploadModal(false);
+  };
+
+  const downloadDocument = async (doc: OpportunityDocument) => {
+    try {
+      const file = await api.downloadDocument(opportunity.id, doc.id);
+      const link = document.createElement('a');
+      link.href = file.fileData;
+      link.download = file.fileName || `${doc.title.replace(/[^a-zA-Z0-9_-]/g, '_')}_${doc.version}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch {
+      window.alert('Document content is unavailable or you do not have access.');
+    }
   };
 
   const getDocTypeIcon = (type: OpportunityDocument['type']) => {
@@ -110,7 +98,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
     <div className="space-y-4">
       {/* Action Header */}
       <div className="bg-white border border-gray-200 rounded p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
+          <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Technical Documentation & Deliverables</h3>
           <p className="text-xs text-gray-500 mt-0.5">
             Architecture blueprints, RFP response sheets, customer SOWs, security questionnaires, and sign-offs.
@@ -132,6 +120,11 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
           <div className="flex items-center justify-between border-b border-gray-100 pb-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Attach Technical Deliverable</h4>
             <button type="button" onClick={() => setShowUploadModal(false)} className="text-xs text-gray-500 hover:text-gray-800">&times; Cancel</button>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-700 mb-1">File (optional, max 5 MB)</label>
+            <input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} className="w-full text-xs file:mr-2 file:rounded file:border-0 file:bg-blue-50 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-blue-700" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -173,8 +166,8 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
       )}
 
       {/* Documents Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+         <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
               <th className="py-2.5 px-3">Document Title</th>
@@ -221,7 +214,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
                 </td>
                 <td className="py-2.5 px-3 text-right">
                   <button 
-                    onClick={() => alert(`Downloading ${doc.title} (${doc.version})...`)}
+                     onClick={() => downloadDocument(doc)}
                     className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded border border-blue-200"
                   >
                     <Download className="w-3 h-3" />
@@ -231,7 +224,11 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
               </tr>
             ))}
           </tbody>
-        </table>
+         </table>
+         <div className="md:hidden p-2 space-y-2">
+           {docs.map(doc => <article key={doc.id} className="border border-gray-200 rounded p-3 bg-white space-y-2"><div className="flex items-start gap-2"><div className="p-1.5 rounded bg-gray-100 border border-gray-200">{getDocTypeIcon(doc.type)}</div><div className="min-w-0 flex-1"><h4 className="text-sm font-semibold text-gray-900 break-words">{doc.title}</h4><div className="text-[10px] text-gray-500">{doc.type} · {doc.version}</div></div></div><div className="flex items-center justify-between text-[11px] text-gray-500"><span>{doc.uploadedBy} · {doc.size}</span><button onClick={() => downloadDocument(doc)} className="inline-flex items-center gap-1 px-2 py-1 text-blue-700 bg-blue-50 border border-blue-200 rounded font-semibold"><Download className="w-3 h-3" /> Download</button></div></article>)}
+           {docs.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No documents uploaded.</div>}
+         </div>
       </div>
     </div>
   );
