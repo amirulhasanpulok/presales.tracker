@@ -119,7 +119,7 @@ router.post('/auth/login', async (req, res) => {
   const token = signToken(row);
 
   const principal = await loadPrincipal(row.id);
-  await audit({ req, action: 'auth.login', targetType: 'user', targetId: row.id, actorEmail: row.email, actorId: row.id });
+  await audit({ req, action: 'auth.login', targetType: 'user', targetId: row.id, actorEmail: row.email, actorId: row.id, actorRole: principal.role?.roleName || row.role });
   return res.json({ token, user: principal.user, role: principal.role });
 });
 

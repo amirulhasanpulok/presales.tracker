@@ -1,7 +1,7 @@
 import { query } from './db.js';
 
 // Append an immutable audit trail entry for a governed action.
-export async function audit({ req, action, targetType = null, targetId = null, meta = null, actorEmail = null, actorId = null }) {
+export async function audit({ req, action, targetType = null, targetId = null, meta = null, actorEmail = null, actorId = null, actorRole = null }) {
   try {
     await query(
       `INSERT INTO audit_logs (actor_id, actor_email, action, target_type, target_id, meta, ip, actor_role, request_id)
@@ -14,7 +14,7 @@ export async function audit({ req, action, targetType = null, targetId = null, m
         targetId,
         meta ? JSON.stringify(meta) : null,
         req?.ip || null,
-        req?.role?.roleName || req?.role?.role_name || req?.role?.name || req?.user?.role || null,
+        actorRole || req?.role?.roleName || req?.role?.role_name || req?.role?.name || req?.user?.role || null,
         req?.requestId || null,
       ],
     );
