@@ -197,7 +197,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 bg-white border border-gray-200 rounded overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 space-y-2.5">
-            <div className="flex flex-wrap items-center gap-2">
+             <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
                <div className="relative flex-1 min-w-0 sm:min-w-[160px]">
                 <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input

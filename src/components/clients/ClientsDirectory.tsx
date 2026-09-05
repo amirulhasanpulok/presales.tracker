@@ -169,11 +169,11 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+         <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
           <select
             value={filterIndustry}
             onChange={(e) => setFilterIndustry(e.target.value)}
-            className="enterprise-select text-xs py-1.5"
+             className="enterprise-select text-xs py-1.5 flex-shrink-0"
           >
             <option value="all">All Industries</option>
              {industryOptions.map(value => <option key={value} value={value}>{value}</option>)}
@@ -182,7 +182,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
           <select
             value={filterTier}
             onChange={(e) => setFilterTier(e.target.value)}
-            className="enterprise-select text-xs py-1.5"
+             className="enterprise-select text-xs py-1.5 flex-shrink-0"
           >
             <option value="all">All Account Tiers</option>
              {tierOptions.map(value => <option key={value} value={value}>{value}</option>)}

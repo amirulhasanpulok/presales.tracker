@@ -57,16 +57,16 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
 
         <div className="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-200">
           <div className="text-right">
-            <div className="text-[10px] uppercase font-semibold text-gray-500">Total Quota Attainment</div>
+             <div className="text-[10px] uppercase font-semibold text-gray-500">{totalQuota > 0 ? 'Total Quota Attainment' : 'Live Pipeline Coverage'}</div>
             <div className="text-sm font-bold font-mono text-emerald-700">
-              {Math.round((totalAttainment / totalQuota) * 100)}% ({formatCurrency(totalAttainment)} / {formatCurrency(totalQuota)})
+               {totalQuota > 0 ? `${Math.round((totalAttainment / totalQuota) * 100)}% (${formatCurrency(totalAttainment)} / ${formatCurrency(totalQuota)})` : formatCurrency(totalAttainment)}
             </div>
           </div>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white border border-gray-200 rounded p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded p-3 flex flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 max-w-sm">
           <div className="relative w-full">
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
@@ -92,14 +92,15 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
 
       {/* KAM Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredKAMs.length === 0 && <div className="md:col-span-2 lg:col-span-3 bg-white border border-dashed border-gray-300 rounded p-10 text-center"><Users className="w-8 h-8 mx-auto text-gray-300" /><h3 className="mt-2 text-sm font-semibold text-gray-800">No Sales KAMs found</h3><p className="mt-1 text-xs text-gray-500">Add Sales KAM users from User Management to populate this directory.</p></div>}
         {filteredKAMs.map(kam => {
-          const attainmentPercent = kam.quotaTarget > 0 ? Math.round((kam.achievedPipeline / kam.quotaTarget) * 100) : 0;
+           const attainmentPercent = kam.quotaTarget > 0 ? Math.round((kam.achievedPipeline / kam.quotaTarget) * 100) : null;
           return (
             <div key={kam.id} className="bg-white border border-gray-200 rounded p-4 space-y-3 hover:border-gray-300 transition-colors">
               <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-xs font-bold text-gray-900">{kam.name}</h3>
-                  <div className="text-[11px] text-gray-500 font-mono">{kam.region}</div>
+                  <div>
+                    <h3 className="text-xs font-bold text-gray-900">{kam.name}</h3>
+                    <div className="text-[11px] text-gray-500 font-mono">{kam.region} · {kam.salesTeam || 'Unassigned team'}</div>
                 </div>
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-200">
                   {kam.accountsCount} Accounts
@@ -110,17 +111,17 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
               <div>
                 <div className="flex items-center justify-between text-[11px] font-mono">
                   <span className="text-gray-500">Annual Quota Progress:</span>
-                  <span className="font-bold text-emerald-700">{attainmentPercent}%</span>
+                   <span className="font-bold text-emerald-700">{attainmentPercent === null ? 'N/A' : `${attainmentPercent}%`}</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1 overflow-hidden">
                   <div 
                     className="bg-emerald-600 h-1.5 rounded-full" 
-                    style={{ width: `${Math.min(attainmentPercent, 100)}%` }}
+                     style={{ width: `${Math.min(attainmentPercent || 0, 100)}%` }}
                   />
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono mt-0.5">
-                  <span>{formatCurrency(kam.achievedPipeline || 0)} Won</span>
-                  <span>Target: {formatCurrency(kam.quotaTarget || 0)}</span>
+                   <span>{formatCurrency(kam.achievedPipeline || 0)} Pipeline</span>
+                   <span>{kam.quotaTarget > 0 ? `Target: ${formatCurrency(kam.quotaTarget)}` : 'Quota not configured'}</span>
                 </div>
               </div>
 

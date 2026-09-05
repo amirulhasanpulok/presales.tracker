@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, TableProperties, Kanban, Calculator, FlaskConical, CheckSquare, ArrowRightLeft, Users, BarChart3, Plus, X } from 'lucide-react';
-import { ActiveTab, Opportunity } from '../../types';
+import { ActiveTab, ClientAccount, Opportunity } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 
 interface CommandPaletteProps {
@@ -10,6 +10,8 @@ interface CommandPaletteProps {
   onSelectOpportunity: (opp: Opportunity) => void;
   onNavigateTab: (tab: ActiveTab) => void;
   onOpenNewOpportunity: () => void;
+  clients?: ClientAccount[];
+  onSelectClient?: (client: ClientAccount) => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -18,7 +20,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   opportunities,
   onSelectOpportunity,
   onNavigateTab,
-  onOpenNewOpportunity
+  onOpenNewOpportunity,
+  clients = [],
+  onSelectClient,
 }) => {
   const [query, setQuery] = useState('');
 
@@ -39,6 +43,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (isOpen) setQuery('');
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const filteredOpps = opportunities.filter(o => 
@@ -58,6 +66,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       ...(o.boq?.items || []).flatMap(item => [item.oem, item.productName, item.model, item.partNumber, item.itemCode, item.description]),
     ].filter(Boolean).join(' ').toLowerCase().includes((query || '').toLowerCase())
   );
+  const filteredClients = clients.filter(client => [client.name, client.code, client.domain, client.industry, client.assignedSalesKAM, client.assignedLeadSA].filter(Boolean).join(' ').toLowerCase().includes((query || '').toLowerCase()));
 
   const quickNav = [
     { label: 'Opportunities Matrix', tab: 'opportunities' as ActiveTab, icon: TableProperties },
@@ -71,7 +80,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-100">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-100" onClick={onClose}>
       <div 
         className="w-full max-w-xl bg-white border border-gray-200 rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[70vh]"
         onClick={(e) => e.stopPropagation()}
@@ -136,6 +145,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               })}
             </div>
           </div>
+
+          {/* Matching Opportunities */}
+          {filteredClients.length > 0 && (
+            <div>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500 font-semibold px-2 mb-1">Clients ({filteredClients.length})</div>
+              <div className="space-y-1">{filteredClients.slice(0, 8).map(client => <button key={client.id} onClick={() => { onSelectClient?.(client); onClose(); }} className="w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-gray-50 text-left border border-transparent hover:border-gray-200"><div className="min-w-0"><div className="font-semibold text-gray-900 truncate">{client.name}</div><div className="text-[10px] text-gray-500">{client.code || client.industry || 'Client profile'}</div></div><span className="text-[10px] text-blue-700">Client 360</span></button>)}</div>
+            </div>
+          )}
 
           {/* Matching Opportunities */}
           <div>

@@ -284,6 +284,7 @@ export interface SalesKAM {
   achievedPipeline: number;
   assignedLeadSA: string;
   avatar: string;
+  salesTeam?: string;
 }
 
 export interface ClientAccount {

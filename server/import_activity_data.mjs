@@ -7,6 +7,7 @@ import { initSchema, query } from './db.js';
 const sourceFile = process.env.ACTIVITY_DATA_FILE || '/home/pulok/data/data.txt';
 const text = fs.readFileSync(sourceFile, 'utf8');
 const wantedKamNames = ['Swapan Roy', 'Mosleh', 'Taslima', 'Shamim', 'Arafat', 'Tushar', 'Tamanna', 'Eshan', 'Rokon', 'Atika', 'Mamun', 'Ahasan Ahmed', 'Mostafiz', 'Mosarof Jony', 'Mohammad Kowshik Aheed', 'Shahnaj Zafrin', 'Ahmed Zaman', 'Moniruzzaman', 'H. M. Riduan Kabir', 'Salauddin'];
+const knownSourceKamNames = ['Zubayer Alam', 'Amirul Hasan Pulok', 'Mahade Hasan', 'Al Owaled', 'Manjuda Akter'];
 const teamByKam = { 'Swapan Roy': 'STI', Mosleh: 'STI', Taslima: 'ESP', Shamim: 'Enterprise Team', Arafat: 'Enterprise Team', Tushar: 'Enterprise Team', Tamanna: 'Enterprise Team', Eshan: 'Enterprise Team', Rokon: 'Enterprise Team', Atika: 'Enterprise Team', Mamun: 'STI', 'Ahasan Ahmed': 'Other', Mostafiz: 'Enterprise Team', 'Mosarof Jony': 'Enterprise Team', 'Mohammad Kowshik Aheed': 'Enterprise Team', 'Shahnaj Zafrin': 'Enterprise Team', 'Ahmed Zaman': 'Enterprise Team', Moniruzzaman: 'Enterprise Team', 'H. M. Riduan Kabir': 'Enterprise Team', Salauddin: 'Enterprise Team' };
 const clean = value => String(value || '').replace(/^"|"$/g, '').replace(/\s+/g, ' ').trim();
 const key = value => clean(value).toLowerCase().replace(/^(mr|ms|md|mrs)\.?\s+/i, '').replace(/[^a-z0-9]/g, '');
@@ -25,7 +26,14 @@ function parseTSV(input) {
   return rows;
 }
 
-const rows = parseTSV(text).filter(row => row.length >= 18 && /^\d+$/.test(clean(row[0])) && clean(row[7]));
+const parsed = parseTSV(text);
+const headerIndex = parsed.findIndex(row => row[0]?.trim() === 'SL' && row.includes('Name of Client'));
+const header = headerIndex >= 0 ? parsed[headerIndex].map(clean) : null;
+const column = name => header ? header.indexOf(name) : -1;
+const canonicalize = row => header ? [
+  row[column('SL')], row[column('Month')], row[column('Working Date')], row[column('Sales Lead Recived Date')] || row[column('Sales Lead Received Date')], row[column('Aging')], row[column('Sales KAM')], row[column('Type of Activity')], row[column('Name of Client')], row[column('Scope of Work')], row[column('Main Domain')], row[column('Presales Personnel')], row[column('Inhouse Stakeholder')], row[column('Outside Stakeholder')], row[column('Daily Status')], row[column('Note')], row[column('Sales Status')], row[column('Implementation Status')], row[column('Next Action')],
+] : row;
+const rows = parsed.slice(headerIndex >= 0 ? headerIndex + 1 : 0).map(canonicalize).map(row => row.map(clean)).filter(row => row.length >= 18 && /^\d+$/.test(clean(row[0])) && clean(row[7]));
 const opportunities = new Map();
 for (const row of rows) {
   const clientName = clean(row[7]);
@@ -38,11 +46,7 @@ await initSchema();
 const existingUsers = await query('SELECT id, name, email FROM users');
 const usersByName = new Map((existingUsers.rows || []).map(user => [key(user.name), user]));
 const tempPasswordHash = await hashPassword(process.env.SALES_KAM_TEMP_PASSWORD || 'ChangeMe@2026');
-const allKamNames = new Map(wantedKamNames.map(name => [key(name), name]));
-for (const item of opportunities.values()) for (const row of item.rows) {
-  const sourceKam = displayName(row[5]);
-  if (sourceKam && sourceKam !== 'Done' && sourceKam !== 'Handover To Sales') allKamNames.set(key(sourceKam), sourceKam);
-}
+const allKamNames = new Map([...wantedKamNames, ...knownSourceKamNames].map(name => [key(name), displayName(name)]));
 for (const [normalized, name] of allKamNames) {
   const alias = normalized === key('Amirul Hasan Pulok') ? usersByName.get(key('Amirul Pulok')) : usersByName.get(normalized);
   if (alias) continue;

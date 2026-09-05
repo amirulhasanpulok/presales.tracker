@@ -43,7 +43,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
   const [scopeQuery, setScopeQuery] = useState('');
   const [scopeDropdownOpen, setScopeDropdownOpen] = useState(false);
-  const [extraTags, setExtraTags] = useState('Kubernetes, Terraform, Microservices');
+  const [extraTags, setExtraTags] = useState('');
   const [legacyStack, setLegacyStack] = useState('');
 
   if (!isOpen) return null;
@@ -61,7 +61,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
 
     const newOpp: Opportunity = {
       id: `opp-${Date.now()}`,
-      code: `OPP-2025-${Math.floor(1000 + Math.random() * 9000)}`,
+       code: `OPP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
       name,
       clientName,
       clientIndustry,
@@ -81,42 +81,16 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
       supportingPresalesEngineers: supportingSAs,
       leadArchitectAvatar: matchedSA?.avatar,
       accountExecutive: ae,
-      currentLegacyStack: legacyStack || 'On-premise legacy monolith requiring cloud migration.',
-      proposedArchitecture: proposedArch || 'Cloud-native scalable architecture with automated CI/CD and zero-trust security mesh.',
-      keyTechnicalRequirements: [
-        'High availability multi-zone deployment with automated failover',
-        'Role-based access control and strict data encryption'
-      ],
-      complianceRequirements: ['SOC2 Type II', 'ISO 27001'],
-      securityReviewStatus: 'In Review',
-      activities: [
-        {
-          id: `act-${Date.now()}`,
-          type: 'Discovery Call',
-          title: 'Initial Technical Intake & Qualification Call',
-          timestamp: new Date().toISOString(),
-          author: leadSA,
-          summary: `Initial technical presales qualification. Customer is exploring ${primaryTechStack} infrastructure modernizations.`,
-          durationMinutes: 45,
-          attendees: [leadSA, ae, `${clientName} Tech Lead`]
-        }
-      ],
-      stakeholders: [
-        {
-          id: `stk-${Date.now()}`,
-          name: `${clientName} Sponsor`,
-          role: 'Head of Engineering',
-          department: 'Technology',
-          email: `tech@${(clientName || 'company').toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-          influence: 'high',
-          sentiment: 'supporter',
-          buyingRole: 'Technical Gatekeeper',
-          lastContactDate: new Date().toISOString().slice(0, 10)
-        }
-      ],
+       currentLegacyStack: legacyStack,
+       proposedArchitecture: proposedArch,
+       keyTechnicalRequirements: [],
+       complianceRequirements: [],
+       securityReviewStatus: 'Not Started',
+       activities: [],
+       stakeholders: [],
       poc: {
         status: 'not_started',
-        allocatedBudget: 5000,
+         allocatedBudget: 0,
         successCriteria: [],
         blockers: []
       },
@@ -132,18 +106,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
         approvalStatus: 'draft',
         version: 1
       },
-      actionItems: [
-        {
-          id: `act-item-${Date.now()}`,
-          title: 'Conduct Technical Architecture Discovery Workshop',
-          assignedTo: leadSA,
-          assignedToRole: 'Lead Solution Architect',
-          dueDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-          isCompleted: false,
-          priority: 'p1_high',
-          category: 'Architecture'
-        }
-      ],
+       actionItems: [],
       handover: {
         isHandedOver: false,
         handedOverBy: '',

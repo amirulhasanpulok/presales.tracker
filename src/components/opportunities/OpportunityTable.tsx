@@ -71,8 +71,15 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
         const matchesName = (opp.name || '').toLowerCase().includes(q);
         const matchesClient = (opp.clientName || '').toLowerCase().includes(q);
         const matchesArch = (opp.leadSolutionArchitect || '').toLowerCase().includes(q);
-        const matchesTech = (opp.primaryTechStack || '').toLowerCase().includes(q) || (opp.technologies || []).some(t => (t || '').toLowerCase().includes(q));
-        if (!matchesCode && !matchesName && !matchesClient && !matchesArch && !matchesTech) {
+         const matchesTech = (opp.primaryTechStack || '').toLowerCase().includes(q) || (opp.technologies || []).some(t => (t || '').toLowerCase().includes(q));
+         const relatedText = [
+           ...(opp.scopes || []),
+           opp.tender?.tenderName,
+           opp.tender?.tenderReference,
+           ...(opp.stakeholders || []).flatMap(stakeholder => [stakeholder.name, stakeholder.email, stakeholder.role]),
+           ...(opp.boq?.items || []).flatMap(item => [item.oem, item.productName, item.model, item.partNumber, item.itemCode, item.description]),
+         ].filter(Boolean).join(' ').toLowerCase();
+         if (!matchesCode && !matchesName && !matchesClient && !matchesArch && !matchesTech && !relatedText.includes(q)) {
           return false;
         }
       }
@@ -218,14 +225,14 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
         </div>
 
         {/* Dropdown Filters Row */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 text-xs overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
           
           {/* Stage Filter */}
           <select
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
             aria-label="Filter by presales stage"
-            className="enterprise-select font-mono text-xs py-1"
+            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
           >
             <option value="all">Stage: All Stages</option>
             {Object.entries(STAGE_CONFIG).map(([key, val]) => (
@@ -238,7 +245,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             value={techStackFilter}
             onChange={(e) => setTechStackFilter(e.target.value)}
             aria-label="Filter by technology stack"
-            className="enterprise-select font-mono text-xs py-1"
+            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
           >
             <option value="all">Stack: All Cloud / Tech</option>
             {techStacks.map(t => (
@@ -251,7 +258,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             value={architectFilter}
             onChange={(e) => setArchitectFilter(e.target.value)}
             aria-label="Filter by lead architect"
-            className="enterprise-select font-mono text-xs py-1"
+            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
           >
             <option value="all">Lead SA: All Architects</option>
             {architects.map(a => (
@@ -264,7 +271,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             value={complexityFilter}
             onChange={(e) => setComplexityFilter(e.target.value)}
             aria-label="Filter by deal complexity"
-            className="enterprise-select font-mono text-xs py-1"
+            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
           >
             <option value="all">Complexity: All</option>
             <option value="critical">Critical / Multi-Tier</option>
@@ -278,7 +285,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
             aria-label="Filter by deal priority"
-            className="enterprise-select font-mono text-xs py-1"
+            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
           >
             <option value="all">Priority: All</option>
             <option value="p0_urgent">P0 - Urgent</option>
@@ -290,7 +297,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
           {/* Overdue SLA Toggle */}
           <button
             onClick={() => setOnlyOverdue(!onlyOverdue)}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-mono transition-colors ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-mono transition-colors flex-shrink-0 ${
               onlyOverdue 
                 ? 'bg-rose-50 text-rose-800 border-rose-300 font-semibold' 
                 : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
@@ -303,7 +310,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="text-blue-700 hover:underline text-xs font-mono font-medium ml-auto"
+              className="text-blue-700 hover:underline text-xs font-mono font-medium ml-auto flex-shrink-0"
             >
               Reset Filters
             </button>
@@ -580,8 +587,8 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
       </div>
 
       {/* Table Footer Telemetry */}
-      <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between text-xs font-mono text-gray-500">
-        <div className="flex items-center gap-4">
+       <div className="px-3 sm:px-4 py-2 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-gray-500">
+         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span>Showing {filteredOpportunities.length} of {opportunities.length} Total Opportunities</span>
           <span>•</span>
            <span>Filtered Total Value: <strong className="text-gray-900">{formatCurrency(filteredOpportunities.reduce((acc, o) => acc + o.contractValue, 0))}</strong></span>

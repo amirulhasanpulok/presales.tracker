@@ -6,18 +6,18 @@ import { formatCurrency } from '../../utils/currency';
 interface HeaderProps {
   opportunities: Opportunity[];
   onOpenNewOpportunity?: () => void;
-  onOpenCommandPalette: () => void;
   onNavigateTab: (tab: ActiveTab) => void;
   onRefreshData?: () => void;
   onToggleSidebar?: () => void;
+  onOpenCommandPalette?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   opportunities,
-  onOpenCommandPalette,
   onNavigateTab,
   onRefreshData,
   onToggleSidebar,
+  onOpenCommandPalette,
 }) => {
   // Aggregate Metrics
   const totalPipeline = opportunities.reduce((acc, o) => acc + (!['closed_lost', 'cancelled'].includes(o.stage) ? (o.contractValue || 0) : 0), 0);
@@ -96,25 +96,11 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Global Search & Command trigger */}
-        <div className="order-3 sm:order-none basis-full sm:basis-auto flex-1 max-w-none sm:max-w-md mx-0 sm:mx-2">
-          <button
-            onClick={onOpenCommandPalette}
-            type="button"
-            className="w-full flex items-center justify-between px-3 py-1.5 text-xs bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-800 border border-gray-300 rounded transition-colors text-left font-sans group"
-          >
-            <div className="flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-600 transition-colors" />
-              <span>Search deals, RFP scopes, BOQs, stakeholders...</span>
-            </div>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono bg-white border border-gray-300 text-gray-600 rounded">
-              ⌘K
-            </kbd>
-          </button>
-        </div>
-
         {/* Quick Actions & Controls */}
         <div className="flex items-center gap-2">
+          <button onClick={onOpenCommandPalette} className="p-1.5 rounded text-gray-500 hover:text-blue-700 hover:bg-blue-50" aria-label="Open search" title="Search">
+            <Search className="w-4 h-4" />
+          </button>
           <button
             onClick={() => onNavigateTab('notifications')}
             className="p-1.5 rounded text-gray-500 hover:text-gray-900 hover:bg-gray-100 relative transition-colors"

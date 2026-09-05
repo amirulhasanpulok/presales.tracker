@@ -63,7 +63,7 @@ export const ActionCenter: React.FC<ActionCenterProps> = ({
     <div className="space-y-4">
       
       {/* Header Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+       <div className="bg-white border border-gray-200 rounded p-3 sm:p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <CheckSquare className="w-5 h-5 text-blue-600" />
@@ -89,7 +89,7 @@ export const ActionCenter: React.FC<ActionCenterProps> = ({
         </div>
 
         {/* Filter controls */}
-        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100 text-xs">
+         <div className="mobile-filter-scroll flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100 text-xs">
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}

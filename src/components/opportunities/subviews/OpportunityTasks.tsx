@@ -31,7 +31,7 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
   // New task form state
   const [newTitle, setNewTitle] = useState('');
   const [newAssignee, setNewAssignee] = useState(opportunity.leadSolutionArchitect);
-  const [newDueDate, setNewDueDate] = useState('2025-04-10');
+  const [newDueDate, setNewDueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [newPriority, setNewPriority] = useState<DealPriority>('p1_high');
   const [newCategory, setNewCategory] = useState<ActionItem['category']>('Architecture');
 

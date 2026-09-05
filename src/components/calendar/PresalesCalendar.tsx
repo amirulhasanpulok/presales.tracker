@@ -144,7 +144,7 @@ export const PresalesCalendar: React.FC<PresalesCalendarProps> = ({
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white border border-gray-200 rounded p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded p-3 flex flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-gray-700">Filter Session Type:</span>
           <select

@@ -90,7 +90,7 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">Active Deals</div>
               <div className="text-base font-bold font-mono text-blue-700">
-                {clientDeals.length}
+                 {activeDeals.length}
               </div>
             </div>
           </div>
@@ -121,7 +121,7 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
           <div className="bg-white border border-gray-200 rounded">
             <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
-                Active Architectural Opportunities ({clientDeals.length})
+                 Client Opportunities ({clientDeals.length})
               </h3>
               <span className="text-[11px] font-mono text-gray-500">
                 Total Sizing: {formatCurrency(clientDeals.reduce((a, c) => a + c.contractValue, 0))}

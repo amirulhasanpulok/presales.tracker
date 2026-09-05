@@ -20,6 +20,14 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
   const activeCount = opportunities.filter(o => o?.poc && ['active_testing', 'scoping', 'provisioning', 'validating_kpis'].includes(o.poc.status)).length;
   const passedCount = opportunities.filter(o => o?.poc && o.poc.status === 'passed').length;
   const totalBudget = opportunities.reduce((acc, o) => acc + ((o.poc?.allocatedBudget) || 0), 0);
+  const measuredDurations = pocOpps.map(o => {
+    const start = o.poc?.startDate ? new Date(o.poc.startDate).getTime() : 0;
+    const end = o.poc?.actualEndDate || o.poc?.targetEndDate;
+    return start && end ? Math.max(0, (new Date(end).getTime() - start) / 86400000) : null;
+  }).filter((days): days is number => days !== null);
+  const averageDuration = measuredDurations.length ? Math.round(measuredDurations.reduce((a, b) => a + b, 0) / measuredDurations.length * 10) / 10 : 0;
+  const completedPocs = opportunities.filter(o => ['passed', 'failed'].includes(o.poc?.status || '')).length;
+  const conversionRate = completedPocs ? Math.round((passedCount / completedPocs) * 1000) / 10 : 0;
 
   const handleToggleCriterion = (opp: Opportunity, critId: string) => {
     const updatedCrit = (opp.poc?.successCriteria || []).map(c => 
@@ -66,11 +74,11 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Average Validation Duration:</span>
-            <div className="text-sm font-bold text-gray-900">22.4 Days</div>
+            <div className="text-sm font-bold text-gray-900">{averageDuration} Days</div>
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Overall POC-to-Win Conversion:</span>
-            <div className="text-sm font-bold text-emerald-700">87.5%</div>
+            <div className="text-sm font-bold text-emerald-700">{conversionRate}%</div>
           </div>
         </div>
       </div>

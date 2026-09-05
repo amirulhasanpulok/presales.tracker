@@ -8,13 +8,16 @@ import {
   DEFAULT_ROLES,
 } from './rbac';
 import { api, getToken } from './api';
+import { LayoutDashboard, TableProperties, CheckSquare, Building2, MoreHorizontal } from 'lucide-react';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
 import { AccessDenied } from './components/common/AccessDenied';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { ChangePasswordScreen } from './components/auth/ChangePasswordScreen';
 import { ExecutiveDashboard } from './components/dashboard/ExecutiveDashboard';
+import { MobileHomeScreen } from './components/dashboard/MobileHomeScreen';
 import { OpportunityTable } from './components/opportunities/OpportunityTable';
+import { MobileOpportunityScreen } from './components/opportunities/MobileOpportunityScreen';
 import { OpportunityBoard } from './components/opportunities/OpportunityBoard';
 import { OpportunityDetailView } from './components/opportunities/OpportunityDetailView';
 import { OpportunityDetailDrawer } from './components/opportunities/OpportunityDetailDrawer';
@@ -23,12 +26,16 @@ import { NewOpportunityModal } from './components/opportunities/NewOpportunityMo
 import { BOQWorkbench } from './components/boq/BOQWorkbench';
 import { POCTracker } from './components/poc/POCTracker';
 import { ActionCenter } from './components/actions/ActionCenter';
+import { MobileActionCenter } from './components/actions/MobileActionCenter';
 import { HandoverQueue } from './components/handover/HandoverQueue';
 import { CapacityMatrix } from './components/capacity/CapacityMatrix';
 import { PresalesAnalytics } from './components/analytics/PresalesAnalytics';
+import { MobileReportsScreen } from './components/analytics/MobileReportsScreen';
 import { PresalesCalendar } from './components/calendar/PresalesCalendar';
 import { ClientsDirectory } from './components/clients/ClientsDirectory';
 import { ClientDetailsView } from './components/clients/ClientDetailsView';
+import { MobileClientsScreen } from './components/clients/MobileClientsScreen';
+import { MobileWorkCapture } from './components/mobile/MobileWorkCapture';
 import { SalesKAMDirectory } from './components/sales/SalesKAMDirectory';
 import { CentralDocumentsRepo } from './components/documents/CentralDocumentsRepo';
 import { NotificationCenter } from './components/notifications/NotificationCenter';
@@ -102,6 +109,7 @@ const toSalesKAM = (user: UserAccount, opportunities: Opportunity[]): SalesKAM =
     achievedPipeline: assigned.reduce((total, o) => total + (o.contractValue || 0), 0),
     assignedLeadSA: assigned[0]?.leadSolutionArchitect || '—',
     avatar: user.avatar || '',
+    salesTeam: user.salesTeam || 'Unassigned',
   };
 };
 
@@ -468,7 +476,6 @@ export default function App() {
       <Header
         opportunities={opportunities}
         onOpenNewOpportunity={handleCreateOpportunityRequest}
-        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onNavigateTab={(tab) => {
           setActiveTab(tab);
           setFullDetailOpportunity(null);
@@ -476,6 +483,7 @@ export default function App() {
         }}
          onRefreshData={handleResetData}
          onToggleSidebar={() => setIsMobileSidebarOpen(true)}
+         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
 
       {/* Main Workspace Layout */}
@@ -500,7 +508,7 @@ export default function App() {
          />
 
         {/* Dynamic Center Viewport */}
-        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto bg-gray-50 p-2 sm:p-4">
+        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto bg-gray-50 p-2 pb-20 sm:p-4 sm:pb-4">
           {/* RBAC view guard: block access if the active tab is not permitted */}
           {canDo(TAB_PERMISSIONS[activeTab] ?? 'app.access') ? (
           <>
@@ -523,22 +531,17 @@ export default function App() {
           ) : (
             <>
               {activeTab === 'dashboard' && (
-                <ExecutiveDashboard
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
-                  onNavigateTab={(tab) => setActiveTab(tab)}
-                  onOpenNewModal={() => setIsNewModalOpen(true)}
-                />
+                <>
+                  <div className="hidden md:block"><ExecutiveDashboard opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onNavigateTab={(tab) => setActiveTab(tab)} onOpenNewModal={() => setIsNewModalOpen(true)} /></div>
+                  <div className="md:hidden pb-24"><MobileHomeScreen opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onNavigateTab={(tab) => setActiveTab(tab)} onOpenNewOpportunity={handleCreateOpportunityRequest} /></div>
+                </>
               )}
 
               {activeTab === 'opportunities' && (
-                <OpportunityTable
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setSelectedOpportunity(opp)}
-                  onUpdateStage={handleUpdateStage}
-                  onOpenNewModal={() => setIsNewModalOpen(true)}
-                  density={density}
-                />
+                <>
+                  <div className="hidden md:block"><OpportunityTable opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateStage={handleUpdateStage} onOpenNewModal={() => setIsNewModalOpen(true)} density={density} /></div>
+                  <div className="md:hidden"><MobileOpportunityScreen opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateStage={handleUpdateStage} onOpenNewModal={() => setIsNewModalOpen(true)} /></div>
+                </>
               )}
 
               {activeTab === 'board' && (
@@ -576,12 +579,10 @@ export default function App() {
               )}
 
               {activeTab === 'action_center' && (
-                <ActionCenter
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setSelectedOpportunity(opp)}
-                  onUpdateOpportunity={handleUpdateOpportunity}
-                />
+                <><div className="hidden md:block"><ActionCenter opportunities={opportunities} onSelectOpportunity={(opp) => setSelectedOpportunity(opp)} onUpdateOpportunity={handleUpdateOpportunity} /></div><div className="md:hidden pb-24"><MobileActionCenter opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateOpportunity={handleUpdateOpportunity} /></div></>
               )}
+
+              {activeTab === 'mobile_capture' && <div className="pb-24"><MobileWorkCapture opportunities={opportunities} onUpdateOpportunity={handleUpdateOpportunity} onOpenNewOpportunity={handleCreateOpportunityRequest} /></div>}
 
               {activeTab === 'handover_queue' && (
                 <HandoverQueue
@@ -606,34 +607,11 @@ export default function App() {
               )}
 
               {activeTab === 'analytics' && (
-                <PresalesAnalytics
-                  opportunities={opportunities}
-                />
+                <><div className="hidden md:block"><PresalesAnalytics opportunities={opportunities} /></div><div className="md:hidden pb-24"><MobileReportsScreen opportunities={opportunities} onNavigateTab={(tab) => setActiveTab(tab)} /></div></>
               )}
 
               {activeTab === 'clients' && (
-                <ClientsDirectory
-                  clients={clients}
-                  opportunities={opportunities}
-                  onSelectClient={(c) => setSelectedClient(c)}
-                  onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
-                  onAddClient={async (client) => {
-                    try {
-                      const saved = await api.createClient(client);
-                      setClients(current => [saved, ...current.filter(item => item.id !== saved.id)]);
-                    } catch (error) {
-                      console.error('Failed to persist client profile:', error);
-                    }
-                  }}
-                  onUpdateClient={async (client) => {
-                    try {
-                      const saved = await api.updateClient(client.id, client);
-                      setClients(current => current.map(item => item.id === saved.id ? saved : item));
-                    } catch (error) {
-                      console.error('Failed to update client profile:', error);
-                    }
-                  }}
-                />
+                <><div className="hidden md:block"><ClientsDirectory clients={clients} opportunities={opportunities} onSelectClient={(c) => setSelectedClient(c)} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onAddClient={async (client) => { try { const saved = await api.createClient(client); setClients(current => [saved, ...current.filter(item => item.id !== saved.id)]); } catch (error) { console.error('Failed to persist client profile:', error); } }} onUpdateClient={async (client) => { try { const saved = await api.updateClient(client.id, client); setClients(current => current.map(item => item.id === saved.id ? saved : item)); } catch (error) { console.error('Failed to update client profile:', error); } }} /></div><div className="md:hidden"><MobileClientsScreen clients={clients} onSelectClient={(client) => setSelectedClient(client)} /></div></>
               )}
 
               {activeTab === 'sales_kams' && (
@@ -738,6 +716,16 @@ export default function App() {
         </main>
       </div>
 
+      <nav className="mobile-bottom-nav fixed bottom-0 inset-x-0 z-30 md:hidden bg-white border-t border-gray-200 px-2 py-1.5 grid grid-cols-5 gap-1 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]" aria-label="Mobile navigation">
+        {[
+          { id: 'dashboard' as ActiveTab, label: 'Home', Icon: LayoutDashboard },
+          { id: 'opportunities' as ActiveTab, label: 'Deals', Icon: TableProperties },
+          { id: 'action_center' as ActiveTab, label: 'Tasks', Icon: CheckSquare },
+          { id: 'clients' as ActiveTab, label: 'Clients', Icon: Building2 },
+        ].map(item => <button key={item.id} onClick={() => { if (canDo(TAB_PERMISSIONS[item.id] || 'app.access')) { setActiveTab(item.id); setFullDetailOpportunity(null); setSelectedClient(null); } }} className={`flex flex-col items-center gap-0.5 rounded py-1 text-[10px] font-semibold ${activeTab === item.id ? 'text-blue-700 bg-blue-50' : 'text-gray-500'}`}><item.Icon className="w-4 h-4" />{item.label}</button>)}
+        <button onClick={() => setIsMobileSidebarOpen(true)} className="flex flex-col items-center gap-0.5 rounded py-1 text-[10px] font-semibold text-gray-500"><MoreHorizontal className="w-4 h-4" />More</button>
+      </nav>
+
       {/* Slide-over Deep Opportunity Inspector Drawer */}
       {selectedOpportunity && !fullDetailOpportunity && (
         <OpportunityDetailDrawer
@@ -766,9 +754,14 @@ export default function App() {
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         opportunities={opportunities}
+        clients={clients}
         onSelectOpportunity={(opp) => {
           setSelectedOpportunity(null);
           setFullDetailOpportunity(opp);
+        }}
+        onSelectClient={(client) => {
+          setSelectedClient(client);
+          setFullDetailOpportunity(null);
         }}
         onNavigateTab={(tab) => {
           setActiveTab(tab);

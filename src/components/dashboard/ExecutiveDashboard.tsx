@@ -298,8 +298,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                   <th className="py-2.5 px-3 text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 text-gray-800">
-                {needsAttentionDeals.slice(0, 5).map(opp => (
+               <tbody className="divide-y divide-gray-200 text-gray-800">
+                 {needsAttentionDeals.length === 0 && <tr><td colSpan={6} className="py-10 text-center"><CheckCircle2 className="w-7 h-7 mx-auto text-emerald-400" /><div className="mt-2 text-xs font-semibold text-gray-800">No critical opportunities require attention</div><div className="text-[11px] text-gray-500 mt-1">New deals and follow-up risks will appear here automatically.</div></td></tr>}
+                 {needsAttentionDeals.slice(0, 5).map(opp => (
                   <tr 
                     key={opp.id}
                     onClick={() => onSelectOpportunity(opp)}

@@ -94,7 +94,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
             <span className="text-xs font-semibold text-gray-800">{opportunity.clientName}</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <PriorityBadge priority={opportunity.priority} />
             <TechFitBadge score={opportunity.technicalFitScore} />
             <div className="relative">

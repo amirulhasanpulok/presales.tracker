@@ -216,7 +216,7 @@ export const OpportunityImplementation: React.FC<OpportunityImplementationProps>
                 )}
                 <span className="font-medium text-gray-900">Customer Engineering Kickoff Scheduled</span>
               </div>
-              <span className="text-[11px] font-mono text-gray-500">Apr 09</span>
+              <span className="text-[11px] font-mono text-gray-500">{handover.kickoffDate || 'Not scheduled'}</span>
             </div>
           </div>
         </div>

@@ -53,12 +53,77 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  .mobile-filter-scroll {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .mobile-filter-scroll > * {
+    flex-shrink: 0;
+  }
+
+  .mobile-filter-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .mobile-filter-grid > label {
+    min-width: 220px;
+    flex-shrink: 0;
+  }
+
+  .mobile-filter-grid > div {
+    min-width: 320px;
+    flex-shrink: 0;
+  }
+
+  .mobile-bottom-nav {
+    padding-bottom: calc(0.375rem + env(safe-area-inset-bottom));
+  }
+
   button,
   input,
   select,
   textarea {
     max-width: 100%;
+    max-height: 8rem;
+    overflow-y: auto;
   }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-mono {
+    overflow-wrap: anywhere;
+  }
+
+  main h1 {
+    font-size: 0.875rem;
+    line-height: 1.2;
+  }
+
+  main h1 + p,
+  main h2 + p,
+  main h3 + p {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    line-height: 1.25;
+    max-height: 2.5em;
+  }
+}
+
+main h1 + p,
+main h2 + p,
+main h3 + p {
+  max-width: 65ch;
 }
 
 /* High Density Table padding helpers */

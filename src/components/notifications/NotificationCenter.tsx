@@ -94,7 +94,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white border border-gray-200 rounded p-2.5 flex items-center justify-between">
+       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded p-2.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-gray-700">Filter Alerts:</span>
           <select

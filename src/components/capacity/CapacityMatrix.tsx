@@ -64,6 +64,7 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
 
       {/* Engineer Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        {engineers.length === 0 && <div className="md:col-span-2 bg-white border border-dashed border-gray-300 rounded p-10 text-center"><Users className="w-8 h-8 mx-auto text-gray-300" /><h3 className="mt-2 text-sm font-semibold text-gray-800">No presales engineers found</h3><p className="mt-1 text-xs text-gray-500">Add presales users from User Management to populate the workload matrix.</p></div>}
         {engineers.map((eng) => {
           const assignedOpps = opportunities.filter(o => o.leadSolutionArchitect === eng.name);
           const totalVal = assignedOpps.reduce((acc, o) => acc + o.contractValue, 0);

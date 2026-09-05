@@ -222,7 +222,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+        <div className="mobile-filter-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
           <label className="lg:col-span-2">
             <span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Search client, opportunity, OEM, product</span>
             <input value={search} onChange={e => setSearch(e.target.value)} className="enterprise-input w-full text-xs" placeholder="Search..." />
