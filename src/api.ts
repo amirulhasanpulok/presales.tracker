@@ -38,6 +38,17 @@ export interface BootstrapPayload {
   activityTypes?: string[];
   taxonomies?: { tech_stacks?: string[]; industries?: string[]; regions?: string[] };
   workflow?: Array<{ id: string; label: string; shortLabel: string; description: string; requiresScope?: boolean; requiresApprovedBOQ?: boolean }>;
+  policies?: SystemPolicies;
+}
+
+export interface SystemPolicies {
+  minMarginFloor: number;
+  slaWarningThresholdDays: number;
+  sessionTimeoutMinutes: number;
+  requireMFA: boolean;
+  enableSlackWebhooks: boolean;
+  slackWebhookUrl: string;
+  autoArchiveDays: number;
 }
 
 let sessionToken: string | null = null;
@@ -127,6 +138,9 @@ export const api = {
 
   updateTaxonomy: (taxonomies: { techStacks: string[]; industries: string[]; regions: string[] }) =>
     request<typeof taxonomies>('/settings/taxonomy', { method: 'PUT', body: JSON.stringify(taxonomies) }),
+
+  updatePolicies: (policies: SystemPolicies) =>
+    request<SystemPolicies>('/settings/policies', { method: 'PUT', body: JSON.stringify(policies) }),
 
   /** Clears the stored session locally. */
   logout(): void {

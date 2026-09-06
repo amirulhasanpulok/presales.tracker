@@ -91,6 +91,7 @@ export async function initSchema() {
     INSERT INTO system_settings (setting_key, setting_value) VALUES ('tech_stacks', '[]') ON CONFLICT (setting_key) DO NOTHING;
     INSERT INTO system_settings (setting_key, setting_value) VALUES ('industries', '[]') ON CONFLICT (setting_key) DO NOTHING;
     INSERT INTO system_settings (setting_key, setting_value) VALUES ('regions', '[]') ON CONFLICT (setting_key) DO NOTHING;
+    INSERT INTO system_settings (setting_key, setting_value) VALUES ('policy_config', '{"minMarginFloor":35,"slaWarningThresholdDays":14,"sessionTimeoutMinutes":60,"requireMFA":true,"enableSlackWebhooks":false,"slackWebhookUrl":"","autoArchiveDays":90}') ON CONFLICT (setting_key) DO NOTHING;
 
     CREATE TABLE IF NOT EXISTS audit_logs (
       id BIGSERIAL PRIMARY KEY,

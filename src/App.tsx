@@ -8,7 +8,7 @@ import {
   DEFAULT_ROLES,
 } from './rbac';
 import { applyWorkflowConfig } from './config/workflow';
-import { api, getToken } from './api';
+import { api, getToken, SystemPolicies } from './api';
 import { LayoutDashboard, TableProperties, CheckSquare, Building2, MoreHorizontal } from 'lucide-react';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
@@ -211,6 +211,7 @@ export default function App() {
   const [oems, setOems] = useState<OEMEntry[]>([]);
   const [products, setProducts] = useState<ProductCatalogEntry[]>([]);
   const [roles, setRoles] = useState<RolePermission[]>(DEFAULT_ROLES as RolePermission[]);
+  const [policies, setPolicies] = useState<SystemPolicies | null>(null);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
@@ -236,6 +237,7 @@ export default function App() {
     hydrateActivityTypes(data.activityTypes);
     hydrateTaxonomies(data.taxonomies);
     applyWorkflowConfig(data.workflow || []);
+    if (data.policies) setPolicies(data.policies);
     setRoles((data.roles ?? []).map(toRoleState));
     setOpportunities((data.opportunities ?? []) as Opportunity[]);
     setClients((data.clients ?? []) as ClientAccount[]);
@@ -737,7 +739,7 @@ export default function App() {
               )}
 
               {activeTab === 'system_settings' && (
-                <SystemSettingsView />
+                <SystemSettingsView policies={policies || undefined} onSaved={setPolicies} />
               )}
 
               {activeTab === 'bulk_upload' && <BulkUploadView />}

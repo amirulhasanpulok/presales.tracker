@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { api, SystemPolicies } from '../../api';
 import { 
   Sliders, 
   Clock, 
@@ -11,20 +12,32 @@ import {
   Lock
 } from 'lucide-react';
 
-export const SystemSettingsView: React.FC = () => {
-  const [minMarginFloor, setMinMarginFloor] = useState(35);
-  const [slaWarningThresholdDays, setSlaWarningThresholdDays] = useState(14);
-  const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState(60);
-  const [requireMFA, setRequireMFA] = useState(true);
-  const [enableSlackWebhooks, setEnableSlackWebhooks] = useState(true);
-  const [slackWebhookUrl, setSlackWebhookUrl] = useState('https://hooks.slack.com/services/T00/B00/XXXX');
-  const [autoArchiveDays, setAutoArchiveDays] = useState(90);
+interface Props { policies?: SystemPolicies; onSaved?: (policies: SystemPolicies) => void; }
+
+const DEFAULT_POLICIES: SystemPolicies = { minMarginFloor: 35, slaWarningThresholdDays: 14, sessionTimeoutMinutes: 60, requireMFA: true, enableSlackWebhooks: false, slackWebhookUrl: '', autoArchiveDays: 90 };
+
+export const SystemSettingsView: React.FC<Props> = ({ policies, onSaved }) => {
+  const initial = policies || DEFAULT_POLICIES;
+  const [minMarginFloor, setMinMarginFloor] = useState(initial.minMarginFloor);
+  const [slaWarningThresholdDays, setSlaWarningThresholdDays] = useState(initial.slaWarningThresholdDays);
+  const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState(initial.sessionTimeoutMinutes);
+  const [requireMFA, setRequireMFA] = useState(initial.requireMFA);
+  const [enableSlackWebhooks, setEnableSlackWebhooks] = useState(initial.enableSlackWebhooks);
+  const [slackWebhookUrl, setSlackWebhookUrl] = useState(initial.slackWebhookUrl);
+  const [autoArchiveDays, setAutoArchiveDays] = useState(initial.autoArchiveDays);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    try {
+      const saved = await api.updatePolicies({ minMarginFloor, slaWarningThresholdDays, sessionTimeoutMinutes, requireMFA, enableSlackWebhooks, slackWebhookUrl, autoArchiveDays });
+      onSaved?.(saved);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    } catch {
+      setSavedSuccess(false);
+      window.alert('Could not save system policies.');
+    }
   };
 
   return (

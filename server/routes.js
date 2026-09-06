@@ -34,6 +34,23 @@ function parseWorkflow(value) {
   }
 }
 
+function parsePolicy(value) {
+  try {
+    const policy = JSON.parse(value || '{}');
+    return {
+      minMarginFloor: Math.min(Math.max(Number(policy.minMarginFloor) || 35, 0), 100),
+      slaWarningThresholdDays: Math.min(Math.max(Number(policy.slaWarningThresholdDays) || 14, 1), 365),
+      sessionTimeoutMinutes: Math.min(Math.max(Number(policy.sessionTimeoutMinutes) || 60, 5), 1440),
+      requireMFA: Boolean(policy.requireMFA),
+      enableSlackWebhooks: Boolean(policy.enableSlackWebhooks),
+      slackWebhookUrl: typeof policy.slackWebhookUrl === 'string' ? policy.slackWebhookUrl.slice(0, 500) : '',
+      autoArchiveDays: Math.min(Math.max(Number(policy.autoArchiveDays) || 90, 1), 3650),
+    };
+  } catch {
+    return { minMarginFloor: 35, slaWarningThresholdDays: 14, sessionTimeoutMinutes: 60, requireMFA: true, enableSlackWebhooks: false, slackWebhookUrl: '', autoArchiveDays: 90 };
+  }
+}
+
 async function getWorkflowStages() {
   const result = await query("SELECT setting_value FROM system_settings WHERE setting_key = 'workflow_stages'");
   return parseWorkflow(result.rows[0]?.setting_value);
@@ -237,7 +254,7 @@ router.get('/bootstrap', authenticate, async (req, res) => {
        FROM product_catalog p LEFT JOIN oems o ON p.oem_id = o.id
        ORDER BY o.name, p.name`,
     ),
-     query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('currency', 'activity_types', 'tech_stacks', 'industries', 'regions', 'workflow_stages')"),
+     query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('currency', 'activity_types', 'tech_stacks', 'industries', 'regions', 'workflow_stages', 'policy_config')"),
   ]);
   const scopedOpportunityDocs = (opportunities.rows || []).map(o => o.doc).filter(doc => isAdministrator || canAccessOpportunity(req, doc));
   const scopedClientDocs = (clients.rows || []).map(c => c.doc);
@@ -259,6 +276,7 @@ router.get('/bootstrap', authenticate, async (req, res) => {
        try { const value = JSON.parse(systemSettings.rows.find(s => s.setting_key === key)?.setting_value || '[]'); return [key, Array.isArray(value) ? value : []]; } catch { return [key, []]; }
      })),
      workflow: parseWorkflow(systemSettings.rows.find(s => s.setting_key === 'workflow_stages')?.setting_value),
+     policies: can(req.role, req.user, 'sys.integrations') ? parsePolicy(systemSettings.rows.find(s => s.setting_key === 'policy_config')?.setting_value) : undefined,
     users: can(req.role, req.user, 'sys.users') ? (users.rows || []) : [req.user],
     auditLogs: can(req.role, req.user, 'sys.audit') ? (auditLogs.rows || []) : [],
   });
@@ -299,6 +317,14 @@ router.put('/settings/taxonomy', authenticate, requirePermission('sys.integratio
   ]);
   await audit({ req, action: 'settings.taxonomy.update', targetType: 'system_settings', targetId: 'taxonomy', meta: { counts: Object.fromEntries(Object.entries(taxonomies).map(([key, values]) => [key, values.length])) } });
   res.json(taxonomies);
+});
+
+router.put('/settings/policies', authenticate, requirePermission('sys.integrations'), async (req, res) => {
+  const policy = parsePolicy(JSON.stringify(req.body || {}));
+  if (policy.enableSlackWebhooks && policy.slackWebhookUrl && !/^https:\/\//i.test(policy.slackWebhookUrl)) return res.status(400).json({ error: 'invalid_webhook_url' });
+  await query("INSERT INTO system_settings (setting_key, setting_value, updated_at) VALUES ('policy_config', $1, now()) ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = now()", [JSON.stringify(policy)]);
+  await audit({ req, action: 'settings.policies.update', targetType: 'system_settings', targetId: 'policy_config', meta: { ...policy, slackWebhookUrl: policy.slackWebhookUrl ? '[configured]' : '' } });
+  res.json(policy);
 });
 
 // ---------------------------------------------------------------------------
