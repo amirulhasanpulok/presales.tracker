@@ -45,6 +45,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
   const [architectFilter, setArchitectFilter] = useState<string>('all');
   const [complexityFilter, setComplexityFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [sourceStatusFilter, setSourceStatusFilter] = useState<string>('all');
   const [onlyOverdue, setOnlyOverdue] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -61,6 +62,8 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
     return Array.from(new Set(opportunities.map(o => o.leadSolutionArchitect))).filter(Boolean);
   }, [opportunities]);
 
+  const sourceStatuses = useMemo(() => Array.from(new Set(opportunities.map(o => o.lastImportedStatus).filter(Boolean))).sort(), [opportunities]);
+
   // Filter and Search logic
   const filteredOpportunities = useMemo(() => {
     return opportunities.filter((opp) => {
@@ -70,7 +73,8 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
         const matchesCode = (opp.code || '').toLowerCase().includes(q);
         const matchesName = (opp.name || '').toLowerCase().includes(q);
         const matchesClient = (opp.clientName || '').toLowerCase().includes(q);
-        const matchesArch = (opp.leadSolutionArchitect || '').toLowerCase().includes(q);
+         const matchesArch = (opp.leadSolutionArchitect || '').toLowerCase().includes(q);
+         const matchesStatus = (opp.lastImportedStatus || '').toLowerCase().includes(q);
          const matchesTech = (opp.primaryTechStack || '').toLowerCase().includes(q) || (opp.technologies || []).some(t => (t || '').toLowerCase().includes(q));
          const relatedText = [
            ...(opp.scopes || []),
@@ -79,7 +83,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
            ...(opp.stakeholders || []).flatMap(stakeholder => [stakeholder.name, stakeholder.email, stakeholder.role]),
            ...(opp.boq?.items || []).flatMap(item => [item.oem, item.productName, item.model, item.partNumber, item.itemCode, item.description]),
          ].filter(Boolean).join(' ').toLowerCase();
-         if (!matchesCode && !matchesName && !matchesClient && !matchesArch && !matchesTech && !relatedText.includes(q)) {
+          if (!matchesCode && !matchesName && !matchesClient && !matchesArch && !matchesStatus && !matchesTech && !relatedText.includes(q)) {
           return false;
         }
       }
@@ -90,6 +94,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
       if (architectFilter !== 'all' && opp.leadSolutionArchitect !== architectFilter) return false;
       if (complexityFilter !== 'all' && opp.dealComplexity !== complexityFilter) return false;
       if (priorityFilter !== 'all' && opp.priority !== priorityFilter) return false;
+      if (sourceStatusFilter !== 'all' && opp.lastImportedStatus !== sourceStatusFilter) return false;
 
       // Overdue SLA Filter
       if (onlyOverdue) {
@@ -120,6 +125,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
     architectFilter,
     complexityFilter,
     priorityFilter,
+    sourceStatusFilter,
     onlyOverdue,
     sortField,
     sortAsc
@@ -149,7 +155,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
     );
   };
 
-  const hasActiveFilters = stageFilter !== 'all' || techStackFilter !== 'all' || architectFilter !== 'all' || complexityFilter !== 'all' || priorityFilter !== 'all' || onlyOverdue || searchQuery !== '';
+  const hasActiveFilters = stageFilter !== 'all' || techStackFilter !== 'all' || architectFilter !== 'all' || complexityFilter !== 'all' || priorityFilter !== 'all' || sourceStatusFilter !== 'all' || onlyOverdue || searchQuery !== '';
 
   const resetFilters = () => {
     setSearchQuery('');
@@ -158,6 +164,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
     setArchitectFilter('all');
     setComplexityFilter('all');
     setPriorityFilter('all');
+    setSourceStatusFilter('all');
     setOnlyOverdue(false);
   };
 
@@ -292,6 +299,11 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             <option value="p1_high">P1 - High</option>
             <option value="p2_medium">P2 - Medium</option>
             <option value="p3_low">P3 - Low</option>
+          </select>
+
+          <select value={sourceStatusFilter} onChange={e => setSourceStatusFilter(e.target.value)} aria-label="Filter by source status" className="enterprise-select font-mono text-xs py-1 flex-shrink-0">
+            <option value="all">Source Status: All</option>
+            {sourceStatuses.map(status => <option key={status} value={status}>{status}</option>)}
           </select>
 
           {/* Overdue SLA Toggle */}

@@ -231,6 +231,9 @@ export interface Opportunity {
   leadSolutionArchitect: string;
   leadArchitectAvatar?: string;
   accountExecutive: string;
+  lastImportedStatus?: string;
+  statusSource?: string;
+  importReviewRequired?: boolean;
   salesTeam?: string;
   postsalesOwner?: string;
   oemEngagements?: string[];
