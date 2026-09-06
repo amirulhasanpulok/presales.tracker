@@ -8,6 +8,14 @@ const outputFile = process.env.IMPORT_OUTPUT || '/home/pulok/data/normalized_opp
 
 const clean = value => String(value ?? '').replace(/^"|"$/g, '').replace(/\s+/g, ' ').trim();
 const key = value => clean(value).toLowerCase().replace(/^(mr|ms|md|mrs)\.?\s+/i, '').replace(/[^a-z0-9]/g, '');
+function deriveStage(group) {
+  const types = group.activities.map(activity => clean(activity.type).toLowerCase());
+  if (types.some(type => /tender|financial proposal|business proposal|price quotation|quotation|pre tender|work order/.test(type))) return 'commercial_negotiation';
+  if (group.boqSubmitted || types.some(type => /boq|bom/.test(type))) return 'proposal_boq';
+  if (types.some(type => /technical proposal|technical solution|solution plan|planning|product analysis|scope analysis/.test(type))) return 'solution_design';
+  if (types.some(type => /meeting|rfq|inhouse|oem|event/.test(type))) return 'tech_discovery';
+  return 'qualification';
+}
 
 function parseTSV(input) {
   const rows = [[]]; let cell = ''; let quoted = false;
@@ -74,7 +82,8 @@ const opportunities = [...groups.values()].map(group => {
   const digest = crypto.createHash('sha1').update(key(group.clientName)).digest('hex').slice(0, 12);
   const status = group.lastStatus.toLowerCase();
   const outcome = status === 'win' ? 'won' : status === 'lost' || status === 'loss' ? 'lost' : status === 'cancel' ? 'cancelled' : status === 'postponed' ? 'on_hold' : 'open';
-  const stage = outcome === 'won' ? 'closed_won' : outcome === 'lost' ? 'closed_lost' : outcome === 'cancelled' ? 'cancelled' : outcome === 'on_hold' ? 'on_hold' : group.boqSubmitted ? 'proposal_boq' : 'qualification';
+  const derivedStage = deriveStage(group);
+  const stage = outcome === 'won' ? 'closed_won' : outcome === 'lost' ? 'closed_lost' : outcome === 'cancelled' ? 'cancelled' : outcome === 'on_hold' ? 'on_hold' : derivedStage;
   const salesKams = [...group.salesKams]; const presalesEngineers = [...group.presalesEngineers];
   return { id: `import-opp-${digest}`, code: `IMPORT-${digest.slice(0, 8).toUpperCase()}`, name: `${group.clientName} Presales Activity`, clientName: group.clientName, stage, outcome: { outcome }, lastStatus: group.lastStatus, statusSource: group.statusSource, statusDate: group.statusDate, boq: { approvalStatus: group.boqSubmitted ? 'pending_sa_lead' : 'draft', sourceSubmitted: group.boqSubmitted }, accountExecutive: salesKams[0] || 'Unassigned', leadSolutionArchitect: presalesEngineers[0] || 'Unassigned', salesKams, presalesEngineers, assignmentReviewRequired: !salesKams.length || !presalesEngineers.length, priority: 'p2_medium', primaryTechStack: 'Unassigned', technologies: [...group.scopes], scopes: [...group.scopes], activities: group.activities, sourceFiles: [...group.sources], importReviewRequired: true };
 });

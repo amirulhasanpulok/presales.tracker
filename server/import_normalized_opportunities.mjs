@@ -124,7 +124,7 @@ const opportunities = sources.map(buildOpportunity);
 const errors = opportunities.flatMap(item => {
   const problems = [];
   if (!item.id || !item.clientName || !item.name) problems.push('missing identity');
-  if (!['closed_won', 'closed_lost', 'cancelled', 'on_hold', 'qualification', 'proposal_boq'].includes(item.stage)) problems.push(`invalid stage ${item.stage}`);
+  if (!['closed_won', 'closed_lost', 'cancelled', 'on_hold', 'qualification', 'solution_design', 'tech_discovery', 'proposal_boq', 'commercial_negotiation'].includes(item.stage)) problems.push(`invalid stage ${item.stage}`);
   return problems.length ? [{ id: item.id, problems }] : [];
 });
 if (errors.length) throw new Error(`Normalized import validation failed: ${JSON.stringify(errors.slice(0, 10))}`);
