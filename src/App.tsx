@@ -7,6 +7,7 @@ import {
   PERMISSION_CATALOG,
   DEFAULT_ROLES,
 } from './rbac';
+import { applyWorkflowConfig } from './config/workflow';
 import { api, getToken } from './api';
 import { LayoutDashboard, TableProperties, CheckSquare, Building2, MoreHorizontal } from 'lucide-react';
 import { Header } from './components/layout/Header';
@@ -234,6 +235,7 @@ export default function App() {
     hydrateCurrency(data.currency);
     hydrateActivityTypes(data.activityTypes);
     hydrateTaxonomies(data.taxonomies);
+    applyWorkflowConfig(data.workflow || []);
     setRoles((data.roles ?? []).map(toRoleState));
     setOpportunities((data.opportunities ?? []) as Opportunity[]);
     setClients((data.clients ?? []) as ClientAccount[]);

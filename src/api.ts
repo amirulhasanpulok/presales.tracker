@@ -37,6 +37,7 @@ export interface BootstrapPayload {
   currency?: string;
   activityTypes?: string[];
   taxonomies?: { tech_stacks?: string[]; industries?: string[]; regions?: string[] };
+  workflow?: Array<{ id: string; label: string; shortLabel: string; description: string; requiresScope?: boolean; requiresApprovedBOQ?: boolean }>;
 }
 
 let sessionToken: string | null = null;

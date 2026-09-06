@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
-import { query } from './db.js';
+import { query, DEFAULT_WORKFLOW_STAGES } from './db.js';
 import { signToken, verifyPassword, hashPassword, authenticate, loadPrincipal, validatePassword } from './auth.js';
 import { can, requirePermission, requireAnyEditPermission } from './rbac.js';
 import { audit } from './audit.js';
@@ -21,18 +21,23 @@ function loadSeedCache() {
 }
 
 const router = express.Router();
-const ALLOWED_OPPORTUNITY_STAGES = new Set([
-  'qualification',
-  'tech_discovery',
-  'solution_design',
-  'poc_demo',
-  'proposal_boq',
-  'commercial_negotiation',
-  'closed_won',
-  'closed_lost',
-  'on_hold',
-  'cancelled',
-]);
+function fallbackWorkflow() {
+  return DEFAULT_WORKFLOW_STAGES.map(([id, label, shortLabel, description, requiresScope, requiresApprovedBOQ]) => ({ id, label, shortLabel, description, requiresScope, requiresApprovedBOQ }));
+}
+
+function parseWorkflow(value) {
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) && parsed.length ? parsed.filter(stage => stage && typeof stage.id === 'string') : fallbackWorkflow();
+  } catch {
+    return fallbackWorkflow();
+  }
+}
+
+async function getWorkflowStages() {
+  const result = await query("SELECT setting_value FROM system_settings WHERE setting_key = 'workflow_stages'");
+  return parseWorkflow(result.rows[0]?.setting_value);
+}
 
 function canAccessOpportunity(req, doc) {
   if (can(req.role, req.user, 'sys.users') || can(req.role, req.user, 'sys.rbac')) return true;
@@ -57,11 +62,11 @@ async function canAccessClient(req, clientDoc) {
   return (opportunities.rows || []).some(row => canAccessOpportunity(req, row.doc || {}));
 }
 
-function stagePrerequisites(doc, nextStage) {
+function stagePrerequisites(doc, nextStage, workflow = fallbackWorkflow()) {
   const missing = [];
-  if (nextStage === 'proposal_boq' && !(doc.scopes || []).length) missing.push('At least one solution scope');
-  if (nextStage === 'commercial_negotiation' && !['approved', 'finalized'].includes(doc.boq?.approvalStatus)) missing.push('Approved BOQ');
-  if (nextStage === 'closed_won' && !['approved', 'finalized'].includes(doc.boq?.approvalStatus)) missing.push('Approved BOQ');
+  const stage = workflow.find(item => item.id === nextStage);
+  if (stage?.requiresScope && !(doc.scopes || []).length) missing.push('At least one solution scope');
+  if (stage?.requiresApprovedBOQ && !['approved', 'finalized'].includes(doc.boq?.approvalStatus)) missing.push('Approved BOQ');
   return missing;
 }
 
@@ -232,7 +237,7 @@ router.get('/bootstrap', authenticate, async (req, res) => {
        FROM product_catalog p LEFT JOIN oems o ON p.oem_id = o.id
        ORDER BY o.name, p.name`,
     ),
-     query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('currency', 'activity_types', 'tech_stacks', 'industries', 'regions')"),
+     query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('currency', 'activity_types', 'tech_stacks', 'industries', 'regions', 'workflow_stages')"),
   ]);
   const scopedOpportunityDocs = (opportunities.rows || []).map(o => o.doc).filter(doc => isAdministrator || canAccessOpportunity(req, doc));
   const scopedClientDocs = (clients.rows || []).map(c => c.doc);
@@ -253,6 +258,7 @@ router.get('/bootstrap', authenticate, async (req, res) => {
      taxonomies: Object.fromEntries(['tech_stacks', 'industries', 'regions'].map(key => {
        try { const value = JSON.parse(systemSettings.rows.find(s => s.setting_key === key)?.setting_value || '[]'); return [key, Array.isArray(value) ? value : []]; } catch { return [key, []]; }
      })),
+     workflow: parseWorkflow(systemSettings.rows.find(s => s.setting_key === 'workflow_stages')?.setting_value),
     users: can(req.role, req.user, 'sys.users') ? (users.rows || []) : [req.user],
     auditLogs: can(req.role, req.user, 'sys.audit') ? (auditLogs.rows || []) : [],
   });
@@ -348,11 +354,13 @@ function prependActivities(doc, activities) {
 
 router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async (req, res) => {
   const doc = req.body;
+  const workflow = await getWorkflowStages();
+  const allowedStages = new Set(workflow.map(stage => stage.id));
   if (!doc || typeof doc !== 'object' || doc.id !== req.params.id) {
     return res.status(400).json({ error: 'invalid_opportunity' });
   }
-  if (doc.stage !== undefined && !ALLOWED_OPPORTUNITY_STAGES.has(String(doc.stage))) {
-    return res.status(422).json({ error: 'unsupported_stage', allowed: [...ALLOWED_OPPORTUNITY_STAGES] });
+  if (doc.stage !== undefined && !allowedStages.has(String(doc.stage))) {
+    return res.status(422).json({ error: 'unsupported_stage', allowed: [...allowedStages] });
   }
   const current = await query('SELECT doc FROM opportunities WHERE id = $1', [req.params.id]);
   if (!current.rowCount) return res.status(404).json({ error: 'not_found' });
@@ -361,7 +369,7 @@ router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async
   const deniedPermission = validateOpportunityChanges(req, previousDoc, doc);
   if (deniedPermission) return res.status(403).json({ error: 'field_permission_required', required: deniedPermission });
   if (doc.stage !== undefined && doc.stage !== previousDoc.stage) {
-    const missing = stagePrerequisites(previousDoc, String(doc.stage));
+    const missing = stagePrerequisites(previousDoc, String(doc.stage), workflow);
     if (missing.length) return res.status(422).json({ error: 'stage_prerequisites_incomplete', stage: doc.stage, missing });
   }
   if (previousDoc.handover?.isHandedOver !== doc.handover?.isHandedOver) return res.status(403).json({ error: 'handover_signoff_required' });
@@ -540,8 +548,10 @@ router.post('/opportunities/:id/handover/signoff', authenticate, requirePermissi
 
 router.post('/opportunities/:id/stage', authenticate, requirePermission('promote_stage'), async (req, res) => {
   const { stage } = req.body || {};
+  const workflow = await getWorkflowStages();
+  const allowedStages = new Set(workflow.map(item => item.id));
   if (!stage) return res.status(400).json({ error: 'invalid_stage' });
-  if (!ALLOWED_OPPORTUNITY_STAGES.has(String(stage))) return res.status(422).json({ error: 'unsupported_stage', allowed: [...ALLOWED_OPPORTUNITY_STAGES] });
+  if (!allowedStages.has(String(stage))) return res.status(422).json({ error: 'unsupported_stage', allowed: [...allowedStages] });
   const entry = makeActivity({
     req,
     type: 'Stage Change',
@@ -553,7 +563,7 @@ router.post('/opportunities/:id/stage', authenticate, requirePermission('promote
   if (!cur.rowCount) return res.status(404).json({ error: 'not_found' });
   const doc = { ...cur.rows[0].doc, stage: String(stage), updatedAt: new Date().toISOString() };
   if (!canAccessOpportunity(req, cur.rows[0].doc)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
-  const missing = stagePrerequisites(cur.rows[0].doc, String(stage));
+  const missing = stagePrerequisites(cur.rows[0].doc, String(stage), workflow);
   if (missing.length) return res.status(422).json({ error: 'stage_prerequisites_incomplete', stage, missing });
   doc.activities = prependActivities(doc, [entry]);
   const result = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 RETURNING doc', [

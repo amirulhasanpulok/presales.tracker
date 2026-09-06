@@ -207,6 +207,24 @@ export const DEFAULT_SCOPES = [
   ['COLLABORATION & COMMUNICATION', 'Bulk Email Service'], ['COLLABORATION & COMMUNICATION', 'Bulk SMS Service'],
 ];
 
+export const DEFAULT_WORKFLOW_STAGES = [
+  ['qualification', '1. Technical Qualification', 'Qualification', 'Initial intake, technical feasibility scoring, BANT qualification', false, false],
+  ['tech_discovery', '2. Technical Discovery', 'Discovery', 'Architecture deep-dive, pain points, compliance & legacy stack audit', false, false],
+  ['solution_design', '3. Solution Architecture', 'Solution Design', 'Target state diagrams, sizing models, integration feasibility specs', false, false],
+  ['poc_demo', '4. POC & Technical Validation', 'POC / Demo', 'Live lab benchmarks, customer KPI validation, blocker resolution', false, false],
+  ['proposal_boq', '5. Proposal & BOQ Sizing', 'Proposal / BOQ', 'Bill of Quantities pricing, margin governance, SOW generation', true, false],
+  ['commercial_negotiation', '6. Commercial & Security Signoff', 'Negotiation', 'InfoSec clearance, MSA review, executive approval gate', false, true],
+  ['closed_won', '7. Closed Won (Handover)', 'Won / Handover', 'Technical knowledge transfer to Delivery / Professional Services', false, true],
+  ['closed_lost', '8. Closed Lost', 'Closed Lost', 'Technical post-mortem, lost reason, competitor analysis', false, false],
+  ['on_hold', '9. On Hold', 'On Hold', 'Opportunity paused pending client, commercial, or technical action', false, false],
+  ['cancelled', '10. Cancelled', 'Cancelled', 'Opportunity withdrawn or no longer being pursued', false, false],
+];
+
+export async function ensureWorkflowConfig() {
+  const stages = DEFAULT_WORKFLOW_STAGES.map(([id, label, shortLabel, description, requiresScope, requiresApprovedBOQ]) => ({ id, label, shortLabel, description, requiresScope, requiresApprovedBOQ }));
+  await query("INSERT INTO system_settings (setting_key, setting_value, updated_at) VALUES ('workflow_stages', $1, now()) ON CONFLICT (setting_key) DO NOTHING", [JSON.stringify(stages)]);
+}
+
 export async function seedScopeCatalog() {
   for (let i = 0; i < DEFAULT_SCOPES.length; i += 1) {
     const [category, name] = DEFAULT_SCOPES[i];

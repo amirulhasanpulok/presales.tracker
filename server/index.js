@@ -4,7 +4,7 @@ import cors from 'cors';
 import compression from 'compression';
 import { randomUUID } from 'node:crypto';
 import routes from './routes.js';
-import { initSchema, ensureSystemRoles, seedScopeCatalog, seedOEMCatalog, seedProductCatalog } from './db.js';
+import { initSchema, ensureSystemRoles, ensureWorkflowConfig, seedScopeCatalog, seedOEMCatalog, seedProductCatalog } from './db.js';
 
 const app = express();
 
@@ -67,7 +67,7 @@ if (!OFFICIAL_PATTERN.test(process.env.JWT_SECRET || '')) {
 
 async function start() {
   await initSchema();
-  await Promise.all([ensureSystemRoles(), seedScopeCatalog(), seedOEMCatalog()]);
+  await Promise.all([ensureSystemRoles(), ensureWorkflowConfig(), seedScopeCatalog(), seedOEMCatalog()]);
   await seedProductCatalog();
   app.listen(port, '127.0.0.1', () => {
     console.log(`presales-api listening on http://127.0.0.1:${port} (db: ${process.env.PGDATABASE || 'presales'})`);

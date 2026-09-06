@@ -10,3 +10,19 @@ export const STAGE_CONFIG: Record<string, { label: string; shortLabel: string; c
   on_hold: { label: '9. On Hold', shortLabel: 'On Hold', color: 'text-amber-800', bg: 'bg-amber-50', borderColor: 'border-amber-200', description: 'Opportunity paused pending client, commercial, or technical action' },
   cancelled: { label: '10. Cancelled', shortLabel: 'Cancelled', color: 'text-gray-500', bg: 'bg-gray-100', borderColor: 'border-gray-300', description: 'Opportunity withdrawn or no longer being pursued' },
 };
+
+// The database controls stage order and business-facing copy at runtime. CSS
+// tokens remain local because they are presentation policy, not business data.
+export function applyWorkflowConfig(stages: Array<{ id: string; label?: string; shortLabel?: string; description?: string }>): void {
+  if (!Array.isArray(stages) || !stages.length) return;
+  const current = { ...STAGE_CONFIG };
+  const next: typeof STAGE_CONFIG = {};
+  for (const stage of stages) {
+    const style = current[stage.id];
+    if (!style) continue;
+    next[stage.id] = { ...style, label: stage.label || style.label, shortLabel: stage.shortLabel || style.shortLabel, description: stage.description || style.description };
+  }
+  if (!Object.keys(next).length) return;
+  for (const key of Object.keys(STAGE_CONFIG)) delete STAGE_CONFIG[key];
+  Object.assign(STAGE_CONFIG, next);
+}
