@@ -22,6 +22,19 @@ API_PORT="${API_PORT:-4000}"
 ENABLE_TLS="${ENABLE_TLS:-0}"
 ADMIN_EMAILS="${ADMIN_EMAILS:-}"
 
+if [[ ! "$API_PORT" =~ ^[0-9]+$ ]] || (( API_PORT < 1 || API_PORT > 65535 )); then
+  echo "API_PORT must be a valid TCP port." >&2
+  exit 1
+fi
+if [[ ! "$DB_NAME" =~ ^[A-Za-z_][A-Za-z0-9_]*$ || ! "$DB_USER" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+  echo "DB_NAME and DB_USER must contain only PostgreSQL identifier characters." >&2
+  exit 1
+fi
+if [[ "$ENABLE_TLS" == "1" && -z "${CERTBOT_EMAIL:-}" ]]; then
+  echo "CERTBOT_EMAIL is required when ENABLE_TLS=1." >&2
+  exit 1
+fi
+
 if [[ -z "$DB_PASSWORD" ]]; then
   DB_PASSWORD="$(openssl rand -hex 24)"
 fi
@@ -33,7 +46,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y git curl ca-certificates build-essential postgresql nginx openssl
 
-if ! command -v node >/dev/null 2>&1; then
+if ! command -v node >/dev/null 2>&1 || [[ "$(node -p 'process.versions.node.split(".")[0]')" -lt 20 ]]; then
   curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 https://deb.nodesource.com/setup_20.x | bash -
   apt-get install -y nodejs
 fi
@@ -51,8 +64,13 @@ else
   git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
 fi
 
-sudo -u postgres psql -v ON_ERROR_STOP=1 \
-  -v db_name="$DB_NAME" -v db_user="$DB_USER" -v db_password="$DB_PASSWORD" <<'SQL'
+systemctl enable --now postgresql
+
+sudo -u postgres env DB_NAME="$DB_NAME" DB_USER="$DB_USER" DB_PASSWORD="$DB_PASSWORD" \
+  psql -v ON_ERROR_STOP=1 <<'SQL'
+\getenv db_name DB_NAME
+\getenv db_user DB_USER
+\getenv db_password DB_PASSWORD
 SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', :'db_user', :'db_password')
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'db_user')\gexec
 ALTER ROLE :"db_user" WITH LOGIN PASSWORD :'db_password';
@@ -61,18 +79,12 @@ WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = :'db_name')\gexec
 SQL
 
 umask 077
-cat > "$APP_DIR/server/.env" <<EOF
-PORT=$API_PORT
-PGHOST=127.0.0.1
-PGPORT=5432
-PGUSER=$DB_USER
-PGPASSWORD=$DB_PASSWORD
-PGDATABASE=$DB_NAME
-JWT_SECRET=$JWT_SECRET
-JWT_EXPIRES_IN=12h
-CORS_ORIGIN=
-ADMIN_EMAILS=$ADMIN_EMAILS
-EOF
+{
+  printf 'PORT=%s\n' "$API_PORT"
+  printf 'PGHOST=127.0.0.1\nPGPORT=5432\n'
+  printf 'PGUSER=%s\nPGPASSWORD=%s\nPGDATABASE=%s\n' "$DB_USER" "$DB_PASSWORD" "$DB_NAME"
+  printf 'JWT_SECRET=%s\nJWT_EXPIRES_IN=12h\nCORS_ORIGIN=\nADMIN_EMAILS=%s\n' "$JWT_SECRET" "$ADMIN_EMAILS"
+} > "$APP_DIR/server/.env"
 
 cd "$APP_DIR"
 npm install --include=dev
@@ -121,7 +133,7 @@ EOF
 ln -sfn /etc/nginx/sites-available/presales-tracker /etc/nginx/sites-enabled/presales-tracker
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
-systemctl enable --now nginx postgresql
+systemctl enable --now nginx
 systemctl reload nginx
 
 if pm2 describe presales-api >/dev/null 2>&1; then
@@ -147,3 +159,7 @@ echo "App directory: $APP_DIR"
 echo "Web root: $WEB_ROOT"
 echo "API: http://127.0.0.1:$API_PORT/api/health"
 echo "Public URL: http://${DOMAIN}/"
+
+curl --fail --silent --show-error --max-time 15 "http://127.0.0.1:${API_PORT}/api/health" >/dev/null
+test -s "$WEB_ROOT/index.html"
+echo "API health check: OK"
