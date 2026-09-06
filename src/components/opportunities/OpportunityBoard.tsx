@@ -16,13 +16,19 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
   onSelectOpportunity,
   onUpdateStage
 }) => {
-  const stages = Object.keys(STAGE_CONFIG) as OpportunityStage[];
+  const configuredStages = Object.keys(STAGE_CONFIG);
+  const unknownStages = Array.from(new Set(opportunities.map(opportunity => opportunity.stage).filter(stage => !configuredStages.includes(stage))));
+  const stages = [...configuredStages, ...unknownStages] as OpportunityStage[];
 
   return (
     <div className="flex-1 overflow-x-auto bg-gray-100/70 p-4">
+      <div className="mb-3 flex items-center justify-between text-xs font-mono text-gray-600">
+        <span>Stage Matrix: <strong className="text-gray-900">{opportunities.length}</strong> opportunities across <strong className="text-gray-900">{stages.length}</strong> stages</span>
+        {unknownStages.length > 0 && <span className="text-amber-700">{unknownStages.length} unmapped stage(s) under review</span>}
+      </div>
       <div className="flex gap-3 min-w-[1750px] h-full">
         {stages.map((stageKey) => {
-          const config = STAGE_CONFIG[stageKey];
+          const config = STAGE_CONFIG[stageKey] || { label: stageKey, shortLabel: 'Unmapped / Review', color: 'text-amber-700', bg: 'bg-amber-50', borderColor: 'border-amber-200', description: 'This stage exists in data but has no configured workflow definition.' };
           const stageOpps = opportunities.filter(o => o.stage === stageKey);
           const stageValue = stageOpps.reduce((acc, o) => acc + o.contractValue, 0);
 
@@ -55,7 +61,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
               <div className="flex-1 p-2 overflow-y-auto space-y-2">
                 {stageOpps.length === 0 ? (
                   <div className="h-32 border border-dashed border-gray-300 rounded flex flex-col items-center justify-center text-gray-400 text-xs font-mono">
-                    <span>No active deals</span>
+                    <span>No opportunities</span>
                   </div>
                 ) : (
                   stageOpps.map((opp) => {
