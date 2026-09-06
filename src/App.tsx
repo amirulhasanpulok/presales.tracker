@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { ActiveTab, Opportunity, OpportunityStage, ClientAccount, UserAccount, RolePermission, AuditLogEntry, ScopeCatalogEntry, OEMEntry, ProductCatalogEntry, PresalesEngineer, SalesKAM, CalendarEvent, NotificationItem } from './types';
 import {
   can,
@@ -14,41 +14,44 @@ import { Sidebar } from './components/layout/Sidebar';
 import { AccessDenied } from './components/common/AccessDenied';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { ChangePasswordScreen } from './components/auth/ChangePasswordScreen';
-import { ExecutiveDashboard } from './components/dashboard/ExecutiveDashboard';
-import { MobileHomeScreen } from './components/dashboard/MobileHomeScreen';
-import { OpportunityTable } from './components/opportunities/OpportunityTable';
-import { MobileOpportunityScreen } from './components/opportunities/MobileOpportunityScreen';
-import { OpportunityBoard } from './components/opportunities/OpportunityBoard';
-import { OpportunityDetailView } from './components/opportunities/OpportunityDetailView';
-import { OpportunityDetailDrawer } from './components/opportunities/OpportunityDetailDrawer';
-import { NewOpportunityView } from './components/opportunities/NewOpportunityView';
-import { NewOpportunityModal } from './components/opportunities/NewOpportunityModal';
-import { BOQWorkbench } from './components/boq/BOQWorkbench';
-import { POCTracker } from './components/poc/POCTracker';
-import { ActionCenter } from './components/actions/ActionCenter';
-import { MobileActionCenter } from './components/actions/MobileActionCenter';
-import { HandoverQueue } from './components/handover/HandoverQueue';
-import { CapacityMatrix } from './components/capacity/CapacityMatrix';
-import { PresalesAnalytics } from './components/analytics/PresalesAnalytics';
-import { MobileReportsScreen } from './components/analytics/MobileReportsScreen';
-import { PresalesCalendar } from './components/calendar/PresalesCalendar';
-import { ClientsDirectory } from './components/clients/ClientsDirectory';
-import { ClientDetailsView } from './components/clients/ClientDetailsView';
-import { MobileClientsScreen } from './components/clients/MobileClientsScreen';
-import { MobileWorkCapture } from './components/mobile/MobileWorkCapture';
-import { SalesKAMDirectory } from './components/sales/SalesKAMDirectory';
-import { CentralDocumentsRepo } from './components/documents/CentralDocumentsRepo';
-import { NotificationCenter } from './components/notifications/NotificationCenter';
-import { AuditLogsView } from './components/audit/AuditLogsView';
-import { UserManagementView } from './components/admin/UserManagementView';
-import { RoleManagementView } from './components/admin/RoleManagementView';
-import { MasterConfigView } from './components/admin/MasterConfigView';
-import { SystemSettingsView } from './components/admin/SystemSettingsView';
-import { BulkUploadView } from './components/admin/BulkUploadView';
-import { ScopeCatalogView } from './components/admin/ScopeCatalogView';
-import { OEMCatalogView } from './components/admin/OEMCatalogView';
-import { ProductCatalogView } from './components/admin/ProductCatalogView';
-import { CommandPalette } from './components/common/CommandPalette';
+
+const lazyNamed = (loader: () => Promise<Record<string, any>>, name: string) =>
+  lazy(async () => ({ default: (await loader())[name] }));
+
+const ExecutiveDashboard = lazyNamed(() => import('./components/dashboard/ExecutiveDashboard'), 'ExecutiveDashboard');
+const MobileHomeScreen = lazyNamed(() => import('./components/dashboard/MobileHomeScreen'), 'MobileHomeScreen');
+const OpportunityTable = lazyNamed(() => import('./components/opportunities/OpportunityTable'), 'OpportunityTable');
+const MobileOpportunityScreen = lazyNamed(() => import('./components/opportunities/MobileOpportunityScreen'), 'MobileOpportunityScreen');
+const OpportunityBoard = lazyNamed(() => import('./components/opportunities/OpportunityBoard'), 'OpportunityBoard');
+const OpportunityDetailView = lazyNamed(() => import('./components/opportunities/OpportunityDetailView'), 'OpportunityDetailView');
+const OpportunityDetailDrawer = lazyNamed(() => import('./components/opportunities/OpportunityDetailDrawer'), 'OpportunityDetailDrawer');
+const NewOpportunityModal = lazyNamed(() => import('./components/opportunities/NewOpportunityModal'), 'NewOpportunityModal');
+const BOQWorkbench = lazyNamed(() => import('./components/boq/BOQWorkbench'), 'BOQWorkbench');
+const POCTracker = lazyNamed(() => import('./components/poc/POCTracker'), 'POCTracker');
+const ActionCenter = lazyNamed(() => import('./components/actions/ActionCenter'), 'ActionCenter');
+const MobileActionCenter = lazyNamed(() => import('./components/actions/MobileActionCenter'), 'MobileActionCenter');
+const HandoverQueue = lazyNamed(() => import('./components/handover/HandoverQueue'), 'HandoverQueue');
+const CapacityMatrix = lazyNamed(() => import('./components/capacity/CapacityMatrix'), 'CapacityMatrix');
+const PresalesAnalytics = lazyNamed(() => import('./components/analytics/PresalesAnalytics'), 'PresalesAnalytics');
+const MobileReportsScreen = lazyNamed(() => import('./components/analytics/MobileReportsScreen'), 'MobileReportsScreen');
+const PresalesCalendar = lazyNamed(() => import('./components/calendar/PresalesCalendar'), 'PresalesCalendar');
+const ClientsDirectory = lazyNamed(() => import('./components/clients/ClientsDirectory'), 'ClientsDirectory');
+const ClientDetailsView = lazyNamed(() => import('./components/clients/ClientDetailsView'), 'ClientDetailsView');
+const MobileClientsScreen = lazyNamed(() => import('./components/clients/MobileClientsScreen'), 'MobileClientsScreen');
+const MobileWorkCapture = lazyNamed(() => import('./components/mobile/MobileWorkCapture'), 'MobileWorkCapture');
+const SalesKAMDirectory = lazyNamed(() => import('./components/sales/SalesKAMDirectory'), 'SalesKAMDirectory');
+const CentralDocumentsRepo = lazyNamed(() => import('./components/documents/CentralDocumentsRepo'), 'CentralDocumentsRepo');
+const NotificationCenter = lazyNamed(() => import('./components/notifications/NotificationCenter'), 'NotificationCenter');
+const AuditLogsView = lazyNamed(() => import('./components/audit/AuditLogsView'), 'AuditLogsView');
+const UserManagementView = lazyNamed(() => import('./components/admin/UserManagementView'), 'UserManagementView');
+const RoleManagementView = lazyNamed(() => import('./components/admin/RoleManagementView'), 'RoleManagementView');
+const MasterConfigView = lazyNamed(() => import('./components/admin/MasterConfigView'), 'MasterConfigView');
+const SystemSettingsView = lazyNamed(() => import('./components/admin/SystemSettingsView'), 'SystemSettingsView');
+const BulkUploadView = lazyNamed(() => import('./components/admin/BulkUploadView'), 'BulkUploadView');
+const ScopeCatalogView = lazyNamed(() => import('./components/admin/ScopeCatalogView'), 'ScopeCatalogView');
+const OEMCatalogView = lazyNamed(() => import('./components/admin/OEMCatalogView'), 'OEMCatalogView');
+const ProductCatalogView = lazyNamed(() => import('./components/admin/ProductCatalogView'), 'ProductCatalogView');
+const CommandPalette = lazyNamed(() => import('./components/common/CommandPalette'), 'CommandPalette');
 
 // ---------------------------------------------------------------------------
 // Server → UI shape mappers
@@ -485,6 +488,7 @@ export default function App() {
   }
 
   return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-gray-50 text-sm text-gray-500 font-mono">Loading workspace…</div>}>
     <div className="h-screen overflow-hidden bg-gray-50 text-gray-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Top Header Command Bar */}
       <Header
@@ -766,18 +770,18 @@ export default function App() {
       )}
 
       {/* New Opportunity Modal */}
-      <NewOpportunityModal
-        key={isNewModalOpen ? 'new-opportunity-open' : 'new-opportunity-closed'}
-        isOpen={isNewModalOpen}
+      {isNewModalOpen && <NewOpportunityModal
+        key="new-opportunity-open"
+        isOpen
         onClose={() => setIsNewModalOpen(false)}
         onCreateOpportunity={handleCreateOpportunity}
         scopes={scopes}
         users={users}
-      />
+      />}
 
       {/* Global Command Palette (Cmd+K) */}
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
+      {isCommandPaletteOpen && <CommandPalette
+        isOpen
         onClose={() => setIsCommandPaletteOpen(false)}
         opportunities={opportunities}
         clients={clients}
@@ -795,7 +799,8 @@ export default function App() {
           setSelectedClient(null);
         }}
         onOpenNewOpportunity={handleCreateOpportunityRequest}
-      />
+      />}
     </div>
+    </Suspense>
   );
 }
