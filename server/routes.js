@@ -232,7 +232,7 @@ router.get('/bootstrap', authenticate, async (req, res) => {
        FROM product_catalog p LEFT JOIN oems o ON p.oem_id = o.id
        ORDER BY o.name, p.name`,
     ),
-    query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('currency', 'activity_types')"),
+     query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('currency', 'activity_types', 'tech_stacks', 'industries', 'regions')"),
   ]);
   const scopedOpportunityDocs = (opportunities.rows || []).map(o => o.doc).filter(doc => isAdministrator || canAccessOpportunity(req, doc));
   const scopedClientDocs = (clients.rows || []).map(c => c.doc);
@@ -248,8 +248,11 @@ router.get('/bootstrap', authenticate, async (req, res) => {
     scopes: scopes.rows || [],
     oems: oems.rows || [],
     products: products.rows || [],
-    currency: systemSettings.rows.find(s => s.setting_key === 'currency')?.setting_value || 'BDT',
-    activityTypes: (() => { try { const value = JSON.parse(systemSettings.rows.find(s => s.setting_key === 'activity_types')?.setting_value || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } })(),
+     currency: systemSettings.rows.find(s => s.setting_key === 'currency')?.setting_value || 'BDT',
+     activityTypes: (() => { try { const value = JSON.parse(systemSettings.rows.find(s => s.setting_key === 'activity_types')?.setting_value || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } })(),
+     taxonomies: Object.fromEntries(['tech_stacks', 'industries', 'regions'].map(key => {
+       try { const value = JSON.parse(systemSettings.rows.find(s => s.setting_key === key)?.setting_value || '[]'); return [key, Array.isArray(value) ? value : []]; } catch { return [key, []]; }
+     })),
     users: can(req.role, req.user, 'sys.users') ? (users.rows || []) : [req.user],
     auditLogs: can(req.role, req.user, 'sys.audit') ? (auditLogs.rows || []) : [],
   });
@@ -269,6 +272,27 @@ router.put('/settings/activity-types', authenticate, requirePermission('sys.inte
   await query("INSERT INTO system_settings (setting_key, setting_value, updated_at) VALUES ('activity_types', $1, now()) ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = now()", [JSON.stringify([...new Set(activityTypes)])]);
   await audit({ req, action: 'settings.activity_types.update', targetType: 'system_settings', targetId: 'activity_types', meta: { activityTypes } });
   res.json({ activityTypes });
+});
+
+router.put('/settings/taxonomy', authenticate, requirePermission('sys.integrations'), async (req, res) => {
+  const clean = value => Array.isArray(value)
+    ? [...new Set(value.map(item => String(item).trim()).filter(Boolean))].slice(0, 200)
+    : [];
+  const taxonomies = {
+    techStacks: clean(req.body?.techStacks),
+    industries: clean(req.body?.industries),
+    regions: clean(req.body?.regions),
+  };
+  if (!taxonomies.techStacks.length || !taxonomies.industries.length || !taxonomies.regions.length) {
+    return res.status(400).json({ error: 'invalid_taxonomy' });
+  }
+  await query(`INSERT INTO system_settings (setting_key, setting_value, updated_at)
+    VALUES ('tech_stacks', $1, now()), ('industries', $2, now()), ('regions', $3, now())
+    ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = now()`, [
+    JSON.stringify(taxonomies.techStacks), JSON.stringify(taxonomies.industries), JSON.stringify(taxonomies.regions),
+  ]);
+  await audit({ req, action: 'settings.taxonomy.update', targetType: 'system_settings', targetId: 'taxonomy', meta: { counts: Object.fromEntries(Object.entries(taxonomies).map(([key, values]) => [key, values.length])) } });
+  res.json(taxonomies);
 });
 
 // ---------------------------------------------------------------------------

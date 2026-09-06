@@ -36,6 +36,7 @@ export interface BootstrapPayload {
   auditLogs: unknown[];
   currency?: string;
   activityTypes?: string[];
+  taxonomies?: { tech_stacks?: string[]; industries?: string[]; regions?: string[] };
 }
 
 let sessionToken: string | null = null;
@@ -122,6 +123,9 @@ export const api = {
 
   updateActivityTypes: (activityTypes: string[]) =>
     request<{ activityTypes: string[] }>('/settings/activity-types', { method: 'PUT', body: JSON.stringify({ activityTypes }) }),
+
+  updateTaxonomy: (taxonomies: { techStacks: string[]; industries: string[]; regions: string[] }) =>
+    request<typeof taxonomies>('/settings/taxonomy', { method: 'PUT', body: JSON.stringify(taxonomies) }),
 
   /** Clears the stored session locally. */
   logout(): void {

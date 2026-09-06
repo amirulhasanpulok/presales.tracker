@@ -181,6 +181,14 @@ function hydrateActivityTypes(value?: string[]) {
   if (Array.isArray(value) && value.length) window.localStorage.setItem('presales_tracker_activity_types_v1', JSON.stringify(value));
 }
 
+function hydrateTaxonomies(value?: Record<string, string[]>) {
+  const keyMap = { tech_stacks: 'techStacks', industries: 'industries', regions: 'regions' } as const;
+  for (const [serverKey, localKey] of Object.entries(keyMap)) {
+    const values = value?.[serverKey];
+    if (Array.isArray(values) && values.length) window.localStorage.setItem(`presales_tracker_taxonomy_${localKey}_v1`, JSON.stringify(values));
+  }
+}
+
 const flatPermissions = (perms: any): string[] =>
   Array.isArray(perms) && typeof perms[0] === 'string'
     ? (perms as string[])
@@ -225,6 +233,7 @@ export default function App() {
   const applyBootstrap = useCallback((data: any) => {
     hydrateCurrency(data.currency);
     hydrateActivityTypes(data.activityTypes);
+    hydrateTaxonomies(data.taxonomies);
     setRoles((data.roles ?? []).map(toRoleState));
     setOpportunities((data.opportunities ?? []) as Opportunity[]);
     setClients((data.clients ?? []) as ClientAccount[]);

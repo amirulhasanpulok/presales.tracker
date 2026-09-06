@@ -70,7 +70,7 @@ export const MasterConfigView: React.FC = () => {
   };
 
   const handleSave = () => {
-    Promise.all([api.updateCurrency(currency), api.updateActivityTypes(activityTypes)]).then(() => {
+    Promise.all([api.updateCurrency(currency), api.updateActivityTypes(activityTypes), api.updateTaxonomy({ techStacks, industries, regions })]).then(() => {
     window.localStorage.setItem(CURRENCY_STORAGE_KEY, currency);
     saveConfiguredTaxonomy('techStacks', techStacks);
     saveConfiguredTaxonomy('industries', industries);
