@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   Calculator, 
   Plus, 
@@ -46,8 +46,13 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
   oems = []
 }) => {
   // Select active opportunity for BOQ modeling
-  const [selectedOppId, setSelectedOppId] = useState<string>(opportunities[0]?.id || '');
-  const activeOpp = opportunities.find(o => o.id === selectedOppId) || opportunities[0];
+  const [selectedOppId, setSelectedOppId] = useState<string>('');
+  const [opportunityQuery, setOpportunityQuery] = useState('');
+  const activeOpp = opportunities.find(o => o.id === selectedOppId);
+  const filteredOpportunities = useMemo(() => opportunities.filter(opportunity => {
+    const query = opportunityQuery.trim().toLowerCase();
+    return !query || [opportunity.code, opportunity.clientName, opportunity.name].some(value => String(value || '').toLowerCase().includes(query));
+  }), [opportunities, opportunityQuery]);
 
   const [newItem, setNewItem] = useState<Partial<BOQItem>>({
     category: 'Cloud Infrastructure',
@@ -71,8 +76,14 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
   if (!activeOpp) {
     return (
-      <div className="p-8 text-center text-gray-500 font-mono text-xs">
-        No active opportunities found for BOQ modeling.
+      <div className="bg-white border border-gray-200 rounded p-6 space-y-3">
+        <h2 className="text-sm font-bold text-gray-900">Select an opportunity for BOQ modeling</h2>
+        <p className="text-xs text-gray-500">Search by opportunity code, client, or name. No opportunity is selected by default.</p>
+        <input value={opportunityQuery} onChange={event => setOpportunityQuery(event.target.value)} placeholder="Search opportunity..." className="enterprise-input w-full text-xs" autoFocus />
+        <div className="max-h-72 overflow-y-auto border border-gray-200 rounded divide-y divide-gray-100">
+          {filteredOpportunities.map(opportunity => <button key={opportunity.id} type="button" onClick={() => setSelectedOppId(opportunity.id)} className="w-full text-left p-2.5 hover:bg-blue-50 text-xs"><strong className="font-mono text-blue-700">{opportunity.code}</strong><span className="ml-2 text-gray-800">{opportunity.clientName}</span><span className="block text-[11px] text-gray-500">{opportunity.name}</span></button>)}
+          {!filteredOpportunities.length && <div className="p-4 text-center text-xs text-gray-500">No matching opportunities.</div>}
+        </div>
       </div>
     );
   }
@@ -218,12 +229,13 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
           <div className="flex items-center gap-2">
             <label className="text-xs font-semibold text-gray-700">Target Opportunity:</label>
+            <input value={opportunityQuery} onChange={event => setOpportunityQuery(event.target.value)} placeholder="Search code/client..." className="enterprise-input text-xs py-1 w-44" aria-label="Search target opportunity" />
             <select
               value={selectedOppId}
               onChange={(e) => setSelectedOppId(e.target.value)}
               className="enterprise-select font-mono text-xs py-1"
             >
-              {opportunities.map(o => (
+              {filteredOpportunities.map(o => (
                 <option key={o.id} value={o.id}>
                   {o.code} - {o.clientName} ({formatCurrency(o.contractValue)})
                 </option>

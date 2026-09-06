@@ -1,6 +1,6 @@
 // Thin typed client for the presales tracker backend API.
-// Keep the bearer token in memory only. This avoids making the session
-// recoverable by arbitrary scripts that can read browser storage.
+// Keep the bearer token in sessionStorage so a normal page refresh preserves
+// the session without persisting it across browser sessions.
 
 export interface PrincipalUser {
   id: string;
@@ -51,7 +51,9 @@ export interface SystemPolicies {
   autoArchiveDays: number;
 }
 
-let sessionToken: string | null = null;
+let sessionToken: string | null = (() => {
+  try { return sessionStorage.getItem('presales_tracker_token_v1'); } catch { return null; }
+})();
 
 export function getToken(): string | null {
   return sessionToken;
@@ -59,6 +61,12 @@ export function getToken(): string | null {
 
 export function setToken(token: string | null): void {
   sessionToken = token;
+  try {
+    if (token) sessionStorage.setItem('presales_tracker_token_v1', token);
+    else sessionStorage.removeItem('presales_tracker_token_v1');
+  } catch {
+    /* storage unavailable */
+  }
 }
 
 export class ApiError extends Error {
