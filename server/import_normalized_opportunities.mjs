@@ -5,6 +5,7 @@ import pg from 'pg';
 const { Pool } = pg;
 const inputFile = process.env.IMPORT_INPUT || '/home/pulok/data/normalized_opportunity_import.json';
 const confirm = process.env.IMPORT_CONFIRM === 'YES';
+const backfillActions = process.env.IMPORT_BACKFILL_ACTIONS === 'YES';
 const pool = new Pool({
   host: process.env.PGHOST || '127.0.0.1',
   port: Number(process.env.PGPORT || 5432),
@@ -38,6 +39,18 @@ function buildActivity(activity) {
 
 function buildOpportunity(source) {
   const activities = (source.activities || []).map(buildActivity);
+  const actionItems = activities.filter(activity => clean(activity.nextAction)).map((activity, index) => ({
+    id: `import-action-${activity.id}`,
+    title: clean(activity.nextAction),
+    assignedTo: source.accountExecutive || source.leadSolutionArchitect || 'Unassigned',
+    assignedToRole: source.accountExecutive && source.accountExecutive !== 'Unassigned' ? 'Sales KAM' : 'Solution Architect',
+    dueDate: activity.timestamp.slice(0, 10),
+    isCompleted: false,
+    priority: 'p2_medium',
+    category: 'Customer Follow-up',
+    sourceActivityId: activity.id,
+    sequence: index,
+  }));
   const now = new Date().toISOString();
   const firstActivity = activities[activities.length - 1]?.timestamp || now;
   const outcome = source.outcome?.outcome || 'open';
@@ -75,7 +88,7 @@ function buildOpportunity(source) {
     documents: [],
     poc: { status: 'not_started', allocatedBudget: 0, successCriteria: [], blockers: [] },
     boq: { items: [], subtotalCost: 0, subtotalListPrice: 0, totalDiscountAmount: 0, totalContractValue: 0, annualRecurringRevenue: 0, oneTimeServicesValue: 0, overallMarginPercent: 0, approvalStatus: 'draft', version: 1 },
-    actionItems: [],
+    actionItems,
     handover: { isHandedOver: false, technicalRunbookReady: false, credentialsSecurelyTransferred: false, customerTechKickoffScheduled: false, knownTechnicalDebtOrRisks: [], specialSLAsAgreed: [] },
     outcome: { outcome, ...(statusDate ? (outcome === 'won' ? { wonDate: statusDate.slice(0, 10) } : outcome === 'lost' ? { lostDate: statusDate.slice(0, 10) } : {}) : {}) },
     sourceFiles: source.sourceFiles || [],
@@ -121,7 +134,9 @@ try {
       await client.query('INSERT INTO clients (id, doc, created_at, updated_at) VALUES ($1, $2, now(), now()) ON CONFLICT (id) DO NOTHING', [clientId, JSON.stringify(clientDoc)]);
       matchedClient = { id: clientId, doc: clientDoc }; clientsByName.set(clientKey, matchedClient); createdClients += 1;
     }
-    const result = await client.query('INSERT INTO opportunities (id, doc, owner_id, updated_at) VALUES ($1, $2, NULL, now()) ON CONFLICT (id) DO NOTHING', [opportunity.id, JSON.stringify(opportunity)]);
+    const result = await client.query(backfillActions
+      ? "INSERT INTO opportunities (id, doc, owner_id, updated_at) VALUES ($1, $2, NULL, now()) ON CONFLICT (id) DO UPDATE SET doc = opportunities.doc || jsonb_build_object('actionItems', EXCLUDED.doc->'actionItems'), updated_at = now() WHERE jsonb_array_length(COALESCE(opportunities.doc->'actionItems', '[]'::jsonb)) = 0"
+      : 'INSERT INTO opportunities (id, doc, owner_id, updated_at) VALUES ($1, $2, NULL, now()) ON CONFLICT (id) DO NOTHING', [opportunity.id, JSON.stringify(opportunity)]);
     insertedOpportunities += result.rowCount;
   }
   await client.query('COMMIT');
