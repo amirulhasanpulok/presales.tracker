@@ -6,6 +6,7 @@ const { Pool } = pg;
 const inputFile = process.env.IMPORT_INPUT || '/home/pulok/data/normalized_opportunity_import.json';
 const confirm = process.env.IMPORT_CONFIRM === 'YES';
 const backfillActions = process.env.IMPORT_BACKFILL_ACTIONS === 'YES';
+const refreshHistorical = process.env.IMPORT_REFRESH_HISTORICAL === 'YES';
 const pool = new Pool({
   host: process.env.PGHOST || '127.0.0.1',
   port: Number(process.env.PGPORT || 5432),
@@ -16,16 +17,30 @@ const pool = new Pool({
 });
 
 const clean = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
 const parseDate = value => {
   const raw = clean(value);
   if (!raw) return null;
-  const direct = new Date(raw);
-  if (!Number.isNaN(direct.getTime())) return direct.toISOString();
   const monthDay = raw.match(/^(\d{1,2})[- ]([A-Za-z]{3,9})$/);
   if (monthDay) {
-    const parsed = new Date(`${monthDay[2]} ${monthDay[1]}, 2025T12:00:00Z`);
+    const month = months.findIndex(name => name.startsWith(monthDay[2].toLowerCase()));
+    if (month >= 0) return new Date(Date.UTC(2025, month, Number(monthDay[1]), 12)).toISOString();
+  }
+  const namedMonthDay = raw.match(/^([A-Za-z]+)\s+(\d{1,2})$/);
+  if (namedMonthDay) {
+    const month = months.findIndex(name => name.startsWith(namedMonthDay[1].toLowerCase()));
+    if (month >= 0) return new Date(Date.UTC(2025, month, Number(namedMonthDay[2]), 12)).toISOString();
+  }
+  const numericDate = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (numericDate) {
+    const first = Number(numericDate[1]); const second = Number(numericDate[2]);
+    const month = first > 12 ? second : first;
+    const day = first > 12 ? first : second;
+    const parsed = new Date(Date.UTC(Number(numericDate[3]), month - 1, day, 12));
     if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
   }
+  const direct = new Date(raw);
+  if (!Number.isNaN(direct.getTime())) return direct.toISOString();
   return null;
 };
 const key = value => clean(value).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -33,7 +48,7 @@ const key = value => clean(value).toLowerCase().replace(/[^a-z0-9]/g, '');
 function buildActivity(activity) {
   return {
     ...activity,
-    timestamp: parseDate(activity.timestamp) || new Date().toISOString(),
+    timestamp: parseDate(activity.timestamp),
   };
 }
 
@@ -44,15 +59,17 @@ function buildOpportunity(source) {
     title: clean(activity.nextAction),
     assignedTo: source.accountExecutive || source.leadSolutionArchitect || 'Unassigned',
     assignedToRole: source.accountExecutive && source.accountExecutive !== 'Unassigned' ? 'Sales KAM' : 'Solution Architect',
-    dueDate: activity.timestamp.slice(0, 10),
+    dueDate: activity.timestamp?.slice(0, 10) || '1970-01-01',
     isCompleted: false,
     priority: 'p2_medium',
     category: 'Customer Follow-up',
     sourceActivityId: activity.id,
     sequence: index,
   }));
-  const now = new Date().toISOString();
-  const firstActivity = activities[activities.length - 1]?.timestamp || now;
+  const now = '1970-01-01T00:00:00.000Z';
+  const dates = activities.map(activity => activity.timestamp).filter(Boolean).sort();
+  const firstActivity = dates[0] || now;
+  const lastActivity = dates.at(-1) || firstActivity;
   const outcome = source.outcome?.outcome || 'open';
   const statusDate = parseDate(source.statusDate);
   return {
@@ -95,8 +112,8 @@ function buildOpportunity(source) {
     lastImportedStatus: source.lastStatus || '',
     importReviewRequired: true,
     createdAt: firstActivity,
-    updatedAt: now,
-    lastContactedAt: firstActivity,
+    updatedAt: lastActivity,
+    lastContactedAt: lastActivity,
     daysInCurrentStage: 0,
   };
 }
@@ -134,8 +151,10 @@ try {
       await client.query('INSERT INTO clients (id, doc, created_at, updated_at) VALUES ($1, $2, now(), now()) ON CONFLICT (id) DO NOTHING', [clientId, JSON.stringify(clientDoc)]);
       matchedClient = { id: clientId, doc: clientDoc }; clientsByName.set(clientKey, matchedClient); createdClients += 1;
     }
-    const result = await client.query(backfillActions
-      ? "INSERT INTO opportunities (id, doc, owner_id, updated_at) VALUES ($1, $2, NULL, now()) ON CONFLICT (id) DO UPDATE SET doc = opportunities.doc || jsonb_build_object('actionItems', EXCLUDED.doc->'actionItems'), updated_at = now() WHERE jsonb_array_length(COALESCE(opportunities.doc->'actionItems', '[]'::jsonb)) = 0"
+    const result = await client.query(refreshHistorical
+      ? "INSERT INTO opportunities (id, doc, owner_id, updated_at) VALUES ($1, $2, NULL, now()) ON CONFLICT (id) DO UPDATE SET doc = EXCLUDED.doc, updated_at = now() WHERE opportunities.doc->>'sourceFiles' IS NOT NULL"
+      : backfillActions
+        ? "INSERT INTO opportunities (id, doc, owner_id, updated_at) VALUES ($1, $2, NULL, now()) ON CONFLICT (id) DO UPDATE SET doc = opportunities.doc || jsonb_build_object('actionItems', EXCLUDED.doc->'actionItems'), updated_at = now() WHERE jsonb_array_length(COALESCE(opportunities.doc->'actionItems', '[]'::jsonb)) = 0"
       : 'INSERT INTO opportunities (id, doc, owner_id, updated_at) VALUES ($1, $2, NULL, now()) ON CONFLICT (id) DO NOTHING', [opportunity.id, JSON.stringify(opportunity)]);
     insertedOpportunities += result.rowCount;
   }
