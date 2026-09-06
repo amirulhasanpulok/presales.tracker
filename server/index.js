@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import { randomUUID } from 'node:crypto';
 import routes from './routes.js';
 import { initSchema, ensureSystemRoles, seedScopeCatalog, seedOEMCatalog, seedProductCatalog } from './db.js';
@@ -17,6 +18,7 @@ app.use((req, res, next) => {
 // Only trust the local reverse proxy. This prevents clients from spoofing
 // X-Forwarded-For and bypassing login throttling/audit attribution.
 app.set('trust proxy', 'loopback');
+app.use(compression({ threshold: 1024 }));
 
 app.use(express.json({ limit: '8mb' }), (req, res, next) => {
   if (req.get('content-length') && Number(req.get('content-length')) > 8 * 1024 * 1024) {
@@ -65,9 +67,7 @@ if (!OFFICIAL_PATTERN.test(process.env.JWT_SECRET || '')) {
 
 async function start() {
   await initSchema();
-  await ensureSystemRoles();
-  await seedScopeCatalog();
-  await seedOEMCatalog();
+  await Promise.all([ensureSystemRoles(), seedScopeCatalog(), seedOEMCatalog()]);
   await seedProductCatalog();
   app.listen(port, '127.0.0.1', () => {
     console.log(`presales-api listening on http://127.0.0.1:${port} (db: ${process.env.PGDATABASE || 'presales'})`);

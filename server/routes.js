@@ -203,11 +203,25 @@ router.get('/bootstrap', authenticate, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const roleId = req.user?.roleId || req.user?.role_id;
   const isAdministrator = can(req.role, req.user, 'sys.users') || can(req.role, req.user, 'sys.rbac');
-  const opportunityQuery = { text: 'SELECT * FROM opportunities ORDER BY updated_at DESC', params: [] };
+  const scope = isAdministrator
+    ? { sql: null, params: [] }
+    : roleId === 'role-kam'
+      ? { sql: "o.doc->>'accountExecutive' = $1", params: [req.user?.name] }
+      : roleId === 'role-sa'
+        ? { sql: "(o.doc->>'leadSolutionArchitect' = $1 OR o.doc->>'presalesEngineerSecondary' = $1 OR o.doc->'supportingPresalesEngineers' ? $1)", params: [req.user?.name] }
+        : roleId === 'role-delivery' || roleId === 'role-postsales'
+          ? { sql: "(o.doc->>'stage' = 'closed_won' OR COALESCE((o.doc->'handover'->>'isHandedOver')::boolean, false) = true)", params: [] }
+          : { sql: 'false', params: [] };
+  const opportunityQuery = isAdministrator
+    ? { text: 'SELECT * FROM opportunities ORDER BY updated_at DESC', params: [] }
+    : { text: `SELECT * FROM opportunities o WHERE ${scope.sql} ORDER BY updated_at DESC`, params: scope.params };
+  const clientQuery = isAdministrator
+    ? { text: 'SELECT * FROM clients ORDER BY updated_at DESC', params: [] }
+    : { text: `SELECT c.* FROM clients c WHERE EXISTS (SELECT 1 FROM opportunities o WHERE o.doc->>'clientName' = c.doc->>'name' AND ${scope.sql}) ORDER BY c.updated_at DESC`, params: scope.params };
   const [roles, opportunities, clients, users, auditLogs, scopes, oems, products, systemSettings] = await Promise.all([
     can(req.role, req.user, 'sys.rbac') ? query('SELECT * FROM roles ORDER BY role_name') : Promise.resolve({ rows: [] }),
     query(opportunityQuery.text, opportunityQuery.params),
-    query('SELECT * FROM clients ORDER BY updated_at DESC'),
+    query(clientQuery.text, clientQuery.params),
     can(req.role, req.user, 'sys.users') ? query('SELECT id, name, email, role, role_id, department, sales_team, phone, manager, skills, certifications, status, mfa_enabled, avatar, region, last_login_at, created_at FROM users ORDER BY name') : Promise.resolve({ rows: [] }),
     can(req.role, req.user, 'sys.audit') ? query('SELECT id, actor_id, actor_email, action, target_type, target_id, meta, ip, actor_role, request_id, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 200') : Promise.resolve({ rows: [] }),
     query('SELECT id, name, category, description, status, sort_order FROM scope_catalog ORDER BY sort_order, name'),
@@ -220,12 +234,8 @@ router.get('/bootstrap', authenticate, async (req, res) => {
     ),
     query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('currency', 'activity_types')"),
   ]);
-  const allOpportunityDocs = (opportunities.rows || []).map(o => o.doc);
-  const scopedOpportunityDocs = isAdministrator
-    ? allOpportunityDocs
-    : allOpportunityDocs.filter(doc => canAccessOpportunity(req, doc));
-  const visibleClientNames = new Set(scopedOpportunityDocs.map(o => o.clientName).filter(Boolean));
-  const scopedClientDocs = isAdministrator ? (clients.rows || []).map(c => c.doc) : (clients.rows || []).map(c => c.doc).filter(c => visibleClientNames.has(c.name));
+  const scopedOpportunityDocs = (opportunities.rows || []).map(o => o.doc).filter(doc => isAdministrator || canAccessOpportunity(req, doc));
+  const scopedClientDocs = (clients.rows || []).map(c => c.doc);
 
   res.json({
     user: req.user,

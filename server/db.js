@@ -8,7 +8,10 @@ const pool = new Pool({
   user: process.env.PGUSER || 'presales',
   password: process.env.PGPASSWORD || '',
   database: process.env.PGDATABASE || 'presales',
-  max: 10,
+  max: Number(process.env.PGPOOL_MAX || 10),
+  connectionTimeoutMillis: 5000,
+  statement_timeout: 15000,
+  query_timeout: 20000,
   idleTimeoutMillis: 30000,
 });
 
@@ -74,6 +77,7 @@ export async function initSchema() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     CREATE UNIQUE INDEX IF NOT EXISTS ux_clients_code ON clients ((doc->>'code')) WHERE doc->>'code' IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_clients_name ON clients ((doc->>'name'));
 
     CREATE TABLE IF NOT EXISTS system_settings (
       setting_key TEXT PRIMARY KEY,
