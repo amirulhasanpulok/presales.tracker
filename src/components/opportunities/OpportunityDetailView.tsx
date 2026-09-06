@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Opportunity, OpportunitySubView, OpportunityStage } from '../../types';
 import { 
   ArrowLeft, 
@@ -41,6 +41,7 @@ interface OpportunityDetailViewProps {
   initialSubView?: OpportunitySubView;
   onBack: () => void;
   onUpdateOpportunity?: (opp: Opportunity) => void;
+  onUpdateStage?: (id: string, stage: OpportunityStage) => void;
 }
 
 export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
@@ -48,17 +49,19 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   initialSubView = 'overview',
   onBack,
   onUpdateOpportunity,
+  onUpdateStage,
 }) => {
   const [activeSubView, setActiveSubView] = useState<OpportunitySubView>(initialSubView);
   const [currentStage, setCurrentStage] = useState<OpportunityStage>(opportunity.stage);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
+  useEffect(() => setCurrentStage(opportunity.stage), [opportunity.stage]);
+
   const stagesList = Object.keys(STAGE_CONFIG) as OpportunityStage[];
 
   const handleStageChange = (newStage: OpportunityStage) => {
-    setCurrentStage(newStage);
-    const updated = { ...opportunity, stage: newStage, daysInCurrentStage: 0 };
-    if (onUpdateOpportunity) onUpdateOpportunity(updated);
+    if (onUpdateStage) onUpdateStage(opportunity.id, newStage);
+    else if (onUpdateOpportunity) onUpdateOpportunity({ ...opportunity, stage: newStage, daysInCurrentStage: 0 });
   };
 
   const subTabs: { id: OpportunitySubView; label: string; icon: React.FC<{ className?: string }> }[] = [

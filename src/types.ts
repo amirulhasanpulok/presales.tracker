@@ -315,6 +315,7 @@ export interface ClientAccount {
   primaryTechStack: CloudProvider | string;
   joinedDate?: string;
   createdDate?: string;
+  updatedAt?: string;
   description?: string;
   headquarters?: string;
   notes?: string;

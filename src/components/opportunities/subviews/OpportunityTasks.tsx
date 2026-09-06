@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Opportunity, ActionItem, DealPriority } from '../../../types';
 import { 
   CheckCircle2, 
@@ -35,10 +35,11 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
   const [newPriority, setNewPriority] = useState<DealPriority>('p1_high');
   const [newCategory, setNewCategory] = useState<ActionItem['category']>('Architecture');
 
+  useEffect(() => setTasks(opportunity.actionItems), [opportunity.actionItems]);
+
   const toggleTask = (taskId: string) => {
     const updated = tasks.map(t => t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t);
     setTasks(updated);
-    opportunity.actionItems = updated;
     if (onUpdateTask) {
       const task = updated.find(t => t.id === taskId);
       if (task) onUpdateTask(taskId, task.isCompleted);
@@ -62,7 +63,6 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
 
     const updated = [created, ...tasks];
     setTasks(updated);
-    opportunity.actionItems = updated;
     if (onAddTask) onAddTask(created);
     setNewTitle('');
     setShowAddModal(false);

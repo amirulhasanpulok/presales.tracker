@@ -16,8 +16,8 @@ import { AccessDenied } from './components/common/AccessDenied';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { ChangePasswordScreen } from './components/auth/ChangePasswordScreen';
 
-const lazyNamed = (loader: () => Promise<Record<string, any>>, name: string) =>
-  lazy(async () => ({ default: (await loader())[name] }));
+const lazyNamed = (loader: () => Promise<Record<string, any>>, name: string): React.LazyExoticComponent<React.ComponentType<any>> =>
+  lazy(async () => ({ default: (await loader())[name] })) as React.LazyExoticComponent<React.ComponentType<any>>;
 
 const ExecutiveDashboard = lazyNamed(() => import('./components/dashboard/ExecutiveDashboard'), 'ExecutiveDashboard');
 const MobileHomeScreen = lazyNamed(() => import('./components/dashboard/MobileHomeScreen'), 'MobileHomeScreen');
@@ -550,6 +550,7 @@ export default function App() {
               opportunity={fullDetailOpportunity}
               onBack={() => setFullDetailOpportunity(null)}
               onUpdateOpportunity={handleUpdateOpportunity}
+              onUpdateStage={handleUpdateStage}
             />
           ) : selectedClient ? (
             <ClientDetailsView

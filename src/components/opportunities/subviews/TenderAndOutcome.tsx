@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Opportunity, DealOutcome, TenderInfo } from '../../../types';
 import { api } from '../../../api';
 import {
@@ -60,7 +60,7 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
   opportunity,
   onUpdateOpportunity,
 }) => {
-  const existingTender = opportunity.tender || emptyTender(opportunity.type === 'tender' || Boolean(opportunity.tender?.isTender));
+  const existingTender = opportunity.tender || emptyTender(false);
   const existingOutcome = opportunity.outcome || {
     ...emptyOutcome(),
     outcome: opportunityStageOutcome(opportunity.stage),
@@ -72,6 +72,13 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
   const [complianceInput, setComplianceInput] = useState(
     (existingTender.complianceRequirements || []).join(', '),
   );
+
+  useEffect(() => {
+    const nextTender = opportunity.tender || emptyTender(false);
+    setTender(nextTender);
+    setOutcome(opportunity.outcome || { ...emptyOutcome(), outcome: opportunityStageOutcome(opportunity.stage) });
+    setComplianceInput((nextTender.complianceRequirements || []).join(', '));
+  }, [opportunity]);
 
   const persist = (nextTender: TenderInfo, nextOutcome: DealOutcome) => {
     if (!onUpdateOpportunity) return;

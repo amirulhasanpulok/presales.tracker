@@ -37,14 +37,15 @@ function parseWorkflow(value) {
 function parsePolicy(value) {
   try {
     const policy = JSON.parse(value || '{}');
+    const numberOr = (candidate, fallback) => Number.isFinite(Number(candidate)) ? Number(candidate) : fallback;
     return {
-      minMarginFloor: Math.min(Math.max(Number(policy.minMarginFloor) || 35, 0), 100),
-      slaWarningThresholdDays: Math.min(Math.max(Number(policy.slaWarningThresholdDays) || 14, 1), 365),
-      sessionTimeoutMinutes: Math.min(Math.max(Number(policy.sessionTimeoutMinutes) || 60, 5), 1440),
+      minMarginFloor: Math.min(Math.max(numberOr(policy.minMarginFloor, 35), 0), 100),
+      slaWarningThresholdDays: Math.min(Math.max(numberOr(policy.slaWarningThresholdDays, 14), 1), 365),
+      sessionTimeoutMinutes: Math.min(Math.max(numberOr(policy.sessionTimeoutMinutes, 60), 5), 1440),
       requireMFA: Boolean(policy.requireMFA),
       enableSlackWebhooks: Boolean(policy.enableSlackWebhooks),
       slackWebhookUrl: typeof policy.slackWebhookUrl === 'string' ? policy.slackWebhookUrl.slice(0, 500) : '',
-      autoArchiveDays: Math.min(Math.max(Number(policy.autoArchiveDays) || 90, 1), 3650),
+      autoArchiveDays: Math.min(Math.max(numberOr(policy.autoArchiveDays, 90), 1), 3650),
     };
   } catch {
     return { minMarginFloor: 35, slaWarningThresholdDays: 14, sessionTimeoutMinutes: 60, requireMFA: true, enableSlackWebhooks: false, slackWebhookUrl: '', autoArchiveDays: 90 };
@@ -94,6 +95,8 @@ function changed(previous, next, field) {
 function validateOpportunityChanges(req, previous, next) {
   if (changed(previous, next, 'stage') && !can(req.role, req.user, 'promote_stage')) return 'promote_stage';
   if (changed(previous, next, 'boq')) {
+    const invalidItem = (next.boq?.items || []).some(item => !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0 || !Number.isFinite(Number(item.unitCost)) || Number(item.unitCost) < 0 || !Number.isFinite(Number(item.unitListPrice)) || Number(item.unitListPrice) < 0 || !Number.isFinite(Number(item.discountPercent)) || Number(item.discountPercent) < 0 || Number(item.discountPercent) > 100);
+    if (invalidItem) return 'valid_boq_values';
     if (!can(req.role, req.user, 'author_boq')) return 'author_boq';
     if (previous.boq?.approvalStatus !== next.boq?.approvalStatus && !can(req.role, req.user, 'approve_boq_discount')) return 'approve_boq_discount';
     if (previous.boq?.overallMarginPercent !== next.boq?.overallMarginPercent && Number(next.boq?.overallMarginPercent) < 35 && !can(req.role, req.user, 'override_margin')) return 'override_margin';
@@ -224,7 +227,7 @@ router.post('/auth/change-password', authenticate, async (req, res) => {
 router.get('/bootstrap', authenticate, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const roleId = req.user?.roleId || req.user?.role_id;
-  const isAdministrator = can(req.role, req.user, 'sys.users') || can(req.role, req.user, 'sys.rbac');
+  const isAdministrator = (req.user?.roleId || req.user?.role_id) === 'role-admin' || (can(req.role, req.user, 'sys.users') && can(req.role, req.user, 'sys.rbac'));
   const scope = isAdministrator
     ? { sql: null, params: [] }
     : roleId === 'role-kam'
@@ -490,7 +493,7 @@ router.post('/opportunities/:id/activities', authenticate, requireAnyEditPermiss
   res.status(201).json(stripDocumentContent(out));
 });
 
-router.post('/opportunities/:id/outcome', authenticate, requireAnyEditPermission(), async (req, res) => {
+router.post('/opportunities/:id/outcome', authenticate, requirePermission('promote_stage'), async (req, res) => {
   const requested = req.body;
   const allowed = ['open', 'won', 'lost', 'on_hold', 'cancelled'];
   if (!requested || !allowed.includes(requested.outcome)) return res.status(400).json({ error: 'invalid_outcome' });
@@ -557,14 +560,19 @@ router.post('/opportunities/:id/handover/signoff', authenticate, requirePermissi
   const handover = previous.handover || {};
   const missing = ['technicalRunbookReady', 'credentialsSecurelyTransferred', 'customerTechKickoffScheduled'].filter(field => !handover[field]);
   if (missing.length) return res.status(422).json({ error: 'handover_gates_incomplete', missing });
-  const updatedHandover = {
-    ...handover,
-    ...(req.body || {}),
+   const handoverInput = req.body && typeof req.body === 'object' ? req.body : {};
+   const allowedHandoverFields = ['technicalRunbookReady', 'credentialsSecurelyTransferred', 'customerTechKickoffScheduled', 'knownTechnicalDebtOrRisks', 'specialSLAsAgreed', 'status'];
+   const sanitizedHandover = Object.fromEntries(Object.entries(handoverInput).filter(([key]) => allowedHandoverFields.includes(key)));
+   const updatedHandover = {
+     ...handover,
+     ...sanitizedHandover,
     isHandedOver: true,
     status: 'handed_over',
     handoverDate: new Date().toISOString().slice(0, 10),
-    handedOverBy: req.user?.name || req.user?.email || 'Unknown',
-  };
+     handedOverBy: req.user?.name || req.user?.email || 'Unknown',
+   };
+   const mergedMissing = ['technicalRunbookReady', 'credentialsSecurelyTransferred', 'customerTechKickoffScheduled'].filter(field => !updatedHandover[field]);
+   if (mergedMissing.length) return res.status(422).json({ error: 'handover_gates_incomplete', missing: mergedMissing });
   const activity = makeActivity({ req, type: 'Handover Sign-off', title: 'Sales handover signed off', summary: `Handover signed off by ${updatedHandover.handedOverBy}.` });
   const out = { ...previous, handover: updatedHandover, activities: prependActivities(previous, [activity]), updatedAt: new Date().toISOString() };
   await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1', [req.params.id, JSON.stringify(out)]);
@@ -681,7 +689,7 @@ router.post('/bulk-import', authenticate, requirePermission('sys.integrations'),
       } else if (entity === 'opportunities') {
         if (!row.name || !row.clientName) throw new Error('name and clientName are required');
         const id = String(row.id || `bulk-opp-${Date.now()}-${created}`); const doc = { ...row, id, code: row.code || `BULK-${Date.now()}-${created}`, name: String(row.name), clientName: String(row.clientName), stage: row.stage || 'qualification', priority: row.priority || 'p2_medium', activities: [], stakeholders: [], technologies: [], scopes: [], contractValue: Number(row.contractValue || 0), arr: Number(row.arr || 0), winProbability: Number(row.winProbability || 0), leadSolutionArchitect: row.leadSolutionArchitect || 'Unassigned', accountExecutive: row.accountExecutive || 'Unassigned', boq: { items: [], subtotalCost: 0, subtotalListPrice: 0, totalDiscountAmount: 0, totalContractValue: 0, annualRecurringRevenue: 0, oneTimeServicesValue: 0, overallMarginPercent: 0, approvalStatus: 'draft', version: 1 }, poc: { status: 'not_started', allocatedBudget: 0, successCriteria: [], blockers: [] }, handover: { isHandedOver: false, technicalRunbookReady: false, credentialsSecurelyTransferred: false, customerTechKickoffScheduled: false, knownTechnicalDebtOrRisks: [], specialSLAsAgreed: [] }, actionItems: [], stakeholders: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), lastContactedAt: new Date().toISOString(), daysInCurrentStage: 0 };
-        await query('INSERT INTO opportunities (id,doc,updated_at) VALUES ($1,$2,now()) ON CONFLICT (id) DO UPDATE SET doc=$2,updated_at=now()', [id, JSON.stringify(doc)]); created += 1;
+         await query('INSERT INTO opportunities (id,doc,updated_at) VALUES ($1,$2,now()) ON CONFLICT (id) DO NOTHING', [id, JSON.stringify(doc)]); created += 1;
       } else {
         const target = await query("SELECT id,doc FROM opportunities WHERE id=$1 OR doc->>'code'=$1 LIMIT 1", [String(row.opportunityId || row.opportunityCode || row.code || '')]);
         if (!target.rowCount) throw new Error('opportunity not found');

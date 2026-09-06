@@ -99,12 +99,16 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItem.description || !newItem.unitCost || !newItem.unitListPrice) return;
+    if (!newItem.description) return;
 
     const qty = Number(newItem.quantity) || 1;
     const listPrice = Number(newItem.unitListPrice) || 0;
     const cost = Number(newItem.unitCost) || 0;
     const discount = Number(newItem.discountPercent) || 0;
+    if (!Number.isFinite(qty) || qty <= 0 || !Number.isFinite(cost) || cost < 0 || !Number.isFinite(listPrice) || listPrice < 0 || !Number.isFinite(discount) || discount < 0 || discount > 100) {
+      window.alert('Enter valid positive quantity/prices and a discount between 0% and 100%.');
+      return;
+    }
     
     const discountedUnitPrice = listPrice * (1 - discount / 100);
     const extendedPrice = discountedUnitPrice * qty;
