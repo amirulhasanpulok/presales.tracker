@@ -188,6 +188,14 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
                   {act.summary}
                 </p>
 
+                {(act.currentStage || act.nextAction || act.nextFollowUpDate) && (
+                  <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                    {act.currentStage && <div className="rounded bg-blue-50 border border-blue-100 p-2"><div className="text-[10px] uppercase font-semibold text-blue-700">Current Stage</div><div className="mt-0.5 font-mono text-gray-800">{act.currentStage}</div></div>}
+                    {act.nextAction && <div className="rounded bg-amber-50 border border-amber-100 p-2"><div className="text-[10px] uppercase font-semibold text-amber-700">Next Action</div><div className="mt-0.5 text-gray-800">{act.nextAction}</div></div>}
+                    {act.nextFollowUpDate && <div className="rounded bg-purple-50 border border-purple-100 p-2"><div className="text-[10px] uppercase font-semibold text-purple-700">Next Follow-up</div><div className="mt-0.5 font-mono text-gray-800">{act.nextFollowUpDate}</div></div>}
+                  </div>
+                )}
+
                 {act.attendees && act.attendees.length > 0 && (
                   <div className="mt-2.5 pt-2 border-t border-gray-200 flex flex-wrap items-center gap-1.5 text-[11px]">
                     <span className="text-gray-500 font-semibold">Attendees:</span>
@@ -205,6 +213,9 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
                     <strong>Deliverables:</strong> {act.deliverables.join(', ')}
                   </div>
                 )}
+
+                {act.attachments && act.attachments.length > 0 && <div className="mt-2 text-[11px] text-blue-700"><strong>Attachments:</strong> {act.attachments.join(', ')}</div>}
+                {act.metadata && <details className="mt-2 text-[10px] text-gray-500"><summary className="cursor-pointer font-semibold">Additional activity details</summary><pre className="mt-1 whitespace-pre-wrap break-words font-mono bg-white border border-gray-200 rounded p-2">{JSON.stringify(act.metadata, null, 2)}</pre></details>}
               </div>
             </div>
           ))}

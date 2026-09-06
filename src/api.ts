@@ -1,6 +1,6 @@
 // Thin typed client for the presales tracker backend API.
-// Session token is kept in localStorage; a 401 anywhere clears it and
-// notifies the app shell so it can bounce to the login screen.
+// Keep the bearer token in memory only. This avoids making the session
+// recoverable by arbitrary scripts that can read browser storage.
 
 export interface PrincipalUser {
   id: string;
@@ -38,23 +38,14 @@ export interface BootstrapPayload {
   activityTypes?: string[];
 }
 
-const TOKEN_KEY = 'presales_tracker_token_v1';
+let sessionToken: string | null = null;
 
 export function getToken(): string | null {
-  try {
-    return localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
+  return sessionToken;
 }
 
 export function setToken(token: string | null): void {
-  try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    /* storage unavailable */
-  }
+  sessionToken = token;
 }
 
 export class ApiError extends Error {
@@ -62,13 +53,15 @@ export class ApiError extends Error {
   code?: string;
   retryAfterSec?: number;
   hints?: string[];
+  missing?: string[];
 
-  constructor(status: number, code?: string, hint?: string, retryAfterSec?: number, hints?: string[]) {
+  constructor(status: number, code?: string, hint?: string, retryAfterSec?: number, hints?: string[], missing?: string[]) {
     super(hint || (hints?.length ? hints.join(', ') : undefined) || code || `request failed (${status})`);
     this.status = status;
     this.code = code;
     this.retryAfterSec = retryAfterSec;
     this.hints = hints;
+    this.missing = missing;
   }
 }
 
@@ -85,7 +78,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
 
   if (!res.ok) {
-    let body: { error?: string; hint?: string; retryAfterSec?: number; hints?: string[] } | null = null;
+    let body: { error?: string; hint?: string; retryAfterSec?: number; hints?: string[]; missing?: string[] } | null = null;
     try {
       body = await res.json();
     } catch {
@@ -97,7 +90,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
         window.dispatchEvent(new Event('presales:unauthorized'));
       }
     }
-    throw new ApiError(res.status, body?.error, body?.hint, body?.retryAfterSec, body?.hints);
+    throw new ApiError(res.status, body?.error, body?.hint, body?.retryAfterSec, body?.hints, body?.missing);
   }
 
   return res.json() as Promise<T>;
@@ -156,6 +149,9 @@ export const api = {
   setOutcome: (id: string, outcome: unknown) =>
     request<any>(`/opportunities/${encodeURIComponent(id)}/outcome`, { method: 'POST', body: JSON.stringify(outcome) }),
 
+  signoffHandover: (id: string, handover: unknown) =>
+    request<any>(`/opportunities/${encodeURIComponent(id)}/handover/signoff`, { method: 'POST', body: JSON.stringify(handover) }),
+
   deleteOpportunity: (id: string) =>
     request(`/opportunities/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
@@ -168,11 +164,14 @@ export const api = {
   /** Admin: restore the seeded demo dataset for opportunities. */
   resetData: () => request<{ ok: boolean; count: number }>('/opportunities/reset', { method: 'POST' }),
 
-  createUser: (payload: { name: string; email: string; role: string; roleId: string; department?: string; region?: string; password?: string }) =>
+  createUser: (payload: { name: string; email: string; role: string; roleId: string; department?: string; salesTeam?: string; region?: string; phone?: string; manager?: string; skills?: string[]; certifications?: string[]; password?: string }) =>
     request('/users', { method: 'POST', body: JSON.stringify(payload) }),
 
-  updateUser: (id: string, payload: { name?: string; email?: string; role?: string; roleId?: string; department?: string; region?: string; status?: string; password?: string }) =>
+  updateUser: (id: string, payload: { name?: string; email?: string; role?: string; roleId?: string; department?: string; salesTeam?: string; region?: string; phone?: string; manager?: string; skills?: string[]; certifications?: string[]; status?: string; password?: string }) =>
     request<any>(`/users/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
+
+  bulkImport: (entity: string, rows: Record<string, unknown>[]) =>
+    request<{ created: number; updated: number; errors: string[] }>('/bulk-import', { method: 'POST', body: JSON.stringify({ entity, rows }) }),
 
   createRole: (payload: { roleName: string; description?: string; permissions: string[] }) =>
     request<any>('/roles', { method: 'POST', body: JSON.stringify(payload) }),
@@ -191,10 +190,10 @@ export const api = {
     request(`/scopes/${encodeURIComponent(scopeId)}`, { method: 'DELETE' }),
 
   // OEM catalog
-  createOEM: (payload: { name: string; website?: string; description?: string; status?: string }) =>
+  createOEM: (payload: { name: string; website?: string; description?: string; status?: string; partnerPortalUrl?: string; partnershipStatus?: string; partnerTier?: string; salesCertifications?: string[]; presalesCertifications?: string[]; postsalesCertifications?: string[]; requiredCertifications?: string[] }) =>
     request<any>('/oems', { method: 'POST', body: JSON.stringify(payload) }),
 
-  updateOEM: (oemId: string, payload: { name?: string; website?: string; description?: string; status?: string }) =>
+  updateOEM: (oemId: string, payload: { name?: string; website?: string; description?: string; status?: string; partnerPortalUrl?: string; partnershipStatus?: string; partnerTier?: string; salesCertifications?: string[]; presalesCertifications?: string[]; postsalesCertifications?: string[]; requiredCertifications?: string[] }) =>
     request<any>(`/oems/${encodeURIComponent(oemId)}`, { method: 'PUT', body: JSON.stringify(payload) }),
 
   deleteOEM: (oemId: string) =>

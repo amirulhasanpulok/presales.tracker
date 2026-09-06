@@ -1,5 +1,5 @@
-import React from 'react';
-import { ClientAccount, Opportunity } from '../../types';
+import React, { useState } from 'react';
+import { ClientAccount, ClientContact, Opportunity } from '../../types';
 import { 
   ArrowLeft, 
   Building2, 
@@ -22,6 +22,7 @@ interface ClientDetailsViewProps {
   opportunities: Opportunity[];
   onBack: () => void;
   onSelectOpportunity: (opp: Opportunity) => void;
+  onUpdateClient?: (client: ClientAccount) => void;
 }
 
 export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
@@ -29,8 +30,26 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
   opportunities,
   onBack,
   onSelectOpportunity,
+  onUpdateClient,
 }) => {
   const clientDeals = opportunities.filter(o => o.clientName === client.name);
+  const [contacts, setContacts] = useState<ClientContact[]>(client.contacts || []);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contact, setContact] = useState<ClientContact>({ id: '', name: '', designation: '', phone: '', email: '', isPrimary: false, notes: '' });
+  const saveContact = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!contact.name.trim()) return;
+    const next = [...contacts, { ...contact, id: contact.id || `contact-${Date.now()}`, name: contact.name.trim() }];
+    setContacts(next);
+    onUpdateClient?.({ ...client, contacts: next, updatedAt: new Date().toISOString() });
+    setContact({ id: '', name: '', designation: '', phone: '', email: '', isPrimary: false, notes: '' });
+    setShowContactForm(false);
+  };
+  const removeContact = (id: string) => {
+    const next = contacts.filter(item => item.id !== id);
+    setContacts(next);
+    onUpdateClient?.({ ...client, contacts: next, updatedAt: new Date().toISOString() });
+  };
   const activeDeals = clientDeals.filter(o => !['closed_won', 'closed_lost', 'on_hold', 'cancelled'].includes(o.stage));
   const wonDeals = clientDeals.filter(o => o.stage === 'closed_won' || o.outcome?.outcome === 'won');
   const lostDeals = clientDeals.filter(o => o.stage === 'closed_lost' || o.outcome?.outcome === 'lost');
@@ -112,6 +131,12 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
             <div className={`text-xl font-bold font-mono mt-1 ${metric.tone}`}>{metric.value}</div>
           </div>
         ))}
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-2"><h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Client Contacts ({contacts.length})</h3><button onClick={() => setShowContactForm(value => !value)} className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded">{showContactForm ? 'Cancel' : 'Add Contact'}</button></div>
+        {showContactForm && <form onSubmit={saveContact} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-gray-50 border border-gray-200 rounded p-3"><input required value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })} placeholder="Contact name" className="enterprise-input text-xs" /><input value={contact.designation} onChange={e => setContact({ ...contact, designation: e.target.value })} placeholder="Designation" className="enterprise-input text-xs" /><input value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} placeholder="Phone" className="enterprise-input text-xs" /><input type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} placeholder="Email" className="enterprise-input text-xs" /><textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} placeholder="Notes" rows={2} className="enterprise-input text-xs resize-none sm:col-span-2" /><label className="inline-flex items-center gap-2 text-xs"><input type="checkbox" checked={!!contact.isPrimary} onChange={e => setContact({ ...contact, isPrimary: e.target.checked })} /> Primary contact</label><button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded">Save Contact</button></form>}
+        {contacts.length === 0 ? <div className="text-xs text-gray-500">No contacts recorded for this client.</div> : <div className="grid grid-cols-1 md:grid-cols-2 gap-2">{contacts.map(item => <div key={item.id} className="border border-gray-200 rounded p-3"><div className="flex items-start justify-between gap-2"><div><div className="text-xs font-bold text-gray-900">{item.name} {item.isPrimary && <span className="text-[10px] text-emerald-700">Primary</span>}</div><div className="text-[11px] text-gray-500">{item.designation || 'Designation not set'}</div></div><button onClick={() => removeContact(item.id)} className="text-[10px] text-red-600 hover:underline">Remove</button></div><div className="mt-2 text-[11px] text-gray-600 space-y-0.5"><div>{item.phone || 'Phone not set'}</div><div>{item.email || 'Email not set'}</div></div></div>)}</div>}
       </div>
 
       {/* Account Info Grid */}

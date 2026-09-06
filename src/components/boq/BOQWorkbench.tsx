@@ -192,6 +192,10 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
     });
   };
 
+  const handleFinalize = () => {
+    onUpdateOpportunity({ ...activeOpp, boq: withRevision(activeOpp.boq, { ...activeOpp.boq, approvalStatus: 'finalized' }), updatedAt: new Date().toISOString() });
+  };
+
   return (
     <div className="space-y-4">
       
@@ -281,7 +285,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
             <span>Export BOQ CSV</span>
           </button>
 
-          {activeOpp.boq.approvalStatus !== 'approved' && (
+           {activeOpp.boq.approvalStatus !== 'approved' && activeOpp.boq.approvalStatus !== 'finalized' && (
             <button
               onClick={handleApprove}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium text-xs shadow-xs"
@@ -289,7 +293,8 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
               <Check className="w-3.5 h-3.5" />
               <span>Simulate Leadership Approval</span>
             </button>
-          )}
+           )}
+           {activeOpp.boq.approvalStatus === 'approved' && <button onClick={handleFinalize} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-xs shadow-xs"><Check className="w-3.5 h-3.5" /> Finalize BOQ</button>}
         </div>
 
         <button

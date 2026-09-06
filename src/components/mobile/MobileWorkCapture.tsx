@@ -16,6 +16,8 @@ export const MobileWorkCapture: React.FC<MobileWorkCaptureProps> = ({ opportunit
   const [saved, setSaved] = useState(false);
   const selected = opportunities.find(opportunity => opportunity.id === opportunityId);
 
+  if (!opportunities.length) return <div className="space-y-3 pb-24"><section className="bg-white border border-gray-200 rounded p-6 text-center"><MessageSquarePlus className="w-8 h-8 mx-auto text-blue-400" /><h1 className="mt-2 text-base font-bold text-gray-900">No opportunities available</h1><p className="mt-1 text-xs text-gray-500">Create an opportunity before logging a work update.</p><button onClick={onOpenNewOpportunity} className="mt-4 inline-flex items-center justify-center gap-2 bg-blue-600 text-white rounded px-4 py-2 text-sm font-semibold"><FilePlus2 className="w-4 h-4" /> New Opportunity</button></section></div>;
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!selected || !title.trim() || !summary.trim()) return;

@@ -320,8 +320,8 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
       </div>
 
       {/* Table Container */}
-      <div className="flex-1 overflow-auto bg-white">
-        <table className="hidden md:table w-full text-left border-collapse text-gray-900">
+       <div className="table-scroll-area flex-1 overflow-auto bg-white">
+        <table className="hidden md:table min-w-[1100px] w-full text-left border-collapse text-gray-900">
           <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 text-[11px] font-mono text-gray-500 uppercase select-none">
             <tr>
               <th className="w-8 py-2.5 px-3 text-center">
@@ -334,16 +334,6 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                 />
               </th>
               
-              <th 
-                onClick={() => handleSort('code')}
-                className="py-2.5 px-3 cursor-pointer hover:text-gray-900 transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  <span>Code</span>
-                  {sortField === 'code' && (sortAsc ? <ArrowUp className="w-3 h-3 text-blue-600" /> : <ArrowDown className="w-3 h-3 text-blue-600" />)}
-                </div>
-              </th>
-
               <th 
                 onClick={() => handleSort('name')}
                 className="py-2.5 px-3 cursor-pointer hover:text-gray-900 transition-colors min-w-[240px]"
@@ -399,7 +389,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
           <tbody className="divide-y divide-gray-100 text-xs font-sans">
             {filteredOpportunities.length === 0 ? (
               <tr>
-                <td colSpan={11} className="py-12 text-center text-gray-500">
+                 <td colSpan={10} className="py-12 text-center text-gray-500">
                   <div className="max-w-sm mx-auto space-y-2">
                     <Layers className="w-8 h-8 mx-auto text-gray-400" />
                     <p className="font-semibold text-gray-800">No opportunities match the current criteria</p>
@@ -440,20 +430,13 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                       />
                     </td>
 
-                    {/* Deal Code & Priority */}
-                    <td className={`font-mono text-gray-900 font-semibold whitespace-nowrap ${cellPadding}`}>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-blue-700 font-bold hover:underline">{opp.code}</span>
-                        <PriorityBadge priority={opp.priority} />
-                      </div>
-                    </td>
-
                     {/* Name & Client */}
                     <td className={cellPadding}>
                       <div className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors leading-tight">
-                        {opp.name}
+                        {opp.name} <span className="font-mono text-[10px] text-gray-400">({opp.code})</span>
                       </div>
                       <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
+                        <PriorityBadge priority={opp.priority} />
                         <span className="font-semibold text-gray-700">{opp.clientName}</span>
                         <span>•</span>
                         <span>{opp.clientIndustry}</span>
@@ -586,7 +569,9 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
         </div>
       </div>
 
-      {/* Table Footer Telemetry */}
+       <div className="hidden md:flex items-center justify-center gap-1 py-1 text-[10px] font-mono text-gray-400 bg-white border-t border-gray-100">&larr; Scroll horizontally to view all columns &rarr;</div>
+
+       {/* Table Footer Telemetry */}
        <div className="px-3 sm:px-4 py-2 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-gray-500">
          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span>Showing {filteredOpportunities.length} of {opportunities.length} Total Opportunities</span>

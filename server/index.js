@@ -3,14 +3,27 @@ import express from 'express';
 import cors from 'cors';
 import { randomUUID } from 'node:crypto';
 import routes from './routes.js';
-import { initSchema, seedScopeCatalog, seedOEMCatalog, seedProductCatalog } from './db.js';
+import { initSchema, ensureSystemRoles, seedScopeCatalog, seedOEMCatalog, seedProductCatalog } from './db.js';
 
 const app = express();
 
 app.disable('x-powered-by');
-app.set('trust proxy', true);
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'same-origin');
+  next();
+});
+// Only trust the local reverse proxy. This prevents clients from spoofing
+// X-Forwarded-For and bypassing login throttling/audit attribution.
+app.set('trust proxy', 'loopback');
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '8mb' }), (req, res, next) => {
+  if (req.get('content-length') && Number(req.get('content-length')) > 8 * 1024 * 1024) {
+    return res.status(413).json({ error: 'request_too_large' });
+  }
+  next();
+});
 
 const origin = process.env.CORS_ORIGIN;
 if (origin) {
@@ -20,7 +33,10 @@ if (origin) {
 // Lightweight request logging (production: pair with PM2 log aggregation).
 app.use((req, res, next) => {
   const start = Date.now();
-  req.requestId = req.get('x-request-id') || randomUUID();
+  const suppliedRequestId = req.get('x-request-id');
+  req.requestId = suppliedRequestId && /^[A-Za-z0-9._:-]{1,100}$/.test(suppliedRequestId)
+    ? suppliedRequestId
+    : randomUUID();
   res.setHeader('x-request-id', req.requestId);
   res.on('finish', () => {
     console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${Date.now() - start}ms`);
@@ -49,6 +65,7 @@ if (!OFFICIAL_PATTERN.test(process.env.JWT_SECRET || '')) {
 
 async function start() {
   await initSchema();
+  await ensureSystemRoles();
   await seedScopeCatalog();
   await seedOEMCatalog();
   await seedProductCatalog();

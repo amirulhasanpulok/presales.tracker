@@ -36,6 +36,10 @@ export async function initSchema() {
       role_id TEXT REFERENCES roles(id),
       department TEXT,
       sales_team TEXT,
+      phone TEXT,
+      manager TEXT,
+      skills JSONB NOT NULL DEFAULT '[]'::jsonb,
+      certifications JSONB NOT NULL DEFAULT '[]'::jsonb,
       status TEXT NOT NULL DEFAULT 'Active',
       mfa_enabled BOOLEAN NOT NULL DEFAULT false,
       avatar TEXT,
@@ -47,6 +51,10 @@ export async function initSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     ALTER TABLE users ADD COLUMN IF NOT EXISTS sales_team TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS manager TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS skills JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS certifications JSONB NOT NULL DEFAULT '[]'::jsonb;
 
     CREATE TABLE IF NOT EXISTS opportunities (
       id TEXT PRIMARY KEY,
@@ -126,9 +134,23 @@ export async function initSchema() {
       website TEXT,
       description TEXT,
       status TEXT NOT NULL DEFAULT 'Active',
+      partner_portal_url TEXT,
+      partnership_status TEXT,
+      partner_tier TEXT,
+      sales_certifications JSONB NOT NULL DEFAULT '[]'::jsonb,
+      presales_certifications JSONB NOT NULL DEFAULT '[]'::jsonb,
+      postsales_certifications JSONB NOT NULL DEFAULT '[]'::jsonb,
+      required_certifications JSONB NOT NULL DEFAULT '[]'::jsonb,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE oems ADD COLUMN IF NOT EXISTS partner_portal_url TEXT;
+    ALTER TABLE oems ADD COLUMN IF NOT EXISTS partnership_status TEXT;
+    ALTER TABLE oems ADD COLUMN IF NOT EXISTS partner_tier TEXT;
+    ALTER TABLE oems ADD COLUMN IF NOT EXISTS sales_certifications JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE oems ADD COLUMN IF NOT EXISTS presales_certifications JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE oems ADD COLUMN IF NOT EXISTS postsales_certifications JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE oems ADD COLUMN IF NOT EXISTS required_certifications JSONB NOT NULL DEFAULT '[]'::jsonb;
     CREATE UNIQUE INDEX IF NOT EXISTS ux_oems_name ON oems (lower(name));
 
     -- Product Catalog (Section 11)
@@ -269,6 +291,12 @@ export async function seedOEMCatalog() {
   }
 }
 
+export async function ensureSystemRoles() {
+  await query(`INSERT INTO roles (id, role_name, name, description, users_count, is_system_role, matching_roles, permissions)
+    VALUES ('role-postsales', 'Postsales / Delivery Manager', 'Postsales / Delivery Manager', 'Owns implementation, service transition, and post-sales acceptance.', 0, true, '["Postsales Manager","Postsales","Delivery Manager"]'::jsonb, '["initiate_handover","signoff_handover"]'::jsonb)
+    ON CONFLICT (id) DO NOTHING`);
+}
+
 export async function seedProductCatalog() {
   // Resolve OEM IDs by name for foreign key.
   const oemRows = (await query('SELECT id, name FROM oems')).rows;
@@ -281,8 +309,8 @@ export async function seedProductCatalog() {
     await query(
       `INSERT INTO product_catalog (id, oem_id, name, category, product_line, model, part_number, description, unit, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Active')
-       ON CONFLICT (lower(model)) DO NOTHING`,
-      [id, oemId, name, category, productLine, name, model, description, unit],
+       ON CONFLICT DO NOTHING`,
+      [id, oemId, name, category, productLine, model, model, description, unit],
     );
   }
 }

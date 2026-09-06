@@ -20,6 +20,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
 }) => {
   const presalesUsers = users.filter(user => user.roleId === 'role-sa' || user.department === 'Solutions Engineering');
   const salesUsers = users.filter(user => user.roleId === 'role-kam' || user.role === 'Sales KAM');
+  const postsalesUsers = users.filter(user => user.roleId === 'role-postsales' || user.roleId === 'role-delivery' || user.role === 'Postsales / Delivery Manager' || user.role === 'Delivery Manager');
   const engineers = presalesUsers;
   const [name, setName] = useState('');
   const [clientName, setClientName] = useState('');
@@ -30,8 +31,8 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
   const [complexity, setComplexity] = useState<DealComplexity>('medium');
   const [techFit, setTechFit] = useState<TechnicalFitScore>('good');
   const [primaryTechStack, setPrimaryTechStack] = useState<CloudProvider>('AWS');
-  const [contractValue, setContractValue] = useState(650000);
-  const [arr, setArr] = useState(480000);
+  const [contractValue, setContractValue] = useState<number | ''>(650000);
+  const [arr, setArr] = useState<number | ''>(480000);
   const [winProbability, setWinProbability] = useState(60);
   const [expectedCloseDate, setExpectedCloseDate] = useState(
     new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10)
@@ -39,23 +40,27 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
   const [leadSA, setLeadSA] = useState(engineers[0]?.name || 'Unassigned');
   const [supportingSAs, setSupportingSAs] = useState<string[]>([]);
   const [ae, setAe] = useState(salesUsers[0]?.name || 'Unassigned');
+  const [salesTeam, setSalesTeam] = useState(salesUsers[0]?.salesTeam || '');
+  const [postsalesOwner, setPostsalesOwner] = useState('Unassigned');
   const [proposedArch, setProposedArch] = useState('');
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
   const [scopeQuery, setScopeQuery] = useState('');
   const [scopeDropdownOpen, setScopeDropdownOpen] = useState(false);
   const [extraTags, setExtraTags] = useState('');
   const [legacyStack, setLegacyStack] = useState('');
+  const [formError, setFormError] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !clientName) return;
+    if (!name.trim() || !clientName.trim()) { setFormError('Opportunity name and client name are required.'); return; }
+    if (contractValue === '' || !Number.isFinite(Number(contractValue)) || Number(contractValue) <= 0) { setFormError('Enter a valid Contract TCV greater than 0.'); return; }
+    if (arr === '' || !Number.isFinite(Number(arr)) || Number(arr) <= 0) { setFormError('Enter a valid ARR greater than 0.'); return; }
+    setFormError('');
 
     const matchedSA = engineers.find(e => e.name === leadSA);
-    const scopeNames = selectedScopes.length
-      ? selectedScopes
-      : (scopes || []).filter(s => s.status !== 'Inactive').slice(0, 3).map(s => s.name);
+    const scopeNames = selectedScopes;
     const techTags = extraTags.split(',').map(s => s.trim()).filter(Boolean);
     const technologies = Array.from(new Set([...scopeNames, ...techTags]));
 
@@ -75,12 +80,14 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
       scopes: scopeNames,
       contractValue: Number(contractValue) || 0,
       arr: Number(arr) || 0,
-      winProbability: Number(winProbability) || 50,
+       winProbability: Math.min(100, Math.max(0, Number.isFinite(Number(winProbability)) ? Number(winProbability) : 0)),
       expectedCloseDate,
       leadSolutionArchitect: leadSA,
       supportingPresalesEngineers: supportingSAs,
       leadArchitectAvatar: matchedSA?.avatar,
-      accountExecutive: ae,
+       accountExecutive: ae,
+       salesTeam,
+       postsalesOwner,
        currentLegacyStack: legacyStack,
        proposedArchitecture: proposedArch,
        keyTechnicalRequirements: [],
@@ -99,8 +106,8 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
         subtotalCost: 0,
         subtotalListPrice: 0,
         totalDiscountAmount: 0,
-        totalContractValue: 0,
-        annualRecurringRevenue: 0,
+         totalContractValue: Number(contractValue),
+         annualRecurringRevenue: Number(arr),
         oneTimeServicesValue: 0,
         overallMarginPercent: 0,
         approvalStatus: 'draft',
@@ -159,6 +166,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
 
         {/* Modal Form */}
         <form onSubmit={handleSubmit} className="p-4 overflow-y-auto space-y-4 text-xs bg-white">
+          {formError && <div className="p-2.5 rounded bg-red-50 border border-red-200 text-xs text-red-700 font-medium">{formError}</div>}
           
           {/* General Information */}
           <div className="space-y-2">
@@ -326,7 +334,8 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
                 <input
                   type="number"
                   value={contractValue}
-                  onChange={(e) => setContractValue(Number(e.target.value))}
+                  min="0"
+                  onChange={(e) => setContractValue(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-full enterprise-input"
                 />
               </div>
@@ -336,7 +345,8 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
                 <input
                   type="number"
                   value={arr}
-                  onChange={(e) => setArr(Number(e.target.value))}
+                  min="0"
+                  onChange={(e) => setArr(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-full enterprise-input"
                 />
               </div>
@@ -354,7 +364,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div>
                 <label className="block text-[11px] font-mono text-gray-700 mb-1">Lead Solution Architect</label>
                 <select
@@ -368,6 +378,8 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
                   ))}
                 </select>
               </div>
+              <div><label className="block text-[11px] font-mono text-gray-700 mb-1">Sales Team</label><input value={salesTeam} onChange={e => setSalesTeam(e.target.value)} placeholder="Enterprise / STI / ESP" className="w-full enterprise-input" /></div>
+              <div><label className="block text-[11px] font-mono text-gray-700 mb-1">Postsales Owner</label>{postsalesUsers.length ? <select value={postsalesOwner} onChange={e => setPostsalesOwner(e.target.value)} className="w-full enterprise-input"><option value="Unassigned">Unassigned</option>{postsalesUsers.map(user => <option key={user.id} value={user.name}>{user.name}</option>)}</select> : <input value={postsalesOwner} onChange={e => setPostsalesOwner(e.target.value)} className="w-full enterprise-input" placeholder="Postsales / Delivery owner" />}</div>
 
               <div>
                 <label className="block text-[11px] font-mono text-gray-700 mb-1">Account Executive (AE)</label>

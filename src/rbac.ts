@@ -60,6 +60,7 @@ export const TAB_PERMISSIONS: Record<string, string> = {
   scope_catalog: 'manage_scope_catalog',
   oem_catalog: 'manage_oem_catalog',
   product_catalog: 'manage_oem_catalog',
+  bulk_upload: 'sys.integrations',
 };
 
 export interface RbacRole {
@@ -113,6 +114,15 @@ export const DEFAULT_ROLES: RbacRole[] = [
     isSystemRole: true,
     matchingRoles: ['Delivery Manager'],
     permissions: ['create_opportunity', 'initiate_handover', 'signoff_handover'],
+  },
+  {
+    id: 'role-postsales',
+    roleName: 'Postsales / Delivery Manager',
+    description: 'Owns post-sales implementation, service transition, and acceptance.',
+    usersCount: 0,
+    isSystemRole: true,
+    matchingRoles: ['Postsales Manager', 'Postsales', 'Delivery Manager'],
+    permissions: ['initiate_handover', 'signoff_handover'],
   },
   {
     id: 'role-admin',
@@ -170,7 +180,7 @@ export function resolveRole(
     roles.find(r => {
       const matches = (r as unknown as { matchingRoles?: string[] }).matchingRoles;
       if (Array.isArray(matches)) {
-        return matches.some(m => user.role.includes(m) || m.includes(user.role));
+        return matches.some(m => m === user.role);
       }
       return (r as unknown as { roleName?: string }).roleName === user.role;
     }) || null

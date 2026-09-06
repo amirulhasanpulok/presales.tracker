@@ -27,7 +27,7 @@ Important deployment variables:
 - `CERTBOT_EMAIL`: required when `ENABLE_TLS=1`.
 - `DB_PASSWORD`: generated automatically if omitted.
 - `JWT_SECRET`: generated automatically if omitted.
-- `ADMIN_EMAILS`: comma-separated bootstrap administrator emails.
+- `ADMIN_EMAILS`: reserved for future bootstrap provisioning; use the seed/admin provisioning command explicitly.
 - `APP_DIR`: application path; defaults to `/opt/presales.tracker`.
 - `WEB_ROOT`: Nginx web root; defaults to `/var/www/presales`.
 

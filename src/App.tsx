@@ -44,6 +44,7 @@ import { UserManagementView } from './components/admin/UserManagementView';
 import { RoleManagementView } from './components/admin/RoleManagementView';
 import { MasterConfigView } from './components/admin/MasterConfigView';
 import { SystemSettingsView } from './components/admin/SystemSettingsView';
+import { BulkUploadView } from './components/admin/BulkUploadView';
 import { ScopeCatalogView } from './components/admin/ScopeCatalogView';
 import { OEMCatalogView } from './components/admin/OEMCatalogView';
 import { ProductCatalogView } from './components/admin/ProductCatalogView';
@@ -71,6 +72,10 @@ const toUserState = (u: any): UserAccount => ({
   roleId: u.role_id ?? u.roleId,
   department: u.department ?? '',
   salesTeam: u.sales_team ?? u.salesTeam,
+  phone: u.phone,
+  manager: u.manager,
+  skills: Array.isArray(u.skills) ? u.skills : [],
+  certifications: Array.isArray(u.certifications) ? u.certifications : [],
   status: u.status ?? 'Active',
   lastLoginAt: u.last_login_at ? new Date(u.last_login_at).toISOString() : u.lastLoginAt,
   avatar: u.avatar,
@@ -246,6 +251,11 @@ export default function App() {
           setCurrentUser(null);
           return;
         }
+        const identity = await api.me();
+        if (identity.user.mustChangePassword) {
+          setCurrentUser(toUserState(identity.user));
+          return;
+        }
         const data = await api.bootstrap();
         applyBootstrap(data);
         setCurrentUser(toUserState(data.user));
@@ -259,15 +269,18 @@ export default function App() {
 
   const handleLogin = useCallback(async (user: any) => {
     setCurrentUser(toUserState(user));
-    setActiveTab('dashboard');
-    setFullDetailOpportunity(null);
-    setSelectedClient(null);
+    if (user?.mustChangePassword) return;
     try {
       const data = await api.bootstrap();
       applyBootstrap(data);
       setCurrentUser(toUserState(data.user));
+      setActiveTab('dashboard');
+      setFullDetailOpportunity(null);
+      setSelectedClient(null);
     } catch {
-      /* keep logged in with minimal data */
+      api.logout();
+      setCurrentUser(null);
+      window.alert('Login succeeded, but the workspace could not be loaded. Please try again.');
     }
   }, [applyBootstrap]);
 
@@ -318,8 +331,9 @@ export default function App() {
   const handleUpdateOpportunity = useCallback((updated: Opportunity) => {
     const prev = opportunities.find(o => o.id === updated.id);
     updateOpportunityLocally(updated);
-    api.updateOpportunity(updated).catch(async () => {
-      window.alert('Could not save changes. Reverting to the last saved state.');
+    api.updateOpportunity(updated).catch(async (error: any) => {
+      const detail = error?.missing?.length ? ` Missing: ${error.missing.join(', ')}.` : '';
+      window.alert(`Could not save changes.${detail} Reverting to the last saved state.`);
       if (prev) updateOpportunityLocally(prev);
     });
   }, [opportunities, updateOpportunityLocally]);
@@ -481,7 +495,7 @@ export default function App() {
           setFullDetailOpportunity(null);
           setSelectedClient(null);
         }}
-         onRefreshData={handleResetData}
+         onRefreshData={canDo('sys.integrations') ? handleResetData : undefined}
          onToggleSidebar={() => setIsMobileSidebarOpen(true)}
          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
@@ -527,6 +541,15 @@ export default function App() {
               opportunities={opportunities}
               onBack={() => setSelectedClient(null)}
               onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
+              onUpdateClient={async (client) => {
+                try {
+                  const saved = await api.updateClient(client.id, client);
+                  setClients(current => current.map(item => item.id === saved.id ? saved : item));
+                  setSelectedClient(saved);
+                } catch (error) {
+                  console.error('Failed to update client profile:', error);
+                }
+              }}
             />
           ) : (
             <>
@@ -681,9 +704,10 @@ export default function App() {
                   oems={oems}
                   canManage={canDo('manage_oem_catalog')}
                   onCreate={handleCreateOEM}
-                  onUpdate={handleUpdateOEM}
-                  onDelete={handleDeleteOEM}
-                />
+                   onUpdate={handleUpdateOEM}
+                   onDelete={handleDeleteOEM}
+                   products={products}
+                 />
               )}
 
               {activeTab === 'product_catalog' && (
@@ -700,6 +724,8 @@ export default function App() {
               {activeTab === 'system_settings' && (
                 <SystemSettingsView />
               )}
+
+              {activeTab === 'bulk_upload' && <BulkUploadView />}
             </>
           )}
           </>

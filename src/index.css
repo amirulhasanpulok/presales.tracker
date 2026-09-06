@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -95,6 +97,10 @@
     overflow-y: auto;
   }
 
+  form {
+    width: 100%;
+  }
+
   h1,
   h2,
   h3,
@@ -171,6 +177,48 @@ main h3 + p {
   outline: none;
   border-color: #2563EB;
   box-shadow: 0 0 0 1px #2563EB;
+}
+
+form {
+  min-width: 0;
+}
+
+form input,
+form select,
+form textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+form button {
+  min-height: 2.25rem;
+}
+
+.enterprise-input::placeholder {
+  color: #9CA3AF;
+}
+
+.enterprise-select:focus {
+  outline: none;
+  border-color: #2563EB;
+  box-shadow: 0 0 0 1px #2563EB;
+}
+
+.table-scroll-area {
+  scrollbar-gutter: stable;
+}
+
+.table-scroll-area::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-scroll-area::-webkit-scrollbar-thumb {
+  background: #9CA3AF;
+  border-radius: 4px;
+}
+
+textarea.enterprise-input {
+  resize: vertical;
 }
 
 .enterprise-select {

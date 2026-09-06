@@ -39,8 +39,8 @@ function canAccessOpportunity(req, doc) {
   const roleId = req.user?.roleId || req.user?.role_id;
   if (roleId === 'role-kam') return doc.accountExecutive === req.user?.name;
   if (roleId === 'role-sa') return doc.leadSolutionArchitect === req.user?.name || doc.presalesEngineerSecondary === req.user?.name || (doc.supportingPresalesEngineers || []).includes(req.user?.name);
-  if (roleId === 'role-delivery') return doc.stage === 'closed_won' || doc.handover?.isHandedOver;
-  return true;
+  if (roleId === 'role-delivery' || roleId === 'role-postsales') return doc.stage === 'closed_won' || doc.handover?.isHandedOver;
+  return false;
 }
 
 function stripDocumentContent(doc) {
@@ -57,6 +57,33 @@ async function canAccessClient(req, clientDoc) {
   return (opportunities.rows || []).some(row => canAccessOpportunity(req, row.doc || {}));
 }
 
+function stagePrerequisites(doc, nextStage) {
+  const missing = [];
+  if (nextStage === 'proposal_boq' && !(doc.scopes || []).length) missing.push('At least one solution scope');
+  if (nextStage === 'commercial_negotiation' && !['approved', 'finalized'].includes(doc.boq?.approvalStatus)) missing.push('Approved BOQ');
+  if (nextStage === 'closed_won' && !['approved', 'finalized'].includes(doc.boq?.approvalStatus)) missing.push('Approved BOQ');
+  return missing;
+}
+
+function changed(previous, next, field) {
+  return JSON.stringify(previous?.[field] ?? null) !== JSON.stringify(next?.[field] ?? null);
+}
+
+function validateOpportunityChanges(req, previous, next) {
+  if (changed(previous, next, 'stage') && !can(req.role, req.user, 'promote_stage')) return 'promote_stage';
+  if (changed(previous, next, 'boq')) {
+    if (!can(req.role, req.user, 'author_boq')) return 'author_boq';
+    if (previous.boq?.approvalStatus !== next.boq?.approvalStatus && !can(req.role, req.user, 'approve_boq_discount')) return 'approve_boq_discount';
+    if (previous.boq?.overallMarginPercent !== next.boq?.overallMarginPercent && Number(next.boq?.overallMarginPercent) < 35 && !can(req.role, req.user, 'override_margin')) return 'override_margin';
+  }
+  if (changed(previous, next, 'poc') && !can(req.role, req.user, 'run_poc_benchmarks')) return 'run_poc_benchmarks';
+  if (changed(previous, next, 'handover')) {
+    if (previous.handover?.isHandedOver !== next.handover?.isHandedOver && !can(req.role, req.user, 'signoff_handover')) return 'signoff_handover';
+    if (previous.handover?.isHandedOver === next.handover?.isHandedOver && !can(req.role, req.user, 'initiate_handover')) return 'initiate_handover';
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Login rate limiting (simple in-memory; enough for a single VPS)
 // ---------------------------------------------------------------------------
@@ -69,6 +96,11 @@ function rateLimitLogin(key) {
     rec.resetAt = now + 15 * 60 * 1000;
   }
   rec.count += 1;
+  if (attempts.size > 10000) {
+    for (const [storedKey, stored] of attempts) {
+      if (stored.resetAt < now) attempts.delete(storedKey);
+    }
+  }
   attempts.set(key, rec);
   if (rec.count > 5) {
     return { blocked: true, retryAfterSec: Math.ceil((rec.resetAt - now) / 1000) };
@@ -171,23 +203,15 @@ router.get('/bootstrap', authenticate, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const roleId = req.user?.roleId || req.user?.role_id;
   const isAdministrator = can(req.role, req.user, 'sys.users') || can(req.role, req.user, 'sys.rbac');
-  const opportunityQuery = isAdministrator
-    ? { text: 'SELECT * FROM opportunities ORDER BY updated_at DESC', params: [] }
-    : roleId === 'role-kam'
-      ? { text: "SELECT * FROM opportunities WHERE doc->>'accountExecutive' = $1 ORDER BY updated_at DESC", params: [req.user?.name] }
-      : roleId === 'role-sa'
-        ? { text: "SELECT * FROM opportunities WHERE doc->>'leadSolutionArchitect' = $1 OR doc->>'presalesEngineerSecondary' = $1 OR doc->'supportingPresalesEngineers' ? $1 ORDER BY updated_at DESC", params: [req.user?.name] }
-        : roleId === 'role-delivery'
-          ? { text: "SELECT * FROM opportunities WHERE doc->>'stage' = 'closed_won' OR COALESCE((doc->'handover'->>'isHandedOver')::boolean, false) = true ORDER BY updated_at DESC", params: [] }
-          : { text: 'SELECT * FROM opportunities ORDER BY updated_at DESC', params: [] };
+  const opportunityQuery = { text: 'SELECT * FROM opportunities ORDER BY updated_at DESC', params: [] };
   const [roles, opportunities, clients, users, auditLogs, scopes, oems, products, systemSettings] = await Promise.all([
     can(req.role, req.user, 'sys.rbac') ? query('SELECT * FROM roles ORDER BY role_name') : Promise.resolve({ rows: [] }),
     query(opportunityQuery.text, opportunityQuery.params),
     query('SELECT * FROM clients ORDER BY updated_at DESC'),
-    can(req.role, req.user, 'sys.users') ? query('SELECT id, name, email, role, role_id, department, sales_team, status, mfa_enabled, avatar, region, last_login_at, created_at FROM users ORDER BY name') : Promise.resolve({ rows: [] }),
+    can(req.role, req.user, 'sys.users') ? query('SELECT id, name, email, role, role_id, department, sales_team, phone, manager, skills, certifications, status, mfa_enabled, avatar, region, last_login_at, created_at FROM users ORDER BY name') : Promise.resolve({ rows: [] }),
     can(req.role, req.user, 'sys.audit') ? query('SELECT id, actor_id, actor_email, action, target_type, target_id, meta, ip, actor_role, request_id, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 200') : Promise.resolve({ rows: [] }),
     query('SELECT id, name, category, description, status, sort_order FROM scope_catalog ORDER BY sort_order, name'),
-    query('SELECT id, name, website, description, status FROM oems ORDER BY name'),
+    query('SELECT id, name, website, description, status, partner_portal_url, partnership_status, partner_tier, sales_certifications, presales_certifications, postsales_certifications, required_certifications FROM oems ORDER BY name'),
     query(
       `SELECT p.id, p.oem_id, o.name AS oem_name, p.name, p.category, p.product_line,
               p.model, p.part_number, p.description, p.unit, p.status
@@ -197,13 +221,9 @@ router.get('/bootstrap', authenticate, async (req, res) => {
     query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('currency', 'activity_types')"),
   ]);
   const allOpportunityDocs = (opportunities.rows || []).map(o => o.doc);
-  const scopedOpportunityDocs = isAdministrator ? allOpportunityDocs : roleId === 'role-kam'
-    ? allOpportunityDocs.filter(o => o.accountExecutive === req.user?.name)
-    : roleId === 'role-sa'
-      ? allOpportunityDocs.filter(o => o.leadSolutionArchitect === req.user?.name || o.presalesEngineerSecondary === req.user?.name || (o.supportingPresalesEngineers || []).includes(req.user?.name))
-      : roleId === 'role-delivery'
-        ? allOpportunityDocs.filter(o => o.stage === 'closed_won' || o.handover?.isHandedOver)
-        : allOpportunityDocs;
+  const scopedOpportunityDocs = isAdministrator
+    ? allOpportunityDocs
+    : allOpportunityDocs.filter(doc => canAccessOpportunity(req, doc));
   const visibleClientNames = new Set(scopedOpportunityDocs.map(o => o.clientName).filter(Boolean));
   const scopedClientDocs = isAdministrator ? (clients.rows || []).map(c => c.doc) : (clients.rows || []).map(c => c.doc).filter(c => visibleClientNames.has(c.name));
 
@@ -267,7 +287,7 @@ router.post('/opportunities', authenticate, requirePermission('create_opportunit
     req.user.id,
   ]);
   await audit({ req, action: 'opportunity.create', targetType: 'opportunity', targetId: out.id });
-  res.status(201).json(out);
+  res.status(201).json(stripDocumentContent(out));
 });
 
 // Build a timestamped history entry stamped with the authenticating user so
@@ -304,6 +324,13 @@ router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async
   if (!current.rowCount) return res.status(404).json({ error: 'not_found' });
   const previousDoc = current.rows[0].doc || {};
   if (!canAccessOpportunity(req, previousDoc)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
+  const deniedPermission = validateOpportunityChanges(req, previousDoc, doc);
+  if (deniedPermission) return res.status(403).json({ error: 'field_permission_required', required: deniedPermission });
+  if (doc.stage !== undefined && doc.stage !== previousDoc.stage) {
+    const missing = stagePrerequisites(previousDoc, String(doc.stage));
+    if (missing.length) return res.status(422).json({ error: 'stage_prerequisites_incomplete', stage: doc.stage, missing });
+  }
+  if (previousDoc.handover?.isHandedOver !== doc.handover?.isHandedOver) return res.status(403).json({ error: 'handover_signoff_required' });
   const note = (doc.updateNote || '').trim();
   const incoming = Array.isArray(doc.activities) ? doc.activities : [];
   const clientAdded = incoming.find((a) => a && a._clientAdded);
@@ -362,7 +389,7 @@ router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async
     targetId: out.id,
     meta: { changedFields: Object.keys(changes), changes },
   });
-  res.json(out);
+  res.json(stripDocumentContent(out));
 });
 
 router.post('/opportunities/:id/activities', authenticate, requireAnyEditPermission(), async (req, res) => {
@@ -392,7 +419,7 @@ router.post('/opportunities/:id/activities', authenticate, requireAnyEditPermiss
   const out = { ...doc, id: req.params.id, activities: prependActivities(doc, [entry]), updatedAt: new Date().toISOString() };
   await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1', [req.params.id, JSON.stringify(out)]);
   await audit({ req, action: 'opportunity.activity.create', targetType: 'opportunity', targetId: req.params.id, meta: { activityId: entry.id, activityType: entry.type, title: entry.title } });
-  res.status(201).json(out);
+  res.status(201).json(stripDocumentContent(out));
 });
 
 router.post('/opportunities/:id/outcome', authenticate, requireAnyEditPermission(), async (req, res) => {
@@ -422,7 +449,9 @@ router.post('/opportunities/:id/outcome', authenticate, requireAnyEditPermission
 router.post('/opportunities/:id/documents', authenticate, requireAnyEditPermission(), async (req, res) => {
   const document = req.body;
   if (!document || typeof document !== 'object' || !String(document.title || '').trim()) return res.status(400).json({ error: 'invalid_document' });
-  if (document.fileData && String(document.fileData).length > 7_000_000) return res.status(413).json({ error: 'document_too_large' });
+  if (document.fileData && (!/^data:[\w.+-]+\/[\w.+-]+;base64,[A-Za-z0-9+/=]+$/.test(String(document.fileData)) || String(document.fileData).length > 7_000_000)) {
+    return res.status(413).json({ error: 'invalid_or_oversized_document' });
+  }
   const current = await query('SELECT doc FROM opportunities WHERE id = $1', [req.params.id]);
   if (!current.rowCount) return res.status(404).json({ error: 'not_found' });
   const previous = current.rows[0].doc || {};
@@ -438,7 +467,7 @@ router.post('/opportunities/:id/documents', authenticate, requireAnyEditPermissi
   const out = { ...previous, id: req.params.id, documents: [savedDocument, ...(previous.documents || [])], updatedAt: new Date().toISOString() };
   await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1', [req.params.id, JSON.stringify(out)]);
   await audit({ req, action: 'opportunity.document.upload', targetType: 'opportunity', targetId: req.params.id, meta: { documentId: savedDocument.id, title: savedDocument.title, version: savedDocument.version } });
-  res.status(201).json(out);
+  res.status(201).json(stripDocumentContent(out));
 });
 
 router.get('/opportunities/:id/documents/:documentId', authenticate, async (req, res) => {
@@ -450,6 +479,29 @@ router.get('/opportunities/:id/documents/:documentId', authenticate, async (req,
   if (!document) return res.status(404).json({ error: 'document_not_found' });
   if (!document.fileData) return res.status(404).json({ error: 'file_content_unavailable' });
   res.json({ fileName: document.fileName || document.title, fileData: document.fileData });
+});
+
+router.post('/opportunities/:id/handover/signoff', authenticate, requirePermission('signoff_handover'), async (req, res) => {
+  const current = await query('SELECT doc FROM opportunities WHERE id = $1', [req.params.id]);
+  if (!current.rowCount) return res.status(404).json({ error: 'not_found' });
+  const previous = current.rows[0].doc || {};
+  if (!canAccessOpportunity(req, previous)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
+  const handover = previous.handover || {};
+  const missing = ['technicalRunbookReady', 'credentialsSecurelyTransferred', 'customerTechKickoffScheduled'].filter(field => !handover[field]);
+  if (missing.length) return res.status(422).json({ error: 'handover_gates_incomplete', missing });
+  const updatedHandover = {
+    ...handover,
+    ...(req.body || {}),
+    isHandedOver: true,
+    status: 'handed_over',
+    handoverDate: new Date().toISOString().slice(0, 10),
+    handedOverBy: req.user?.name || req.user?.email || 'Unknown',
+  };
+  const activity = makeActivity({ req, type: 'Handover Sign-off', title: 'Sales handover signed off', summary: `Handover signed off by ${updatedHandover.handedOverBy}.` });
+  const out = { ...previous, handover: updatedHandover, activities: prependActivities(previous, [activity]), updatedAt: new Date().toISOString() };
+  await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1', [req.params.id, JSON.stringify(out)]);
+  await audit({ req, action: 'opportunity.handover.signoff', targetType: 'opportunity', targetId: req.params.id, meta: { previous: handover, next: updatedHandover } });
+  res.json(stripDocumentContent(out));
 });
 
 router.post('/opportunities/:id/stage', authenticate, requirePermission('promote_stage'), async (req, res) => {
@@ -467,6 +519,8 @@ router.post('/opportunities/:id/stage', authenticate, requirePermission('promote
   if (!cur.rowCount) return res.status(404).json({ error: 'not_found' });
   const doc = { ...cur.rows[0].doc, stage: String(stage), updatedAt: new Date().toISOString() };
   if (!canAccessOpportunity(req, cur.rows[0].doc)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
+  const missing = stagePrerequisites(cur.rows[0].doc, String(stage));
+  if (missing.length) return res.status(422).json({ error: 'stage_prerequisites_incomplete', stage, missing });
   doc.activities = prependActivities(doc, [entry]);
   const result = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 RETURNING doc', [
     req.params.id,
@@ -477,8 +531,10 @@ router.post('/opportunities/:id/stage', authenticate, requirePermission('promote
 });
 
 router.delete('/opportunities/:id', authenticate, requirePermission('delete_opportunity'), async (req, res) => {
+  const current = await query('SELECT doc FROM opportunities WHERE id = $1', [req.params.id]);
+  if (!current.rowCount) return res.status(404).json({ error: 'not_found' });
+  if (!canAccessOpportunity(req, current.rows[0].doc || {})) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
   const result = await query('DELETE FROM opportunities WHERE id = $1 RETURNING id', [req.params.id]);
-  if (!result.rowCount) return res.status(404).json({ error: 'not_found' });
   await audit({ req, action: 'opportunity.delete', targetType: 'opportunity', targetId: req.params.id });
   res.json({ ok: true });
 });
@@ -527,6 +583,48 @@ router.put('/clients/:id', authenticate, requireAnyEditPermission(), async (req,
   }
 });
 
+router.post('/bulk-import', authenticate, requirePermission('sys.integrations'), async (req, res) => {
+  const { entity, rows } = req.body || {};
+  const allowed = ['users', 'clients', 'opportunities', 'opportunity_updates'];
+  if (!allowed.includes(entity) || !Array.isArray(rows) || rows.length > 1000) return res.status(400).json({ error: 'invalid_bulk_import' });
+  let created = 0; let updated = 0; const errors = [];
+  for (const row of rows) {
+    try {
+      if (!row || typeof row !== 'object') throw new Error('row is not an object');
+      if (entity === 'users') {
+        if (!row.name || !row.email) throw new Error('name and email are required');
+        const role = await query('SELECT id FROM roles WHERE id = $1 OR lower(role_name) = lower($2) LIMIT 1', [row.roleId || row.role_id || null, row.role || 'Sales KAM']);
+        if (!role.rowCount) throw new Error('role not found');
+        const exists = await query('SELECT id FROM users WHERE lower(email) = lower($1)', [String(row.email)]);
+        if (exists.rowCount) { updated += 1; continue; }
+         const importedPassword = String(row.password || '');
+         if (!importedPassword || validatePassword(importedPassword).length) throw new Error('a strong row password is required');
+         await query("INSERT INTO users (id,name,email,password_hash,role,role_id,department,sales_team,status,region,must_change_password) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Active',$9,true)", [`bulk-user-${Date.now()}-${created}`, String(row.name).trim(), String(row.email).trim(), await hashPassword(importedPassword), String(row.role || 'Sales KAM'), role.rows[0].id, row.department || null, row.salesTeam || row.sales_team || null, row.region || null]);
+        created += 1;
+      } else if (entity === 'clients') {
+        if (!row.name && !row['Subscriber Name']) throw new Error('client name is required');
+        const name = String(row.name || row['Subscriber Name']).trim();
+        const code = String(row.code || row['Subscriber ID'] || `BULK-${Date.now()}-${created}`).trim();
+        const existing = await query("SELECT id FROM clients WHERE doc->>'code' = $1 OR lower(doc->>'name') = lower($2) LIMIT 1", [code, name]);
+        const doc = { ...row, id: existing.rows[0]?.id || `bulk-client-${Date.now()}-${created}`, code, name, source: row.source || 'bulk_excel', lastUpdated: new Date().toISOString() };
+        if (existing.rowCount) { await query('UPDATE clients SET doc=$2, updated_at=now() WHERE id=$1', [existing.rows[0].id, JSON.stringify(doc)]); updated += 1; } else { await query('INSERT INTO clients (id,doc,updated_at) VALUES ($1,$2,now())', [doc.id, JSON.stringify(doc)]); created += 1; }
+      } else if (entity === 'opportunities') {
+        if (!row.name || !row.clientName) throw new Error('name and clientName are required');
+        const id = String(row.id || `bulk-opp-${Date.now()}-${created}`); const doc = { ...row, id, code: row.code || `BULK-${Date.now()}-${created}`, name: String(row.name), clientName: String(row.clientName), stage: row.stage || 'qualification', priority: row.priority || 'p2_medium', activities: [], stakeholders: [], technologies: [], scopes: [], contractValue: Number(row.contractValue || 0), arr: Number(row.arr || 0), winProbability: Number(row.winProbability || 0), leadSolutionArchitect: row.leadSolutionArchitect || 'Unassigned', accountExecutive: row.accountExecutive || 'Unassigned', boq: { items: [], subtotalCost: 0, subtotalListPrice: 0, totalDiscountAmount: 0, totalContractValue: 0, annualRecurringRevenue: 0, oneTimeServicesValue: 0, overallMarginPercent: 0, approvalStatus: 'draft', version: 1 }, poc: { status: 'not_started', allocatedBudget: 0, successCriteria: [], blockers: [] }, handover: { isHandedOver: false, technicalRunbookReady: false, credentialsSecurelyTransferred: false, customerTechKickoffScheduled: false, knownTechnicalDebtOrRisks: [], specialSLAsAgreed: [] }, actionItems: [], stakeholders: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), lastContactedAt: new Date().toISOString(), daysInCurrentStage: 0 };
+        await query('INSERT INTO opportunities (id,doc,updated_at) VALUES ($1,$2,now()) ON CONFLICT (id) DO UPDATE SET doc=$2,updated_at=now()', [id, JSON.stringify(doc)]); created += 1;
+      } else {
+        const target = await query("SELECT id,doc FROM opportunities WHERE id=$1 OR doc->>'code'=$1 LIMIT 1", [String(row.opportunityId || row.opportunityCode || row.code || '')]);
+        if (!target.rowCount) throw new Error('opportunity not found');
+        if (!canAccessOpportunity(req, target.rows[0].doc || {})) throw new Error('opportunity scope forbidden');
+        const doc = target.rows[0].doc || {}; const activity = { id: `bulk-activity-${Date.now()}-${updated}`, type: row.type || row.activityType || 'Other', title: row.title || row.type || 'Imported update', timestamp: new Date().toISOString(), author: req.user?.name || 'Bulk Import', summary: row.summary || row.description || row.note || '', durationMinutes: Number(row.durationMinutes || 0), attendees: [], nextAction: row.nextAction || '', nextFollowUpDate: row.nextFollowUpDate || '' };
+        await query('UPDATE opportunities SET doc=$2,updated_at=now() WHERE id=$1', [target.rows[0].id, JSON.stringify({ ...doc, activities: [activity, ...(doc.activities || [])], updatedAt: new Date().toISOString() })]); updated += 1;
+      }
+    } catch (error) { errors.push(`${entity} row ${errors.length + created + updated + 1}: ${error.message}`); }
+  }
+  await audit({ req, action: `bulk_import.${entity}`, targetType: entity, meta: { rows: rows.length, created, updated, errors: errors.length } });
+  res.json({ created, updated, errors });
+});
+
 // Admin-only reset: restores seed opportunities from the seed cache.
 router.post('/opportunities/reset', authenticate, requirePermission('sys.integrations'), async (req, res) => {
   const cache = loadSeedCache();
@@ -546,33 +644,33 @@ router.post('/opportunities/reset', authenticate, requirePermission('sys.integra
 // ---------------------------------------------------------------------------
 router.get('/users', authenticate, requirePermission('sys.users'), async (req, res) => {
   const { rows } = await query(
-    'SELECT id, name, email, role, role_id, department, sales_team, status, mfa_enabled, avatar, region, last_login_at, created_at FROM users ORDER BY name',
+    'SELECT id, name, email, role, role_id, department, sales_team, phone, manager, skills, certifications, status, mfa_enabled, avatar, region, last_login_at, created_at FROM users ORDER BY name',
   );
   res.json(rows);
 });
 
 router.post('/users', authenticate, requirePermission('sys.users'), async (req, res) => {
-  const { name, email, role, roleId, department, region, password } = req.body || {};
+  const { name, email, role, roleId, department, salesTeam, phone, manager, skills, certifications, region, password } = req.body || {};
   if (!name || !email || !role || !roleId) {
     return res.status(400).json({ error: 'missing_fields' });
   }
-  const finalPassword = typeof password === 'string' && password.length >= 8
-    ? password
-    : `Temp-${Buffer.from(Math.random().toString(36) + Date.now().toString(36)).toString('hex').slice(0, 10)}`;
+  if (typeof password !== 'string' || validatePassword(password).length) {
+    return res.status(400).json({ error: 'weak_password', hints: validatePassword(String(password || '')) });
+  }
+  const finalPassword = password;
   const exists = await query('SELECT 1 FROM users WHERE lower(email) = lower($1)', [String(email)]);
   if (exists.rows.length) return res.status(409).json({ error: 'email_taken' });
   const id = `usr-${Date.now()}`;
   await query(
-    'INSERT INTO users (id, name, email, password_hash, role, role_id, department, region, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,\'Active\')',
-    [id, String(name), String(email), await hashPassword(finalPassword), String(role), String(roleId), department || null, region || null],
+    'INSERT INTO users (id, name, email, password_hash, role, role_id, department, sales_team, phone, manager, skills, certifications, region, status, must_change_password) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,\'Active\',true)',
+    [id, String(name), String(email), await hashPassword(finalPassword), String(role), String(roleId), department || null, salesTeam || null, phone || null, manager || null, JSON.stringify(skills || []), JSON.stringify(certifications || []), region || null],
   );
   await audit({ req, action: 'user.create', targetType: 'user', targetId: id });
-  const generated = typeof password !== 'string' || password.length < 8;
-  res.status(201).json({ id, name, email, role, roleId, department: department ?? null, region: region ?? null, status: 'Active', mfaEnabled: false, tempPassword: generated ? finalPassword : undefined });
+  res.status(201).json({ id, name, email, role, roleId, department: department ?? null, salesTeam: salesTeam ?? null, phone: phone ?? null, manager: manager ?? null, skills: skills || [], certifications: certifications || [], region: region ?? null, status: 'Active', mfaEnabled: false, mustChangePassword: true });
 });
 
 router.put('/users/:id', authenticate, requirePermission('sys.users'), async (req, res) => {
-  const { name, email, role, roleId, department, region, status, password } = req.body || {};
+  const { name, email, role, roleId, department, salesTeam, phone, manager, skills, certifications, region, status, password } = req.body || {};
   const fields = [];
   const values = [];
   if (name !== undefined) { values.push(String(name)); fields.push(`name = $${values.length}`); }
@@ -581,10 +679,19 @@ router.put('/users/:id', authenticate, requirePermission('sys.users'), async (re
   if (roleId !== undefined) { values.push(String(roleId)); fields.push(`role_id = $${values.length}`); }
   if (department !== undefined) { values.push(String(department)); fields.push(`department = $${values.length}`); }
   if (region !== undefined) { values.push(String(region)); fields.push(`region = $${values.length}`); }
+  if (salesTeam !== undefined) { values.push(String(salesTeam)); fields.push(`sales_team = $${values.length}`); }
+  if (phone !== undefined) { values.push(String(phone)); fields.push(`phone = $${values.length}`); }
+  if (manager !== undefined) { values.push(String(manager)); fields.push(`manager = $${values.length}`); }
+  if (skills !== undefined) { values.push(JSON.stringify(Array.isArray(skills) ? skills : [])); fields.push(`skills = $${values.length}::jsonb`); }
+  if (certifications !== undefined) { values.push(JSON.stringify(Array.isArray(certifications) ? certifications : [])); fields.push(`certifications = $${values.length}::jsonb`); }
   if (status !== undefined) { values.push(String(status)); fields.push(`status = $${values.length}`); }
   if (password !== undefined) {
+    const passwordReasons = validatePassword(String(password));
+    if (passwordReasons.length) return res.status(400).json({ error: 'weak_password', hints: passwordReasons });
     values.push(await hashPassword(String(password)));
     fields.push(`password_hash = $${values.length}`);
+    values.push(true);
+    fields.push(`must_change_password = $${values.length}`);
   }
   if (!fields.length) return res.status(400).json({ error: 'nothing_to_update' });
   values.push(req.params.id);
@@ -689,12 +796,12 @@ router.delete('/scopes/:id', authenticate, requirePermission('manage_scope_catal
 // OEM Management (Section 10)
 // ---------------------------------------------------------------------------
 router.get('/oems', authenticate, async (req, res) => {
-  const { rows } = await query('SELECT id, name, website, description, status FROM oems ORDER BY name');
+  const { rows } = await query('SELECT id, name, website, description, status, partner_portal_url, partnership_status, partner_tier, sales_certifications, presales_certifications, postsales_certifications, required_certifications FROM oems ORDER BY name');
   res.json(rows);
 });
 
 router.post('/oems', authenticate, requirePermission('manage_oem_catalog'), async (req, res) => {
-  const { name, website, description, status } = req.body || {};
+  const { name, website, description, status, partnerPortalUrl, partnershipStatus, partnerTier, salesCertifications, presalesCertifications, postsalesCertifications, requiredCertifications } = req.body || {};
   if (!name || !String(name).trim()) {
     return res.status(400).json({ error: 'invalid_oem' });
   }
@@ -704,15 +811,15 @@ router.post('/oems', authenticate, requirePermission('manage_oem_catalog'), asyn
   if (conflict.rows.length) return res.status(409).json({ error: 'duplicate_oem', name: finalName });
   const id = `oem-${Date.now()}`;
   await query(
-    `INSERT INTO oems (id, name, website, description, status) VALUES ($1, $2, $3, $4, $5)`,
-    [id, finalName, website ?? null, description ?? null, finalStatus],
+    `INSERT INTO oems (id, name, website, description, status, partner_portal_url, partnership_status, partner_tier, sales_certifications, presales_certifications, postsales_certifications, required_certifications) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb)`,
+    [id, finalName, website ?? null, description ?? null, finalStatus, partnerPortalUrl ?? null, partnershipStatus ?? null, partnerTier ?? null, JSON.stringify(salesCertifications || []), JSON.stringify(presalesCertifications || []), JSON.stringify(postsalesCertifications || []), JSON.stringify(requiredCertifications || [])],
   );
   await audit({ req, action: 'oem.create', targetType: 'oems', targetId: id, meta: { name: finalName } });
-  res.status(201).json({ id, name: finalName, website: website ?? null, description: description ?? null, status: finalStatus });
+  res.status(201).json({ id, name: finalName, website: website ?? null, description: description ?? null, status: finalStatus, partner_portal_url: partnerPortalUrl ?? null, partnership_status: partnershipStatus ?? null, partner_tier: partnerTier ?? null, sales_certifications: salesCertifications || [], presales_certifications: presalesCertifications || [], postsales_certifications: postsalesCertifications || [], required_certifications: requiredCertifications || [] });
 });
 
 router.put('/oems/:id', authenticate, requirePermission('manage_oem_catalog'), async (req, res) => {
-  const { name, website, description, status } = req.body || {};
+  const { name, website, description, status, partnerPortalUrl, partnershipStatus, partnerTier, salesCertifications, presalesCertifications, postsalesCertifications, requiredCertifications } = req.body || {};
   const cur = await query('SELECT * FROM oems WHERE id = $1', [req.params.id]);
   if (!cur.rowCount) return res.status(404).json({ error: 'not_found' });
   const prev = cur.rows[0];
@@ -725,11 +832,11 @@ router.put('/oems/:id', authenticate, requirePermission('manage_oem_catalog'), a
   const finalWebsite = website !== undefined ? (website ?? null) : (prev.website ?? null);
   const finalDesc = description !== undefined ? (description ?? null) : (prev.description ?? null);
   await query(
-    `UPDATE oems SET name = $1, website = $2, description = $3, status = $4, updated_at = now() WHERE id = $5`,
-    [finalName, finalWebsite, finalDesc, finalStatus, req.params.id],
+    `UPDATE oems SET name = $1, website = $2, description = $3, status = $4, partner_portal_url = COALESCE($5, partner_portal_url), partnership_status = COALESCE($6, partnership_status), partner_tier = COALESCE($7, partner_tier), sales_certifications = COALESCE($8::jsonb, sales_certifications), presales_certifications = COALESCE($9::jsonb, presales_certifications), postsales_certifications = COALESCE($10::jsonb, postsales_certifications), required_certifications = COALESCE($11::jsonb, required_certifications), updated_at = now() WHERE id = $12`,
+    [finalName, finalWebsite, finalDesc, finalStatus, partnerPortalUrl ?? null, partnershipStatus ?? null, partnerTier ?? null, salesCertifications ? JSON.stringify(salesCertifications) : null, presalesCertifications ? JSON.stringify(presalesCertifications) : null, postsalesCertifications ? JSON.stringify(postsalesCertifications) : null, requiredCertifications ? JSON.stringify(requiredCertifications) : null, req.params.id],
   );
   await audit({ req, action: 'oem.update', targetType: 'oems', targetId: req.params.id, meta: { name: finalName, status: finalStatus } });
-  res.json({ id: req.params.id, name: finalName, website: finalWebsite, description: finalDesc, status: finalStatus });
+  res.json({ ...prev, id: req.params.id, name: finalName, website: finalWebsite, description: finalDesc, status: finalStatus, partner_portal_url: partnerPortalUrl ?? prev.partner_portal_url, partnership_status: partnershipStatus ?? prev.partnership_status, partner_tier: partnerTier ?? prev.partner_tier, sales_certifications: salesCertifications ?? prev.sales_certifications, presales_certifications: presalesCertifications ?? prev.presales_certifications, postsales_certifications: postsalesCertifications ?? prev.postsales_certifications, required_certifications: requiredCertifications ?? prev.required_certifications });
 });
 
 router.delete('/oems/:id', authenticate, requirePermission('manage_oem_catalog'), async (req, res) => {
@@ -812,7 +919,7 @@ router.delete('/products/:id', authenticate, requirePermission('manage_oem_catal
 router.get('/audit-logs', authenticate, requirePermission('sys.audit'), async (req, res) => {
   const { rows } = await query(
     'SELECT id, actor_id, actor_email, action, target_type, target_id, meta, ip, actor_role, request_id, created_at FROM audit_logs ORDER BY created_at DESC LIMIT $1',
-    [Number(req.query.limit) || 200],
+    [Math.min(Math.max(Number(req.query.limit) || 200, 1), 200)],
   );
   res.json(rows);
 });
@@ -822,7 +929,8 @@ router.get('/health', async (req, res) => {
     await query('SELECT 1');
     res.json({ ok: true, service: 'presales-api', db: 'connected', time: new Date().toISOString() });
   } catch (err) {
-    res.status(503).json({ ok: false, service: 'presales-api', db: 'error', error: err.message });
+    console.error('health check failed:', err.message);
+    res.status(503).json({ ok: false, service: 'presales-api', db: 'error' });
   }
 });
 

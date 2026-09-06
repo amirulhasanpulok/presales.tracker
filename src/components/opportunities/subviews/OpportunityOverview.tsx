@@ -197,6 +197,8 @@ export const OpportunityOverview: React.FC<OpportunityOverviewProps> = ({
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase font-semibold">Account Executive / KAM</div>
                   <div className="font-bold text-gray-900">{opportunity.accountExecutive}</div>
+                  {opportunity.salesTeam && <div className="text-[11px] text-gray-500 mt-0.5">Team: {opportunity.salesTeam}</div>}
+                  {opportunity.postsalesOwner && opportunity.postsalesOwner !== 'Unassigned' && <div className="text-[11px] text-gray-500">Postsales: {opportunity.postsalesOwner}</div>}
                 </div>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
                   Commercial

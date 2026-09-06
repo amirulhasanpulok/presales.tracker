@@ -20,6 +20,7 @@ export async function audit({ req, action, targetType = null, targetId = null, m
     );
   } catch (err) {
     console.error('audit write failed:', err.message);
+    throw err;
   }
 }
 

@@ -90,5 +90,8 @@ export async function authenticate(req, res, next) {
   }
   req.user = principal.user;
   req.role = principal.role;
+  if (principal.user.mustChangePassword && req.path !== '/auth/change-password' && req.path !== '/auth/me') {
+    return res.status(403).json({ error: 'password_change_required' });
+  }
   next();
 }

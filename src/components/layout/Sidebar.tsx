@@ -113,6 +113,7 @@ interface NavSection {
         { id: 'scope_catalog' as ActiveTab, label: 'Scope Catalog', icon: Layers, perm: 'manage_scope_catalog' },
         { id: 'oem_catalog' as ActiveTab, label: 'OEM Catalog', icon: Factory, perm: 'manage_oem_catalog' },
         { id: 'product_catalog' as ActiveTab, label: 'Product Catalog', icon: Boxes, perm: 'manage_oem_catalog' },
+        { id: 'bulk_upload' as ActiveTab, label: 'Bulk Excel Upload', icon: FileText, perm: 'sys.integrations' },
         { id: 'master_config' as ActiveTab, label: 'Master Configuration', icon: Sliders, perm: 'sys.integrations' },
         { id: 'system_settings' as ActiveTab, label: 'System Settings', icon: Settings, perm: 'sys.integrations' },
       ]

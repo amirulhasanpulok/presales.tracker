@@ -34,7 +34,7 @@ apt-get update
 apt-get install -y git curl ca-certificates build-essential postgresql nginx openssl
 
 if ! command -v node >/dev/null 2>&1; then
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 https://deb.nodesource.com/setup_20.x | bash -
   apt-get install -y nodejs
 fi
 
@@ -75,9 +75,9 @@ ADMIN_EMAILS=$ADMIN_EMAILS
 EOF
 
 cd "$APP_DIR"
-npm ci
+npm install --include=dev
 cd "$APP_DIR/server"
-npm ci
+npm install --omit=dev
 cd "$APP_DIR"
 npm run build
 
@@ -105,6 +105,12 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /assets/ {
+        try_files \$uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
     }
 
     location / {

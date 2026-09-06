@@ -19,7 +19,8 @@ const uniqueNames = [...new Map(names.map(name => [name.toLowerCase().replace(/[
 await initSchema();
 const existing = await query('SELECT id, name, email FROM users');
 const existingByName = new Map((existing.rows || []).map(user => [user.name.toLowerCase().replace(/[^a-z0-9]/g, ''), user]));
-const passwordHash = await hashPassword(process.env.SALES_KAM_TEMP_PASSWORD || 'ChangeMe@2026');
+if (!process.env.SALES_KAM_TEMP_PASSWORD) throw new Error('SALES_KAM_TEMP_PASSWORD must be set.');
+const passwordHash = await hashPassword(process.env.SALES_KAM_TEMP_PASSWORD);
 let imported = 0;
 let skipped = 0;
 

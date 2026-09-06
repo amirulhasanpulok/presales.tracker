@@ -6,7 +6,8 @@ import { query, initSchema } from './db.js';
 import { hashPassword } from './auth.js';
 import { MOCK_ROLES, MOCK_USERS, INITIAL_OPPORTUNITIES, MOCK_CLIENTS, MOCK_AUDIT_LOGS } from '../src/data/mockData.ts';
 
-const SEED_PASSWORD = process.env.SEED_PASSWORD || 'ChangeMe@2026';
+const SEED_PASSWORD = process.env.SEED_PASSWORD;
+if (!SEED_PASSWORD) throw new Error('SEED_PASSWORD must be set; refusing to seed a shared password.');
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
@@ -86,7 +87,7 @@ async function main() {
   writeFileSync(path.join(__dirname, 'seed-cache.json'), JSON.stringify({ opportunities: INITIAL_OPPORTUNITIES }, null, 2));
 
   console.log(`Seed complete. ${MOCK_ROLES.length} roles, ${MOCK_USERS.length} users, ${INITIAL_OPPORTUNITIES.length} opportunities, ${(MOCK_CLIENTS || []).length} clients.`);
-  console.log(`Initial password for all seeded users: ${SEED_PASSWORD} — each user must change it at first login.`);
+  console.log('Seeded users require the configured initial password and must change it at first login.');
   process.exit(0);
 }
 

@@ -28,6 +28,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newType, setNewType] = useState<OpportunityDocument['type']>('SADD Blueprint');
+  const [newVersion, setNewVersion] = useState('v1.0');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -49,7 +50,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
       id: `doc-${Date.now()}`,
       title: newTitle,
       type: newType,
-      version: 'v1.0',
+      version: newVersion.trim() || 'v1.0',
       size: selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : 'Metadata only',
       fileName: selectedFile?.name,
       fileData,
@@ -63,6 +64,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
     if (onUploadDoc) onUploadDoc(newDoc);
 
     setNewTitle('');
+    setNewVersion('v1.0');
     setSelectedFile(null);
     setShowUploadModal(false);
   };
@@ -70,6 +72,9 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
   const downloadDocument = async (doc: OpportunityDocument) => {
     try {
       const file = await api.downloadDocument(opportunity.id, doc.id);
+      if (!/^data:[\w.+-]+\/[\w.+-]+;base64,[A-Za-z0-9+/=]+$/.test(file.fileData)) {
+        throw new Error('invalid document URL');
+      }
       const link = document.createElement('a');
       link.href = file.fileData;
       link.download = file.fileName || `${doc.title.replace(/[^a-zA-Z0-9_-]/g, '_')}_${doc.version}`;
@@ -121,6 +126,8 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Attach Technical Deliverable</h4>
             <button type="button" onClick={() => setShowUploadModal(false)} className="text-xs text-gray-500 hover:text-gray-800">&times; Cancel</button>
           </div>
+
+          <div><label className="block text-[11px] font-semibold text-gray-700 mb-1">Version</label><input value={newVersion} onChange={e => setNewVersion(e.target.value)} placeholder="v1.0" className="enterprise-input w-full text-xs font-mono" /></div>
 
           <div>
             <label className="block text-[11px] font-semibold text-gray-700 mb-1">File (optional, max 5 MB)</label>

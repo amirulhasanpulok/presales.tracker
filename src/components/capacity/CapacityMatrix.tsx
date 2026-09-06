@@ -1,7 +1,6 @@
 import React from 'react';
 import { Users, Cpu, Award, TrendingUp, CheckCircle, Plus, AlertCircle, Database, Layers } from 'lucide-react';
 import { PresalesEngineer, Opportunity } from '../../types';
-import { formatCurrency } from '../../utils/currency';
 
 interface CapacityMatrixProps {
   engineers?: PresalesEngineer[];
@@ -14,10 +13,9 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
   opportunities,
   onSelectOpportunity
 }) => {
-  const avgUtilization = engineers.length ? Math.round(engineers.reduce((total, engineer) => total + (engineer.utilizationPercentage || 0), 0) / engineers.length * 10) / 10 : 0;
-  const activePocLabs = opportunities.filter(o => ['active_testing', 'validating_kpis'].includes(o.poc?.status)).length;
   const certifiedEngineers = engineers.filter(engineer => (engineer.certifications || []).length > 0).length;
   const certificationCoverage = engineers.length ? Math.round((certifiedEngineers / engineers.length) * 100) : 0;
+  const departments = new Set(engineers.map(engineer => engineer.title).filter(Boolean)).size;
   return (
     <div className="space-y-4">
       
@@ -27,9 +25,9 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-600" />
             <div>
-              <h1 className="text-base font-bold text-gray-900 tracking-tight">Solutions Architecture Workload & Skill Matrix</h1>
+              <h1 className="text-base font-bold text-gray-900 tracking-tight">Presales Team Directory & Skill Matrix</h1>
               <p className="text-xs text-gray-500 mt-0.5">
-                Monitor engineering utilization, cloud certifications, active POC commitments, and deal allocation bandwidth.
+                Maintain presales personnel profiles, technical competencies, certifications, and access readiness.
               </p>
             </div>
           </div>
@@ -44,16 +42,16 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
         {/* Global Team Capacity Overview */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100 text-xs font-mono">
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
-            <span className="text-gray-500 text-[11px] font-sans font-medium">Avg SA Team Utilization:</span>
-            <div className="text-sm font-bold text-emerald-700">{avgUtilization}%</div>
+            <span className="text-gray-500 text-[11px] font-sans font-medium">Team Members:</span>
+            <div className="text-sm font-bold text-emerald-700">{engineers.length}</div>
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
-            <span className="text-gray-500 text-[11px] font-sans font-medium">Total Supported Pipeline:</span>
-            <div className="text-sm font-bold text-gray-900">{formatCurrency(opportunities.reduce((acc, o) => acc + o.contractValue, 0))}</div>
+            <span className="text-gray-500 text-[11px] font-sans font-medium">Role Profiles:</span>
+            <div className="text-sm font-bold text-gray-900">{departments}</div>
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
-            <span className="text-gray-500 text-[11px] font-sans font-medium">Total Active POC Labs:</span>
-            <div className="text-sm font-bold text-amber-800">{activePocLabs} Active Labs</div>
+            <span className="text-gray-500 text-[11px] font-sans font-medium">Presales Access:</span>
+            <div className="text-sm font-bold text-amber-800">Managed</div>
           </div>
           <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Certification Coverage:</span>
@@ -66,9 +64,6 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {engineers.length === 0 && <div className="md:col-span-2 bg-white border border-dashed border-gray-300 rounded p-10 text-center"><Users className="w-8 h-8 mx-auto text-gray-300" /><h3 className="mt-2 text-sm font-semibold text-gray-800">No presales engineers found</h3><p className="mt-1 text-xs text-gray-500">Add presales users from User Management to populate the workload matrix.</p></div>}
         {engineers.map((eng) => {
-          const assignedOpps = opportunities.filter(o => o.leadSolutionArchitect === eng.name);
-          const totalVal = assignedOpps.reduce((acc, o) => acc + o.contractValue, 0);
-
           return (
             <div
               key={eng.id}
@@ -121,32 +116,6 @@ export const CapacityMatrix: React.FC<CapacityMatrixProps> = ({
                       <Award className="w-3 h-3 text-blue-600" />
                       {cert}
                     </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Active Assigned Deals */}
-              <div className="pt-2 border-t border-gray-100 space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-gray-600">
-                  <span className="font-semibold">Assigned Active Deals ({assignedOpps.length})</span>
-                  <span className="font-mono text-gray-900 font-bold">{formatCurrency(totalVal)} Pipeline</span>
-                </div>
-
-                <div className="space-y-1">
-                  {assignedOpps.map(opp => (
-                    <div
-                      key={opp.id}
-                      onClick={() => onSelectOpportunity(opp)}
-                      className="p-2 rounded bg-gray-50 hover:bg-blue-50/50 border border-gray-200 hover:border-blue-200 flex items-center justify-between text-xs cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <span className="font-mono text-blue-700 text-[11px] font-bold">{opp.code}</span>
-                        <span className="text-gray-900 font-medium truncate">{opp.clientName}</span>
-                      </div>
-                      <span className="font-mono text-gray-600 text-[11px] font-semibold whitespace-nowrap">
-                        {formatCurrency(opp.contractValue)}
-                      </span>
-                    </div>
                   ))}
                 </div>
               </div>

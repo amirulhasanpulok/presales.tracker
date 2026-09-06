@@ -19,7 +19,7 @@ Optional environment variables:
 - `DB_NAME`, `DB_USER`, and `DB_PASSWORD`.
 - `JWT_SECRET`.
 - `API_PORT` (default `4000`).
-- `ADMIN_EMAILS` for seeded administrator accounts.
+- `ADMIN_EMAILS` is not currently consumed by the API; provision administrators separately.
 - `ENABLE_TLS=1` and `CERTBOT_EMAIL` to configure HTTPS with Certbot.
 
 The script creates `server/.env` with restrictive permissions. Secrets and

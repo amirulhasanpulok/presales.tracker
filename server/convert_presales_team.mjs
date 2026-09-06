@@ -14,7 +14,8 @@ try {
     await query("UPDATE users SET role = 'Principal Solutions Architect', role_id = 'role-sa', department = 'Solutions Engineering', sales_team = NULL WHERE lower(name) = lower($1)", [name]);
   }
 
-  const passwordHash = await hashPassword(process.env.PRESALES_TEMP_PASSWORD || 'ChangeMe@2026');
+  if (!process.env.PRESALES_TEMP_PASSWORD) throw new Error('PRESALES_TEMP_PASSWORD must be set.');
+  const passwordHash = await hashPassword(process.env.PRESALES_TEMP_PASSWORD);
   await query("INSERT INTO users (id, name, email, password_hash, role, role_id, department, status, region, must_change_password) VALUES ('usr-presales-amirul', 'Amirul Hasan Pulok', 'amirul.hasan.pulok@link3.net', $1, 'Principal Solutions Architect', 'role-sa', 'Solutions Engineering', 'Active', 'Bangladesh', true) ON CONFLICT (id) DO NOTHING", [passwordHash]);
 
   const opportunities = await query('SELECT id, doc FROM opportunities');

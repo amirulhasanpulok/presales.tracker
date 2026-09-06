@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Opportunity } from '../../../types';
 import { 
   DollarSign, 
@@ -23,6 +23,20 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
   opportunity,
   onUpdateOpportunity,
 }) => {
+  const [oemInput, setOemInput] = useState('');
+  const [oemEngagements, setOemEngagements] = useState(opportunity.oemEngagements || []);
+  const addOEMEngagement = () => {
+    const value = oemInput.trim();
+    if (!value || oemEngagements.includes(value)) return;
+    const next = [...oemEngagements, value];
+    setOemEngagements(next); setOemInput('');
+    onUpdateOpportunity?.({ ...opportunity, oemEngagements: next, updatedAt: new Date().toISOString() });
+  };
+  const removeOEMEngagement = (value: string) => {
+    const next = oemEngagements.filter(item => item !== value);
+    setOemEngagements(next);
+    onUpdateOpportunity?.({ ...opportunity, oemEngagements: next, updatedAt: new Date().toISOString() });
+  };
   return (
     <div className="space-y-4">
       {/* Top Commercial Highlights */}
@@ -117,6 +131,12 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-2"><h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">OEM Engagement</h3><span className="text-[10px] text-gray-500">Optional presales collaboration</span></div>
+        <div className="flex gap-2"><input value={oemInput} onChange={e => setOemInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOEMEngagement(); } }} placeholder="OEM or partner name" className="enterprise-input flex-1 text-xs" /><button type="button" onClick={addOEMEngagement} className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded">Add OEM</button></div>
+        {oemEngagements.length ? <div className="flex flex-wrap gap-1.5">{oemEngagements.map(value => <span key={value} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-purple-50 text-purple-700 border border-purple-200">{value}<button type="button" onClick={() => removeOEMEngagement(value)} className="font-bold text-purple-400 hover:text-red-600">×</button></span>)}</div> : <p className="text-xs text-gray-500">No OEM engagement recorded. Use the OEM Catalog for full partner profiles and products.</p>}
       </div>
     </div>
   );

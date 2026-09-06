@@ -20,7 +20,7 @@ export function roleHasKey(role, key) {
 
 export function can(role, user, key) {
   if (!role || !user) return false;
-  if (key === 'app.access') return true;
+  if (key === 'app.access') return Array.isArray(role.permissions);
   return roleHasKey(role, key);
 }
 

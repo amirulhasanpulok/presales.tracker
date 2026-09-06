@@ -10,7 +10,7 @@ import {
   Save,
   AlertTriangle,
 } from 'lucide-react';
-import { OEMEntry } from '../../types';
+import { OEMEntry, ProductCatalogEntry } from '../../types';
 
 interface OEMCatalogViewProps {
   oems: OEMEntry[];
@@ -18,6 +18,7 @@ interface OEMCatalogViewProps {
   onCreate: (payload: { name: string; website?: string; description?: string; status?: string }) => Promise<any>;
   onUpdate: (oemId: string, payload: { name?: string; website?: string; description?: string; status?: string }) => Promise<any>;
   onDelete: (oemId: string) => Promise<any>;
+  products?: ProductCatalogEntry[];
 }
 
 type OEMForm = {
@@ -25,9 +26,16 @@ type OEMForm = {
   website: string;
   description: string;
   status: 'Active' | 'Inactive';
+  partnerPortalUrl: string;
+  partnershipStatus: string;
+  partnerTier: string;
+  salesCertifications: string;
+  presalesCertifications: string;
+  postsalesCertifications: string;
+  requiredCertifications: string;
 };
 
-const emptyForm: OEMForm = { name: '', website: '', description: '', status: 'Active' };
+const emptyForm: OEMForm = { name: '', website: '', description: '', status: 'Active', partnerPortalUrl: '', partnershipStatus: '', partnerTier: '', salesCertifications: '', presalesCertifications: '', postsalesCertifications: '', requiredCertifications: '' };
 
 export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
   oems,
@@ -35,6 +43,7 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
   onCreate,
   onUpdate,
   onDelete,
+  products = [],
 }) => {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -42,6 +51,7 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
   const [form, setForm] = useState<OEMForm>(emptyForm);
   const [savedMsg, setSavedMsg] = useState('');
   const [error, setError] = useState('');
+  const [selectedOEM, setSelectedOEM] = useState<OEMEntry | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -78,6 +88,13 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
           website: form.website.trim() || undefined,
           description: form.description.trim() || undefined,
           status: form.status,
+          partnerPortalUrl: form.partnerPortalUrl.trim() || undefined,
+          partnershipStatus: form.partnershipStatus.trim() || undefined,
+          partnerTier: form.partnerTier.trim() || undefined,
+          salesCertifications: form.salesCertifications.split(',').map(value => value.trim()).filter(Boolean),
+          presalesCertifications: form.presalesCertifications.split(',').map(value => value.trim()).filter(Boolean),
+          postsalesCertifications: form.postsalesCertifications.split(',').map(value => value.trim()).filter(Boolean),
+          requiredCertifications: form.requiredCertifications.split(',').map(value => value.trim()).filter(Boolean),
         });
         showMsg('OEM updated.');
       } else {
@@ -86,6 +103,13 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
           website: form.website.trim() || undefined,
           description: form.description.trim() || undefined,
           status: form.status,
+          partnerPortalUrl: form.partnerPortalUrl.trim() || undefined,
+          partnershipStatus: form.partnershipStatus.trim() || undefined,
+          partnerTier: form.partnerTier.trim() || undefined,
+          salesCertifications: form.salesCertifications.split(',').map(value => value.trim()).filter(Boolean),
+          presalesCertifications: form.presalesCertifications.split(',').map(value => value.trim()).filter(Boolean),
+          postsalesCertifications: form.postsalesCertifications.split(',').map(value => value.trim()).filter(Boolean),
+          requiredCertifications: form.requiredCertifications.split(',').map(value => value.trim()).filter(Boolean),
         });
         showMsg('OEM added to catalog.');
       }
@@ -102,6 +126,13 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
       website: o.website || '',
       description: o.description || '',
       status: o.status === 'Inactive' ? 'Inactive' : 'Active',
+      partnerPortalUrl: o.partner_portal_url || '',
+      partnershipStatus: o.partnership_status || '',
+      partnerTier: o.partner_tier || '',
+      salesCertifications: (o.sales_certifications || []).join(', '),
+      presalesCertifications: (o.presales_certifications || []).join(', '),
+      postsalesCertifications: (o.postsales_certifications || []).join(', '),
+      requiredCertifications: (o.required_certifications || []).join(', '),
     });
     setError('');
   };
@@ -180,7 +211,7 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
               <div className="p-8 text-center text-xs text-gray-400">No OEM partners match your filters.</div>
             )}
             {filtered.map(o => (
-              <div key={o.id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50">
+              <div key={o.id} onClick={() => setSelectedOEM(o)} className={`p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50 cursor-pointer ${selectedOEM?.id === o.id ? 'bg-blue-50/60' : ''}`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded bg-blue-50 border border-blue-200 text-blue-700 font-bold text-xs flex items-center justify-center flex-shrink-0">
                     {o.name.substring(0, 2).toUpperCase()}
@@ -192,16 +223,18 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
                         {o.status}
                       </span>
                     </div>
-                    {o.website && <div className="text-[11px] text-gray-500 truncate">{o.website}</div>}
-                    {o.description && <div className="text-[11px] text-gray-400 truncate">{o.description}</div>}
+                     {o.website && <div className="text-[11px] text-gray-500 truncate">{o.website}</div>}
+                     {o.description && <div className="text-[11px] text-gray-400 truncate">{o.description}</div>}
+                     {(o.partner_tier || o.partnership_status) && <div className="text-[10px] text-blue-700 font-mono mt-1">{o.partner_tier || 'Partner'} · {o.partnership_status || 'Status not set'}</div>}
+                     {(o.required_certifications || []).length > 0 && <div className="text-[10px] text-amber-700 mt-0.5">Required: {o.required_certifications.join(', ')}</div>}
                   </div>
                 </div>
                 {canManage && (
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={() => startEdit(o)} title="Edit" className="p-1.5 text-gray-400 hover:text-blue-600 rounded">
+                   <button onClick={(e) => { e.stopPropagation(); startEdit(o); }} title="Edit" className="p-1.5 text-gray-400 hover:text-blue-600 rounded">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleDelete(o)} title="Delete" className="p-1.5 text-gray-400 hover:text-red-600 rounded">
+                   <button onClick={(e) => { e.stopPropagation(); handleDelete(o); }} title="Delete" className="p-1.5 text-gray-400 hover:text-red-600 rounded">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -211,13 +244,15 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-4 h-fit">
+         <div className="space-y-4 h-fit">
+         {selectedOEM && <div className="bg-white border border-blue-200 rounded p-4 space-y-3"><div className="flex items-center justify-between"><div><div className="text-[10px] uppercase font-semibold text-gray-500">OEM Profile</div><h2 className="text-sm font-bold text-gray-900">{selectedOEM.name}</h2></div><div className="flex gap-1"><button onClick={() => startEdit(selectedOEM)} className="p-1.5 text-blue-700 bg-blue-50 rounded" title="Edit OEM"><Pencil className="w-3.5 h-3.5" /></button><button onClick={() => handleDelete(selectedOEM)} className="p-1.5 text-red-700 bg-red-50 rounded" title="Delete OEM"><Trash2 className="w-3.5 h-3.5" /></button></div></div><div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="block text-gray-500">Partnership</span><strong>{selectedOEM.partnership_status || 'Not set'}</strong></div><div><span className="block text-gray-500">Partner Tier</span><strong>{selectedOEM.partner_tier || 'Not set'}</strong></div><div className="col-span-2"><span className="block text-gray-500">Partner Portal</span><span className="text-blue-700 break-all">{selectedOEM.partner_portal_url || 'Not set'}</span></div></div><div><div className="text-[10px] uppercase font-semibold text-gray-500 mb-1">Related Products ({products.filter(product => product.oem_id === selectedOEM.id).length})</div>{products.filter(product => product.oem_id === selectedOEM.id).length ? <div className="space-y-1">{products.filter(product => product.oem_id === selectedOEM.id).slice(0, 8).map(product => <div key={product.id} className="text-[11px] p-1.5 rounded bg-gray-50 border border-gray-200"><strong>{product.name}</strong><span className="ml-1 text-gray-500">{product.model || product.part_number || ''}</span></div>)}</div> : <div className="text-[11px] text-gray-400">No related products linked.</div>}</div></div>}
+         <div className="bg-white border border-gray-200 rounded p-4 h-fit">
           <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
             {editing ? <Pencil className="w-4 h-4 text-blue-600" /> : <Plus className="w-4 h-4 text-emerald-600" />}
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
-              {editing ? 'Edit OEM' : 'Add OEM'}
+              {editing ? 'Edit OEM Profile' : 'Onboard OEM'}
             </h3>
-          </div>
+         </div></div>
 
           <form onSubmit={handleSubmit} className="mt-3 space-y-3">
             <div>
@@ -255,6 +290,18 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
               </select>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Partner Portal URL</span><input value={form.partnerPortalUrl} onChange={e => setForm({ ...form, partnerPortalUrl: e.target.value })} placeholder="https://partner..." className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
+              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Partnership Status</span><input value={form.partnershipStatus} onChange={e => setForm({ ...form, partnershipStatus: e.target.value })} placeholder="Active / Pending / Expired" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
+              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Partner Tier</span><input value={form.partnerTier} onChange={e => setForm({ ...form, partnerTier: e.target.value })} placeholder="Gold / Silver / Registered" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
+              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Required Certifications</span><input value={form.requiredCertifications} onChange={e => setForm({ ...form, requiredCertifications: e.target.value })} placeholder="Comma separated" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Sales Certifications</span><input value={form.salesCertifications} onChange={e => setForm({ ...form, salesCertifications: e.target.value })} placeholder="Comma separated certifications" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
+              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Presales Certifications</span><input value={form.presalesCertifications} onChange={e => setForm({ ...form, presalesCertifications: e.target.value })} placeholder="Comma separated certifications" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
+              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Postsales Certifications</span><input value={form.postsalesCertifications} onChange={e => setForm({ ...form, postsalesCertifications: e.target.value })} placeholder="Comma separated certifications" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
+            </div>
+
             <div>
               <label className="text-[10px] uppercase font-semibold text-gray-500">Description</label>
               <textarea
@@ -273,7 +320,7 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  {editing ? 'Save Changes' : 'Add OEM'}
+                  {editing ? 'Save OEM Profile' : 'Onboard OEM'}
                 </button>
                 {editing && (
                   <>

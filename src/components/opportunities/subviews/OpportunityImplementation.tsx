@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Opportunity, HandoverDetails } from '../../../types';
+import { api } from '../../../api';
 import { 
   Layers, 
   CheckCircle2, 
@@ -42,25 +43,14 @@ export const OpportunityImplementation: React.FC<OpportunityImplementationProps>
     if (onUpdateOpportunity) onUpdateOpportunity({ ...opportunity, handover: updated });
   };
 
-  const completeHandover = () => {
-    const updated: HandoverDetails = {
-      ...handover,
-      isHandedOver: true,
-      status: 'handed_over',
-      handoverDate: new Date().toISOString().split('T')[0],
-      handedOverBy: handedOverBy || opportunity.leadSolutionArchitect,
-      salesKAM,
-      boqVersion,
-      technicalNotes,
-      attachedDocuments: attachedDocuments.split(',').map(value => value.trim()).filter(Boolean),
-      assignedDeliveryLead: deliveryLead,
-      assignedCustomerSuccessManager: csm,
-      technicalRunbookReady: true,
-      credentialsSecurelyTransferred: true,
-      customerTechKickoffScheduled: true
-    };
-    setHandover(updated);
-    if (onUpdateOpportunity) onUpdateOpportunity({ ...opportunity, handover: updated });
+  const completeHandover = async () => {
+    try {
+      const updated = await api.signoffHandover(opportunity.id, { assignedDeliveryLead: deliveryLead, assignedCustomerSuccessManager: csm, salesKAM, boqVersion, technicalNotes, attachedDocuments: attachedDocuments.split(',').map(value => value.trim()).filter(Boolean) });
+      setHandover(updated.handover);
+      onUpdateOpportunity?.(updated);
+    } catch (error: any) {
+      window.alert(error?.message || 'Complete all handover gates before signing off.');
+    }
   };
 
   const saveHandover = () => {

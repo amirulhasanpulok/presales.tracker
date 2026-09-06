@@ -15,7 +15,7 @@ export type TechnicalFitScore = 'perfect' | 'good' | 'moderate' | 'challenging';
 export type DealPriority = 'p0_urgent' | 'p1_high' | 'p2_medium' | 'p3_low';
 export type CloudProvider = 'AWS' | 'Google Cloud' | 'Azure' | 'Hybrid / On-Prem' | 'Multi-Cloud' | 'Kubernetes' | 'AI / LLM Infra';
 export type POCStatus = 'not_started' | 'scoping' | 'provisioning' | 'active_testing' | 'validating_kpis' | 'passed' | 'failed' | 'cancelled';
-export type ApprovalStatus = 'draft' | 'pending_sa_lead' | 'pending_sales_vp' | 'pending_finance' | 'approved' | 'rejected';
+export type ApprovalStatus = 'draft' | 'pending_sa_lead' | 'pending_sales_vp' | 'pending_finance' | 'approved' | 'finalized' | 'rejected';
 
 export interface Stakeholder {
   id: string;
@@ -136,6 +136,7 @@ export interface PresalesActivity {
   nextAction?: string;
   nextFollowUpDate?: string;
   attachments?: string[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface ActionItem {
@@ -230,11 +231,17 @@ export interface Opportunity {
   leadSolutionArchitect: string;
   leadArchitectAvatar?: string;
   accountExecutive: string;
+  salesTeam?: string;
+  postsalesOwner?: string;
+  oemEngagements?: string[];
   presalesEngineerSecondary?: string;
   supportingPresalesEngineers?: string[];
 
   // Technical Scope
   currentLegacyStack: string;
+  requirementDetails?: string;
+  clientPainPoint?: string;
+  expectedSolution?: string;
   proposedArchitecture: string;
   keyTechnicalRequirements: string[];
   complianceRequirements: ('SOC2 Type II' | 'HIPAA' | 'PCI-DSS' | 'ISO 27001' | 'FedRAMP' | 'GDPR')[];
@@ -313,6 +320,17 @@ export interface ClientAccount {
   notes?: string;
   keyStakeholders?: any[];
   bankRecords?: ClientBankRecord[];
+  contacts?: ClientContact[];
+}
+
+export interface ClientContact {
+  id: string;
+  name: string;
+  designation?: string;
+  phone?: string;
+  email?: string;
+  isPrimary?: boolean;
+  notes?: string;
 }
 
 export interface ClientBankRecord {
@@ -392,6 +410,10 @@ export interface UserAccount {
   roleId?: string;
   department: 'Solutions Engineering' | 'Sales' | 'Delivery & Services' | 'Information Security' | 'Operations' | string;
   salesTeam?: string;
+  phone?: string;
+  manager?: string;
+  skills?: string[];
+  certifications?: string[];
   status: 'Active' | 'Inactive' | 'Invited' | 'active' | 'inactive' | string;
   lastActive?: string;
   lastLoginAt?: string;
@@ -440,6 +462,13 @@ export interface OEMEntry {
   website?: string | null;
   description?: string | null;
   status: 'Active' | 'Inactive' | string;
+  partner_portal_url?: string | null;
+  partnership_status?: string | null;
+  partner_tier?: string | null;
+  sales_certifications?: string[];
+  presales_certifications?: string[];
+  postsales_certifications?: string[];
+  required_certifications?: string[];
 }
 
 // Section 11: Product catalog entry linked to OEM
@@ -476,6 +505,7 @@ export interface PresalesFilterState {
 
 export type ActiveTab = 
   | 'dashboard'
+  | 'mobile_capture'
   | 'opportunities'
   | 'board'
   | 'new_opportunity'
@@ -495,6 +525,7 @@ export type ActiveTab =
   | 'scope_catalog'
   | 'oem_catalog'
   | 'product_catalog'
+  | 'bulk_upload'
   | 'audit_logs'
   | 'user_management'
   | 'role_management'

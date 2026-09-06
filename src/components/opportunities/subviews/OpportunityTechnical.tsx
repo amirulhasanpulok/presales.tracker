@@ -29,6 +29,11 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
     ...(opportunity.poc || {}),
   }));
   const [secReviewStatus, setSecReviewStatus] = useState(opportunity.securityReviewStatus);
+  const [scopeAnalysis, setScopeAnalysis] = useState({ requirementDetails: opportunity.requirementDetails || '', clientPainPoint: opportunity.clientPainPoint || '', expectedSolution: opportunity.expectedSolution || '', currentLegacyStack: opportunity.currentLegacyStack || '', proposedArchitecture: opportunity.proposedArchitecture || '', requirements: (opportunity.keyTechnicalRequirements || []).join(', ') });
+  const saveScopeAnalysis = () => {
+    const updated = { ...opportunity, requirementDetails: scopeAnalysis.requirementDetails, clientPainPoint: scopeAnalysis.clientPainPoint, expectedSolution: scopeAnalysis.expectedSolution, currentLegacyStack: scopeAnalysis.currentLegacyStack, proposedArchitecture: scopeAnalysis.proposedArchitecture, keyTechnicalRequirements: scopeAnalysis.requirements.split(',').map(value => value.trim()).filter(Boolean) };
+    onUpdateOpportunity?.(updated);
+  };
 
   const toggleKPI = (kpiId: string) => {
     const updatedCriteria = poc.successCriteria.map(k => 
@@ -83,6 +88,13 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
             {opportunity.complianceRequirements.join(', ')}
           </div>
         </div>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-2"><div><h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Scope Analysis & Requirements</h3><p className="text-[11px] text-gray-500 mt-0.5">Capture the customer requirement before solution design.</p></div><button type="button" onClick={saveScopeAnalysis} className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded">Save Analysis</button></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3"><label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Requirement Details</span><textarea value={scopeAnalysis.requirementDetails} onChange={e => setScopeAnalysis({ ...scopeAnalysis, requirementDetails: e.target.value })} rows={3} className="enterprise-input w-full text-xs resize-none" /></label><label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Client Pain Point</span><textarea value={scopeAnalysis.clientPainPoint} onChange={e => setScopeAnalysis({ ...scopeAnalysis, clientPainPoint: e.target.value })} rows={3} className="enterprise-input w-full text-xs resize-none" /></label><label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Current Infrastructure</span><textarea value={scopeAnalysis.currentLegacyStack} onChange={e => setScopeAnalysis({ ...scopeAnalysis, currentLegacyStack: e.target.value })} rows={3} className="enterprise-input w-full text-xs resize-none" /></label><label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Expected Solution</span><textarea value={scopeAnalysis.expectedSolution} onChange={e => setScopeAnalysis({ ...scopeAnalysis, expectedSolution: e.target.value })} rows={3} className="enterprise-input w-full text-xs resize-none" /></label></div>
+        <label className="block"><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Key Technical Requirements (comma separated)</span><input value={scopeAnalysis.requirements} onChange={e => setScopeAnalysis({ ...scopeAnalysis, requirements: e.target.value })} className="enterprise-input w-full text-xs" /></label>
+        <label className="block"><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Proposed Architecture</span><textarea value={scopeAnalysis.proposedArchitecture} onChange={e => setScopeAnalysis({ ...scopeAnalysis, proposedArchitecture: e.target.value })} rows={3} className="enterprise-input w-full text-xs resize-none" /></label>
       </div>
 
       {/* Target Architecture Specification */}

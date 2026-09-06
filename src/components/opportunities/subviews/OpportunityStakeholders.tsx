@@ -52,7 +52,6 @@ export const OpportunityStakeholders: React.FC<OpportunityStakeholdersProps> = (
 
     const updated = [...stakeholders, newSh];
     setStakeholders(updated);
-    opportunity.stakeholders = updated;
     if (onAddStakeholder) onAddStakeholder(newSh);
 
     setName('');

@@ -127,6 +127,11 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
     updateOpportunity(items, 'approved');
   };
 
+  const finalizeBOQ = () => {
+    setApprovalStatus('finalized');
+    updateOpportunity(items, 'finalized');
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Commercial Summary Bar */}
@@ -175,7 +180,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
             </div>
           </div>
           <div className="flex gap-1.5 mt-2">
-            {approvalStatus !== 'approved' ? (
+             {approvalStatus !== 'approved' && approvalStatus !== 'finalized' ? (
               <>
                 <button
                   onClick={requestApproval}
@@ -190,13 +195,13 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
                   Approve BOQ
                 </button>
               </>
-            ) : (
-              <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Approved by Presales VP
-              </span>
-            )}
-          </div>
-        </div>
+             ) : approvalStatus === 'approved' ? (
+               <div className="flex items-center gap-2"><span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Approved</span><button onClick={finalizeBOQ} className="text-[11px] px-2 py-1 bg-blue-600 text-white rounded font-semibold">Finalize</button></div>
+             ) : (
+               <span className="text-[11px] text-blue-700 font-bold flex items-center gap-1"><Lock className="w-3.5 h-3.5" /> Final BOQ locked</span>
+             )}
+           </div>
+         </div>
       </div>
 
       {/* Action Header */}

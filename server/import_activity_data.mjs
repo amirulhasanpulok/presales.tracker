@@ -45,7 +45,8 @@ for (const row of rows) {
 await initSchema();
 const existingUsers = await query('SELECT id, name, email FROM users');
 const usersByName = new Map((existingUsers.rows || []).map(user => [key(user.name), user]));
-const tempPasswordHash = await hashPassword(process.env.SALES_KAM_TEMP_PASSWORD || 'ChangeMe@2026');
+if (!process.env.SALES_KAM_TEMP_PASSWORD) throw new Error('SALES_KAM_TEMP_PASSWORD must be set.');
+const tempPasswordHash = await hashPassword(process.env.SALES_KAM_TEMP_PASSWORD);
 const allKamNames = new Map([...wantedKamNames, ...knownSourceKamNames].map(name => [key(name), displayName(name)]));
 for (const [normalized, name] of allKamNames) {
   const alias = normalized === key('Amirul Hasan Pulok') ? usersByName.get(key('Amirul Pulok')) : usersByName.get(normalized);

@@ -22,6 +22,10 @@ interface UserManagementViewProps {
     role: string;
     department?: string;
     region?: string;
+    phone?: string;
+    salesTeam?: string;
+    skills?: string[];
+    certifications?: string[];
   }) => Promise<any>;
   onUpdateUser?: (user: UserAccount) => Promise<any>;
   roles?: RolePermission[];
@@ -47,9 +51,16 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   const [newRole, setNewRole] = useState<UserAccount['role']>(roleOptions[0]?.value || 'presales_architect');
   const [newDepartment, setNewDepartment] = useState('Solutions Engineering');
   const [newRegion, setNewRegion] = useState('US East');
+  const [newPhone, setNewPhone] = useState('');
+  const [newSalesTeam, setNewSalesTeam] = useState('');
+  const [newSkills, setNewSkills] = useState('');
+  const [newCertifications, setNewCertifications] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const resetInviteForm = () => {
     setNewName(''); setNewEmail(''); setNewRole(roleOptions[0]?.value || 'presales_architect');
     setNewDepartment('Solutions Engineering'); setNewRegion('');
+    setNewPhone(''); setNewSalesTeam(''); setNewSkills(''); setNewCertifications('');
+    setNewPassword('');
   };
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -79,10 +90,13 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
           role: newRole,
           department: newDepartment,
           region: newRegion,
+          phone: newPhone,
+          salesTeam: newSalesTeam,
+          skills: newSkills.split(',').map(value => value.trim()).filter(Boolean),
+           certifications: newCertifications.split(',').map(value => value.trim()).filter(Boolean),
+           password: newPassword,
         });
-        if (resp?.tempPassword) {
-          setNotice(`Invite created for ${newEmail}. Temporary password: ${resp.tempPassword}`);
-        }
+        setNotice(`Invite created for ${newEmail}. The user must change the administrator-provided initial password at first login.`);
         if (resp?.id) serverUser = { ...created, ...resp, status: resp.status || created.status, mfaEnabled: resp.mfaEnabled ?? created.mfaEnabled };
       } catch (err: any) {
         setNotice(err?.message || 'Could not create the user on the server.');
@@ -330,6 +344,18 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Initial Password *</label>
+                <input type="password" required minLength={10} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 10 characters with a number" className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Phone</span><input value={newPhone} onChange={e => setNewPhone(e.target.value)} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Team</span><input value={newSalesTeam} onChange={e => setNewSalesTeam(e.target.value)} placeholder="Enterprise / STI / Postsales" className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Skills</span><input value={newSkills} onChange={e => setNewSkills(e.target.value)} placeholder="Comma separated" className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Certifications</span><input value={newCertifications} onChange={e => setNewCertifications(e.target.value)} placeholder="Comma separated" className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+              </div>
+
               <div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2">
                 <button
                   type="button"
@@ -378,8 +404,15 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Assigned Role</label>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Phone</span><input value={editingUser.phone || ''} onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Team</span><input value={editingUser.salesTeam || ''} onChange={e => setEditingUser({ ...editingUser, salesTeam: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Skills</span><input value={(editingUser.skills || []).join(', ')} onChange={e => setEditingUser({ ...editingUser, skills: e.target.value.split(',').map(value => value.trim()).filter(Boolean) })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Certifications</span><input value={(editingUser.certifications || []).join(', ')} onChange={e => setEditingUser({ ...editingUser, certifications: e.target.value.split(',').map(value => value.trim()).filter(Boolean) })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+               </div>
+
+               <div>
+                 <label className="block text-xs font-semibold text-gray-700 mb-1">Assigned Role</label>
                 <select
                   value={editingUser.role}
                   onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
