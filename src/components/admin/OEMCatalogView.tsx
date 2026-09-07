@@ -1,394 +1,90 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Factory,
-  Plus,
-  Search,
-  Pencil,
-  Trash2,
-  X,
-  CheckCircle2,
-  Save,
-  AlertTriangle,
-} from 'lucide-react';
+import { AlertTriangle, Award, Boxes, CheckCircle2, ExternalLink, Factory, Globe2, Pencil, Plus, Search, ShieldCheck, Trash2, X } from 'lucide-react';
 import { OEMEntry, ProductCatalogEntry } from '../../types';
 
-interface OEMCatalogViewProps {
+interface Props {
   oems: OEMEntry[];
   canManage: boolean;
-  onCreate: (payload: { name: string; website?: string; description?: string; status?: string }) => Promise<any>;
-  onUpdate: (oemId: string, payload: { name?: string; website?: string; description?: string; status?: string }) => Promise<any>;
-  onDelete: (oemId: string) => Promise<any>;
   products?: ProductCatalogEntry[];
+  onCreate: (payload: any) => Promise<any>;
+  onUpdate: (id: string, payload: any) => Promise<any>;
+  onDelete: (id: string) => Promise<any>;
 }
 
-type OEMForm = {
-  name: string;
-  website: string;
-  description: string;
-  status: 'Active' | 'Inactive';
-  partnerPortalUrl: string;
-  partnershipStatus: string;
-  partnerTier: string;
-  salesCertifications: string;
-  presalesCertifications: string;
-  postsalesCertifications: string;
-  requiredCertifications: string;
-};
+type Tab = 'overview' | 'certifications' | 'products';
+type Form = { name: string; website: string; description: string; status: 'Active' | 'Inactive'; partnerPortalUrl: string; partnershipStatus: string; partnerTier: string; salesCertifications: string; presalesCertifications: string; postsalesCertifications: string; requiredCertifications: string };
+const blank: Form = { name: '', website: '', description: '', status: 'Active', partnerPortalUrl: '', partnershipStatus: '', partnerTier: '', salesCertifications: '', presalesCertifications: '', postsalesCertifications: '', requiredCertifications: '' };
+const list = (value: string) => value.split(',').map(item => item.trim()).filter(Boolean);
 
-const emptyForm: OEMForm = { name: '', website: '', description: '', status: 'Active', partnerPortalUrl: '', partnershipStatus: '', partnerTier: '', salesCertifications: '', presalesCertifications: '', postsalesCertifications: '', requiredCertifications: '' };
-
-export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
-  oems,
-  canManage,
-  onCreate,
-  onUpdate,
-  onDelete,
-  products = [],
-}) => {
+export const OEMCatalogView: React.FC<Props> = ({ oems, canManage, products = [], onCreate, onUpdate, onDelete }) => {
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [tierFilter, setTierFilter] = useState('all');
-  const [partnershipFilter, setPartnershipFilter] = useState('all');
-  const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState<OEMForm>(emptyForm);
-  const [savedMsg, setSavedMsg] = useState('');
-  const [error, setError] = useState('');
-  const [selectedOEM, setSelectedOEM] = useState<OEMEntry | null>(null);
-  const [profileTab, setProfileTab] = useState<'overview' | 'partner' | 'products'>('overview');
+  const [status, setStatus] = useState('all');
+  const [tier, setTier] = useState('all');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>('overview');
   const [productQuery, setProductQuery] = useState('');
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return oems
-      .filter(s => statusFilter === 'all' || s.status === statusFilter)
-      .filter(s => tierFilter === 'all' || s.partner_tier === tierFilter)
-      .filter(s => partnershipFilter === 'all' || s.partnership_status === partnershipFilter)
-      .filter(s => !q || s.name.toLowerCase().includes(q))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [oems, query, statusFilter, tierFilter, partnershipFilter]);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<Form>(blank);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
 
   const tiers = useMemo(() => [...new Set(oems.map(oem => oem.partner_tier).filter(Boolean))].sort(), [oems]);
-  const partnershipStatuses = useMemo(() => [...new Set(oems.map(oem => oem.partnership_status).filter(Boolean))].sort(), [oems]);
-
-  useEffect(() => {
-    if (!selectedOEM && filtered[0]) setSelectedOEM(filtered[0]);
-  }, [filtered, selectedOEM]);
-
-  const activeCount = oems.filter(oem => oem.status === 'Active').length;
-  const portalCoverage = oems.filter(oem => oem.partner_portal_url).length;
-  const certificationProfiles = oems.filter(oem => (oem.required_certifications || []).length > 0).length;
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return oems.filter(oem => (status === 'all' || oem.status === status) && (tier === 'all' || oem.partner_tier === tier) && (!needle || `${oem.name} ${oem.description || ''} ${oem.partner_tier || ''}`.toLowerCase().includes(needle))).sort((a, b) => a.name.localeCompare(b.name));
+  }, [oems, query, status, tier]);
+  const selected = oems.find(oem => oem.id === selectedId) || filtered[0] || oems[0];
+  const selectedProducts = products.filter(product => product.oem_id === selected?.id && (!productQuery || `${product.name} ${product.model || ''} ${product.part_number || ''}`.toLowerCase().includes(productQuery.toLowerCase())));
+  const active = oems.filter(oem => oem.status === 'Active').length;
   const linkedProducts = products.filter(product => product.oem_id).length;
+  const withPortal = oems.filter(oem => oem.partner_portal_url).length;
+  const withCertifications = oems.filter(oem => (oem.required_certifications || []).length).length;
 
-  const showMsg = (msg: string) => {
-    setSavedMsg(msg);
-    setError('');
-    window.setTimeout(() => setSavedMsg(''), 3000);
+  useEffect(() => { if (!selectedId && selected) setSelectedId(selected.id); }, [selectedId, selected]);
+
+  const beginEdit = (oem?: OEMEntry) => {
+    const source = oem || selected;
+    setForm(source ? { name: source.name, website: source.website || '', description: source.description || '', status: source.status === 'Inactive' ? 'Inactive' : 'Active', partnerPortalUrl: source.partner_portal_url || '', partnershipStatus: source.partnership_status || '', partnerTier: source.partner_tier || '', salesCertifications: (source.sales_certifications || []).join(', '), presalesCertifications: (source.presales_certifications || []).join(', '), postsalesCertifications: (source.postsales_certifications || []).join(', '), requiredCertifications: (source.required_certifications || []).join(', ') } : blank);
+    setEditing(true); setError('');
   };
 
-  const showError = (code: string) => {
-    setError(code === 'duplicate_oem' ? 'An OEM with this name already exists.' : 'Action failed. Please try again.');
-    setSavedMsg('');
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.name.trim()) return setError('OEM name is required.');
+    const payload = { name: form.name.trim(), website: form.website.trim() || undefined, description: form.description.trim() || undefined, status: form.status, partnerPortalUrl: form.partnerPortalUrl.trim() || undefined, partnershipStatus: form.partnershipStatus.trim() || undefined, partnerTier: form.partnerTier.trim() || undefined, salesCertifications: list(form.salesCertifications), presalesCertifications: list(form.presalesCertifications), postsalesCertifications: list(form.postsalesCertifications), requiredCertifications: list(form.requiredCertifications) };
+    try { const result = selected && oems.some(oem => oem.id === selected.id) && form.name === selected.name ? await onUpdate(selected.id, payload) : await onCreate(payload); setSelectedId(result?.id || selectedId); setEditing(false); setNotice('OEM profile saved.'); window.setTimeout(() => setNotice(''), 2500); } catch (err: any) { setError(err?.message || 'Could not save OEM profile.'); }
   };
 
-  const resetForm = () => {
-    setEditing(null);
-    setForm(emptyForm);
-    setError('');
+  const remove = async () => {
+    if (!selected || !window.confirm(`Delete ${selected.name}? Related products will be unlinked.`)) return;
+    await onDelete(selected.id); setSelectedId(null); setNotice('OEM removed.');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) return;
-    try {
-      if (editing) {
-        await onUpdate(editing, {
-          name: form.name.trim(),
-          website: form.website.trim() || undefined,
-          description: form.description.trim() || undefined,
-          status: form.status,
-          partnerPortalUrl: form.partnerPortalUrl.trim() || undefined,
-          partnershipStatus: form.partnershipStatus.trim() || undefined,
-          partnerTier: form.partnerTier.trim() || undefined,
-          salesCertifications: form.salesCertifications.split(',').map(value => value.trim()).filter(Boolean),
-          presalesCertifications: form.presalesCertifications.split(',').map(value => value.trim()).filter(Boolean),
-          postsalesCertifications: form.postsalesCertifications.split(',').map(value => value.trim()).filter(Boolean),
-          requiredCertifications: form.requiredCertifications.split(',').map(value => value.trim()).filter(Boolean),
-        });
-        showMsg('OEM updated.');
-      } else {
-        await onCreate({
-          name: form.name.trim(),
-          website: form.website.trim() || undefined,
-          description: form.description.trim() || undefined,
-          status: form.status,
-          partnerPortalUrl: form.partnerPortalUrl.trim() || undefined,
-          partnershipStatus: form.partnershipStatus.trim() || undefined,
-          partnerTier: form.partnerTier.trim() || undefined,
-          salesCertifications: form.salesCertifications.split(',').map(value => value.trim()).filter(Boolean),
-          presalesCertifications: form.presalesCertifications.split(',').map(value => value.trim()).filter(Boolean),
-          postsalesCertifications: form.postsalesCertifications.split(',').map(value => value.trim()).filter(Boolean),
-          requiredCertifications: form.requiredCertifications.split(',').map(value => value.trim()).filter(Boolean),
-        });
-        showMsg('OEM added to catalog.');
-      }
-      resetForm();
-    } catch (err: any) {
-      showError(err?.code);
-    }
-  };
-
-  const startEdit = (o: OEMEntry) => {
-    setEditing(o.id);
-    setForm({
-      name: o.name,
-      website: o.website || '',
-      description: o.description || '',
-      status: o.status === 'Inactive' ? 'Inactive' : 'Active',
-      partnerPortalUrl: o.partner_portal_url || '',
-      partnershipStatus: o.partnership_status || '',
-      partnerTier: o.partner_tier || '',
-      salesCertifications: (o.sales_certifications || []).join(', '),
-      presalesCertifications: (o.presales_certifications || []).join(', '),
-      postsalesCertifications: (o.postsales_certifications || []).join(', '),
-      requiredCertifications: (o.required_certifications || []).join(', '),
-    });
-    setError('');
-  };
-
-  const handleDelete = async (o: OEMEntry) => {
-    if (!window.confirm(`Delete OEM "${o.name}"? Associated products will be unlinked.`)) return;
-    try {
-      await onDelete(o.id);
-      if (editing === o.id) resetForm();
-      showMsg('OEM deleted.');
-    } catch {
-      showError('');
-    }
-  };
-
-  return (
-    <div className="space-y-4 max-w-5xl mx-auto">
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-base font-bold text-gray-900 tracking-tight">OEM Management Center</h1>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">
-              PARTNERS
-            </span>
-          </div>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Govern partner relationships, certification readiness, portals, and product coverage from one workspace.
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold font-mono text-gray-900">{oems.length}</div>
-          <div className="text-[10px] uppercase font-semibold text-gray-500">OEM partners</div>
-        </div>
+  return <div className="space-y-4 max-w-7xl mx-auto">
+    <section className="rounded-xl overflow-hidden bg-slate-950 text-white border border-slate-800 shadow-lg">
+      <div className="p-5 sm:p-7 flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+        <div><div className="text-[10px] tracking-[0.2em] uppercase text-blue-300 font-mono">Partner Operations / Master Data</div><h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-2">OEM Management Center</h1><p className="text-sm text-slate-300 mt-2 max-w-2xl">Manage partner health, certification readiness, portals, and product coverage from one operational workspace.</p></div>
+        {canManage && <button onClick={() => { setForm(blank); setSelectedId(null); setEditing(true); }} className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-400 rounded-lg text-sm font-semibold"><Plus className="w-4 h-4" />Onboard OEM</button>}
       </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white border border-gray-200 rounded p-3"><div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Active Partners</div><div className="text-2xl font-bold font-mono text-emerald-700 mt-1">{activeCount}</div><div className="text-[10px] text-gray-500">of {oems.length} registered OEMs</div></div>
-        <div className="bg-white border border-gray-200 rounded p-3"><div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Product Coverage</div><div className="text-2xl font-bold font-mono text-blue-700 mt-1">{linkedProducts}</div><div className="text-[10px] text-gray-500">catalog products linked to OEMs</div></div>
-        <div className="bg-white border border-gray-200 rounded p-3"><div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Portal Coverage</div><div className="text-2xl font-bold font-mono text-purple-700 mt-1">{portalCoverage}</div><div className="text-[10px] text-gray-500">partner portals configured</div></div>
-        <div className="bg-white border border-gray-200 rounded p-3"><div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Certification Profiles</div><div className="text-2xl font-bold font-mono text-amber-700 mt-1">{certificationProfiles}</div><div className="text-[10px] text-gray-500">profiles with requirements</div></div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 border-t border-white/10 bg-white/5">
+        {[['Active Partners', active, 'of ' + oems.length + ' registered'], ['Product Coverage', linkedProducts, 'catalog links'], ['Portal Coverage', withPortal, 'partner portals'], ['Certification Profiles', withCertifications, 'requirements tracked']].map(([label, value, detail]) => <div key={String(label)} className="p-4 border-r border-white/10 last:border-r-0"><div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{label}</div><div className="text-2xl font-bold font-mono mt-1">{value}</div><div className="text-[10px] text-slate-400 mt-1">{detail}</div></div>)}
       </div>
+    </section>
 
-      <div className="bg-white border border-gray-200 rounded p-1.5 flex flex-wrap gap-1 shadow-2xs">
-        {([
-          ['overview', 'Partner Directory'],
-          ['partner', 'Profiles & Certifications'],
-          ['products', 'Product Portfolio'],
-        ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => setProfileTab(tab)} className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${profileTab === tab ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}>{label}</button>)}
-        <span className="ml-auto self-center px-2 text-[10px] font-mono text-gray-400 uppercase tracking-wider">Single-page partner workspace</span>
-      </div>
+    {notice && <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 flex items-center gap-2"><CheckCircle2 className="w-4 h-4" />{notice}</div>}
+    {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex items-center gap-2"><AlertTriangle className="w-4 h-4" />{error}</div>}
 
-      {savedMsg && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800 font-medium flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          {savedMsg}
-        </div>
-      )}
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded text-xs text-red-700 font-medium flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-red-500" />
-          {error}
-        </div>
-      )}
+    <div className="grid grid-cols-1 xl:grid-cols-[340px_minmax(0,1fr)] gap-4">
+      <aside className="bg-white border border-gray-200 rounded-xl overflow-hidden h-fit">
+        <div className="p-3 border-b border-gray-200 space-y-2"><div className="text-xs font-bold text-gray-900">Partner Directory</div><div className="relative"><Search className="w-4 h-4 absolute left-2.5 top-2.5 text-gray-400" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search partners..." className="enterprise-input w-full pl-8 text-xs" /></div><div className="grid grid-cols-2 gap-2"><select value={status} onChange={event => setStatus(event.target.value)} className="enterprise-select text-xs"><option value="all">All status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select><select value={tier} onChange={event => setTier(event.target.value)} className="enterprise-select text-xs"><option value="all">All tiers</option>{tiers.map(value => <option key={value} value={value}>{value}</option>)}</select></div></div>
+        <div className="max-h-[640px] overflow-y-auto divide-y divide-gray-100">{filtered.map(oem => <button key={oem.id} onClick={() => { setSelectedId(oem.id); setTab('overview'); }} className={`w-full text-left p-3 hover:bg-blue-50 ${selected?.id === oem.id ? 'bg-blue-50 border-l-2 border-blue-600' : ''}`}><div className="flex items-start gap-3"><div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">{oem.name.slice(0, 2).toUpperCase()}</div><div className="min-w-0"><div className="flex items-center gap-1.5"><strong className="text-xs text-gray-900 truncate">{oem.name}</strong><span className="text-[9px] px-1 rounded bg-emerald-50 text-emerald-700">{oem.status}</span></div><div className="text-[10px] text-gray-500 mt-1 truncate">{oem.partner_tier || 'Tier not set'} · {oem.partnership_status || 'Status not set'}</div><div className="text-[10px] text-blue-700 mt-1">{products.filter(product => product.oem_id === oem.id).length} products</div></div></div></button>)}{!filtered.length && <div className="p-8 text-center text-xs text-gray-500">No partners match the filters.</div>}</div>
+      </aside>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200 space-y-2.5">
-             <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
-              <div className="relative flex-1 min-w-0 sm:min-w-[160px]">
-                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search OEMs..."
-                  className="enterprise-input pl-8 text-xs py-1.5 w-full"
-                />
-              </div>
-               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                 className="enterprise-input text-xs py-1.5 w-full sm:w-auto"
-              >
-                <option value="all">All statuses</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-               </select>
-               <select value={tierFilter} onChange={e => setTierFilter(e.target.value)} className="enterprise-input text-xs py-1.5 w-full sm:w-auto"><option value="all">All partner tiers</option>{tiers.map(tier => <option key={tier} value={tier}>{tier}</option>)}</select>
-               <select value={partnershipFilter} onChange={e => setPartnershipFilter(e.target.value)} className="enterprise-input text-xs py-1.5 w-full sm:w-auto"><option value="all">All partnership statuses</option>{partnershipStatuses.map(status => <option key={status} value={status}>{status}</option>)}</select>
-            </div>
-          </div>
-
-          <div className="divide-y divide-gray-100 max-h-[560px] overflow-y-auto">
-            {filtered.length === 0 && (
-              <div className="p-8 text-center text-xs text-gray-400">No OEM partners match your filters.</div>
-            )}
-            {filtered.map(o => (
-              <div key={o.id} onClick={() => { setSelectedOEM(o); setProfileTab('overview'); setProductQuery(''); }} className={`p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50 cursor-pointer ${selectedOEM?.id === o.id ? 'bg-blue-50/60' : ''}`}>
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded bg-blue-50 border border-blue-200 text-blue-700 font-bold text-xs flex items-center justify-center flex-shrink-0">
-                    {o.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold ${o.status === 'Inactive' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{o.name}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${o.status === 'Inactive' ? 'bg-gray-100 text-gray-500' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
-                        {o.status}
-                      </span>
-                    </div>
-                     {o.website && <div className="text-[11px] text-gray-500 truncate">{o.website}</div>}
-                     {o.description && <div className="text-[11px] text-gray-400 truncate">{o.description}</div>}
-                     {(o.partner_tier || o.partnership_status) && <div className="text-[10px] text-blue-700 font-mono mt-1">{o.partner_tier || 'Partner'} · {o.partnership_status || 'Status not set'}</div>}
-                     {(o.required_certifications || []).length > 0 && <div className="text-[10px] text-amber-700 mt-0.5">Required: {o.required_certifications.join(', ')}</div>}
-                  </div>
-                </div>
-                {canManage && (
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                   <button onClick={(e) => { e.stopPropagation(); startEdit(o); }} title="Edit" className="p-1.5 text-gray-400 hover:text-blue-600 rounded">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                   <button onClick={(e) => { e.stopPropagation(); handleDelete(o); }} title="Delete" className="p-1.5 text-gray-400 hover:text-red-600 rounded">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-         <div className="space-y-4 h-fit">
-          {selectedOEM && <div className="bg-white border border-blue-200 rounded p-4 space-y-3"><div className="flex items-center justify-between"><div><div className="text-[10px] uppercase font-semibold text-gray-500">OEM Profile</div><h2 className="text-sm font-bold text-gray-900">{selectedOEM.name}</h2></div><div className="flex gap-1"><button onClick={() => startEdit(selectedOEM)} className="p-1.5 text-blue-700 bg-blue-50 rounded" title="Edit OEM"><Pencil className="w-3.5 h-3.5" /></button><button onClick={() => handleDelete(selectedOEM)} className="p-1.5 text-red-700 bg-red-50 rounded" title="Delete OEM"><Trash2 className="w-3.5 h-3.5" /></button></div></div><div className="flex gap-1 border-b border-gray-200 pb-2"><button onClick={() => setProfileTab('overview')} className={`px-2 py-1 text-[10px] font-semibold rounded ${profileTab === 'overview' ? 'bg-blue-50 text-blue-700' : 'text-gray-500'}`}>Overview</button><button onClick={() => setProfileTab('partner')} className={`px-2 py-1 text-[10px] font-semibold rounded ${profileTab === 'partner' ? 'bg-blue-50 text-blue-700' : 'text-gray-500'}`}>Partner & Certs</button><button onClick={() => setProfileTab('products')} className={`px-2 py-1 text-[10px] font-semibold rounded ${profileTab === 'products' ? 'bg-blue-50 text-blue-700' : 'text-gray-500'}`}>Products ({products.filter(product => product.oem_id === selectedOEM.id).length})</button></div>{profileTab === 'overview' && <div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="block text-gray-500">Status</span><strong>{selectedOEM.status}</strong></div><div><span className="block text-gray-500">Partnership</span><strong>{selectedOEM.partnership_status || 'Not set'}</strong></div><div><span className="block text-gray-500">Partner Tier</span><strong>{selectedOEM.partner_tier || 'Not set'}</strong></div><div className="col-span-2"><span className="block text-gray-500">Website</span><span className="text-blue-700 break-all">{selectedOEM.website || 'Not set'}</span></div><div className="col-span-2"><span className="block text-gray-500">Partner Portal</span><span className="text-blue-700 break-all">{selectedOEM.partner_portal_url || 'Not set'}</span></div><div className="col-span-2 text-gray-600">{selectedOEM.description || 'No OEM profile description.'}</div></div>}{profileTab === 'partner' && <div className="space-y-2 text-[11px]"><div><span className="block text-gray-500">Sales certifications</span><strong>{(selectedOEM.sales_certifications || []).join(', ') || 'None recorded'}</strong></div><div><span className="block text-gray-500">Presales certifications</span><strong>{(selectedOEM.presales_certifications || []).join(', ') || 'None recorded'}</strong></div><div><span className="block text-gray-500">Postsales certifications</span><strong>{(selectedOEM.postsales_certifications || []).join(', ') || 'None recorded'}</strong></div><div><span className="block text-gray-500">Required certifications</span><strong>{(selectedOEM.required_certifications || []).join(', ') || 'None recorded'}</strong></div></div>}{profileTab === 'products' && <div className="space-y-2"><input value={productQuery} onChange={event => setProductQuery(event.target.value)} placeholder="Search this OEM's products..." className="enterprise-input text-xs w-full" />{products.filter(product => product.oem_id === selectedOEM.id && (!productQuery || `${product.name} ${product.model || ''} ${product.part_number || ''}`.toLowerCase().includes(productQuery.toLowerCase()))).map(product => <div key={product.id} className="text-[11px] p-2 rounded bg-gray-50 border border-gray-200"><strong>{product.name}</strong><span className="ml-1 text-gray-500">{product.model || product.part_number || ''}</span><div className="text-[10px] text-gray-500">{product.category} · {product.status}</div></div>)}{!products.some(product => product.oem_id === selectedOEM.id) && <div className="text-[11px] text-gray-400">No related products linked.</div>}</div>}</div>}
-          <div className="bg-white border border-gray-200 rounded p-4 h-fit">
-          <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-            {editing ? <Pencil className="w-4 h-4 text-blue-600" /> : <Plus className="w-4 h-4 text-emerald-600" />}
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
-              {editing ? 'Edit OEM Profile' : 'Onboard OEM'}
-            </h3>
-         </div></div>
-
-          <form onSubmit={handleSubmit} className="mt-3 space-y-3">
-            <div>
-              <label className="text-[10px] uppercase font-semibold text-gray-500">Name *</label>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Fortinet"
-                className="enterprise-input text-xs py-1.5 mt-1 w-full"
-                disabled={!canManage}
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] uppercase font-semibold text-gray-500">Website</label>
-              <input
-                value={form.website}
-                onChange={(e) => setForm({ ...form, website: e.target.value })}
-                placeholder="https://..."
-                className="enterprise-input text-xs py-1.5 mt-1 w-full"
-                disabled={!canManage}
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] uppercase font-semibold text-gray-500">Status</label>
-              <select
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value as any })}
-                className="enterprise-input text-xs py-1.5 mt-1 w-full"
-                disabled={!canManage}
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Partner Portal URL</span><input value={form.partnerPortalUrl} onChange={e => setForm({ ...form, partnerPortalUrl: e.target.value })} placeholder="https://partner..." className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
-              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Partnership Status</span><input value={form.partnershipStatus} onChange={e => setForm({ ...form, partnershipStatus: e.target.value })} placeholder="Active / Pending / Expired" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
-              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Partner Tier</span><input value={form.partnerTier} onChange={e => setForm({ ...form, partnerTier: e.target.value })} placeholder="Gold / Silver / Registered" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
-              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Required Certifications</span><input value={form.requiredCertifications} onChange={e => setForm({ ...form, requiredCertifications: e.target.value })} placeholder="Comma separated" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Sales Certifications</span><input value={form.salesCertifications} onChange={e => setForm({ ...form, salesCertifications: e.target.value })} placeholder="Comma separated certifications" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
-              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Presales Certifications</span><input value={form.presalesCertifications} onChange={e => setForm({ ...form, presalesCertifications: e.target.value })} placeholder="Comma separated certifications" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
-              <label><span className="text-[10px] uppercase font-semibold text-gray-500">Postsales Certifications</span><input value={form.postsalesCertifications} onChange={e => setForm({ ...form, postsalesCertifications: e.target.value })} placeholder="Comma separated certifications" className="enterprise-input text-xs py-1.5 mt-1 w-full" disabled={!canManage} /></label>
-            </div>
-
-            <div>
-              <label className="text-[10px] uppercase font-semibold text-gray-500">Description</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                rows={3}
-                className="enterprise-input text-xs py-1.5 mt-1 w-full resize-none"
-                disabled={!canManage}
-              />
-            </div>
-
-            {canManage && (
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  {editing ? 'Save OEM Profile' : 'Onboard OEM'}
-                </button>
-                {editing && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { const o = oems.find(x => x.id === editing); if (o) handleDelete(o); }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </form>
-
-          {!canManage && (
-            <div className="mt-3 p-2.5 bg-gray-50 border border-gray-200 rounded text-[11px] text-gray-500">
-              Your role can view the catalog but not modify it.
-            </div>
-          )}
-        </div>
-      </div>
+      <main className="bg-white border border-gray-200 rounded-xl overflow-hidden min-h-[620px]">
+        {selected ? <><div className="p-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-start justify-between gap-4"><div className="flex items-start gap-3"><div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">{selected.name.slice(0, 2).toUpperCase()}</div><div><div className="text-[10px] uppercase tracking-wider text-gray-500 font-mono">OEM profile</div><h2 className="text-xl font-bold text-gray-900">{selected.name}</h2><div className="text-xs text-gray-500 mt-1">{selected.website || 'Website not configured'} · {selected.partner_tier || 'Tier not set'}</div></div></div><div className="flex gap-2">{canManage && <button onClick={() => beginEdit(selected)} className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-blue-700 bg-blue-50 rounded-lg"><Pencil className="w-3.5 h-3.5" />Edit Profile</button>}<button onClick={() => selected.website && window.open(selected.website, '_blank', 'noopener,noreferrer')} disabled={!selected.website} className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-gray-100 rounded-lg disabled:opacity-40"><ExternalLink className="w-3.5 h-3.5" />Website</button></div></div><div className="flex gap-1 px-5 border-b border-gray-200"><button onClick={() => setTab('overview')} className={`px-3 py-3 text-xs font-semibold border-b-2 ${tab === 'overview' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'}`}>Overview</button><button onClick={() => setTab('partner')} className={`px-3 py-3 text-xs font-semibold border-b-2 ${tab === 'partner' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'}`}>Partner & Certifications</button><button onClick={() => setTab('products')} className={`px-3 py-3 text-xs font-semibold border-b-2 ${tab === 'products' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'}`}>Product Portfolio ({products.filter(product => product.oem_id === selected.id).length})</button></div><div className="p-5">{tab === 'overview' && <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="rounded-lg border border-gray-200 p-4"><div className="text-[10px] uppercase tracking-wider text-gray-500">Relationship</div><div className="grid grid-cols-2 gap-3 mt-3 text-sm"><div><span className="block text-xs text-gray-500">Status</span><strong>{selected.status}</strong></div><div><span className="block text-xs text-gray-500">Tier</span><strong>{selected.partner_tier || 'Not set'}</strong></div><div><span className="block text-xs text-gray-500">Partnership</span><strong>{selected.partnership_status || 'Not set'}</strong></div><div><span className="block text-xs text-gray-500">Products</span><strong>{products.filter(product => product.oem_id === selected.id).length}</strong></div></div></div><div className="rounded-lg border border-gray-200 p-4"><div className="text-[10px] uppercase tracking-wider text-gray-500">Access & Description</div><a className="block text-sm text-blue-700 break-all mt-3" href={selected.partner_portal_url || undefined}>{selected.partner_portal_url || 'Partner portal not configured'}</a><p className="text-sm text-gray-600 mt-3">{selected.description || 'No profile description has been added.'}</p></div></div>}{tab === 'partner' && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[['Sales', selected.sales_certifications], ['Presales', selected.presales_certifications], ['Postsales', selected.postsales_certifications], ['Required', selected.required_certifications]].map(([label, values]) => <div key={String(label)} className="rounded-lg border border-gray-200 p-4"><div className="text-[10px] uppercase tracking-wider text-gray-500">{label} certifications</div><div className="flex flex-wrap gap-1.5 mt-3">{(values as string[] || []).map(value => <span key={value} className="px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs">{value}</span>)}{!(values as string[] || []).length && <span className="text-xs text-gray-400">Not configured</span>}</div></div>)}</div>}{tab === 'products' && <div><div className="flex items-center gap-2 mb-4"><Boxes className="w-4 h-4 text-blue-600" /><input value={productQuery} onChange={event => setProductQuery(event.target.value)} placeholder="Search this OEM's products..." className="enterprise-input flex-1 text-xs" /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-3">{selectedProducts.map(product => <div key={product.id} className="rounded-lg border border-gray-200 p-3"><div className="text-xs font-bold text-gray-900">{product.name}</div><div className="text-[11px] font-mono text-blue-700 mt-1">{product.model || product.part_number || 'Model not set'}</div><div className="text-xs text-gray-500 mt-2">{product.category} · {product.status}</div></div>)}{!selectedProducts.length && <div className="col-span-full text-center text-xs text-gray-500 py-8">No products match this OEM.</div>}</div></div>}</div></> : <div className="min-h-[620px] flex items-center justify-center text-sm text-gray-500">Select an OEM partner to open its profile.</div>}
+      </main>
     </div>
-  );
+
+    {editing && <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"><form onSubmit={save} className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-5 space-y-4"><div className="flex items-center justify-between"><div><div className="text-[10px] uppercase tracking-wider text-gray-500">Partner record</div><h2 className="text-lg font-bold text-gray-900">{selected ? 'Edit OEM Profile' : 'Onboard OEM Partner'}</h2></div><button type="button" onClick={() => setEditing(false)}><X className="w-5 h-5 text-gray-400" /></button></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[['Name', 'name'], ['Website', 'website'], ['Partner portal URL', 'partnerPortalUrl'], ['Partnership status', 'partnershipStatus'], ['Partner tier', 'partnerTier']].map(([label, key]) => <label key={key} className="text-xs font-semibold text-gray-700">{label}<input value={(form as any)[key]} onChange={event => setForm({ ...form, [key]: event.target.value })} className="enterprise-input w-full text-xs mt-1" /></label>)}<label className="text-xs font-semibold text-gray-700">Status<select value={form.status} onChange={event => setForm({ ...form, status: event.target.value as any })} className="enterprise-select w-full text-xs mt-1"><option>Active</option><option>Inactive</option></select></label></div><label className="text-xs font-semibold text-gray-700">Description<textarea value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} className="enterprise-input w-full text-xs mt-1" rows={3} /></label><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[['Sales certifications', 'salesCertifications'], ['Presales certifications', 'presalesCertifications'], ['Postsales certifications', 'postsalesCertifications'], ['Required certifications', 'requiredCertifications']].map(([label, key]) => <label key={key} className="text-xs font-semibold text-gray-700">{label}<input value={(form as any)[key]} onChange={event => setForm({ ...form, [key]: event.target.value })} placeholder="Comma separated" className="enterprise-input w-full text-xs mt-1" /></label>)}</div><div className="flex justify-end gap-2"><button type="button" onClick={() => setEditing(false)} className="px-3 py-2 text-xs bg-gray-100 rounded-lg">Cancel</button><button type="submit" className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg">Save Profile</button></div></form></div>}
+  </div>;
 };
