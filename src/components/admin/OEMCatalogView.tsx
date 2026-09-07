@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Factory,
   Plus,
@@ -47,6 +47,8 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
 }) => {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [tierFilter, setTierFilter] = useState('all');
+  const [partnershipFilter, setPartnershipFilter] = useState('all');
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<OEMForm>(emptyForm);
   const [savedMsg, setSavedMsg] = useState('');
@@ -59,9 +61,18 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
     const q = query.trim().toLowerCase();
     return oems
       .filter(s => statusFilter === 'all' || s.status === statusFilter)
+      .filter(s => tierFilter === 'all' || s.partner_tier === tierFilter)
+      .filter(s => partnershipFilter === 'all' || s.partnership_status === partnershipFilter)
       .filter(s => !q || s.name.toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [oems, query, statusFilter]);
+  }, [oems, query, statusFilter, tierFilter, partnershipFilter]);
+
+  const tiers = useMemo(() => [...new Set(oems.map(oem => oem.partner_tier).filter(Boolean))].sort(), [oems]);
+  const partnershipStatuses = useMemo(() => [...new Set(oems.map(oem => oem.partnership_status).filter(Boolean))].sort(), [oems]);
+
+  useEffect(() => {
+    if (!selectedOEM && filtered[0]) setSelectedOEM(filtered[0]);
+  }, [filtered, selectedOEM]);
 
   const activeCount = oems.filter(oem => oem.status === 'Active').length;
   const portalCoverage = oems.filter(oem => oem.partner_portal_url).length;
@@ -208,7 +219,7 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
                   className="enterprise-input pl-8 text-xs py-1.5 w-full"
                 />
               </div>
-              <select
+               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                  className="enterprise-input text-xs py-1.5 w-full sm:w-auto"
@@ -216,7 +227,9 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
                 <option value="all">All statuses</option>
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
-              </select>
+               </select>
+               <select value={tierFilter} onChange={e => setTierFilter(e.target.value)} className="enterprise-input text-xs py-1.5 w-full sm:w-auto"><option value="all">All partner tiers</option>{tiers.map(tier => <option key={tier} value={tier}>{tier}</option>)}</select>
+               <select value={partnershipFilter} onChange={e => setPartnershipFilter(e.target.value)} className="enterprise-input text-xs py-1.5 w-full sm:w-auto"><option value="all">All partnership statuses</option>{partnershipStatuses.map(status => <option key={status} value={status}>{status}</option>)}</select>
             </div>
           </div>
 
