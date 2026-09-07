@@ -8,6 +8,7 @@ import {
   DEFAULT_ROLES,
 } from './rbac';
 import { applyWorkflowConfig } from './config/workflow';
+import { isTerminalOpportunity } from './utils/opportunityStatus';
 import { api, getToken, SystemPolicies } from './api';
 import { LayoutDashboard, TableProperties, CheckSquare, Building2, MoreHorizontal } from 'lucide-react';
 import { Header } from './components/layout/Header';
@@ -134,7 +135,7 @@ const toLiveCalendarEvents = (opportunities: Opportunity[]): CalendarEvent[] => 
 const toLiveNotifications = (opportunities: Opportunity[]): NotificationItem[] => {
   const now = new Date();
   return opportunities.flatMap(opportunity => [
-    ...(opportunity.actionItems || []).filter(action => !action.isCompleted && new Date(action.dueDate) < now).map(action => ({ id: `alert-action-${opportunity.id}-${action.id}`, title: 'Overdue follow-up', message: `${action.title} is overdue for ${opportunity.clientName}.`, type: 'sla_breach', timestamp: action.dueDate, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem)),
+    ...(!isTerminalOpportunity(opportunity.stage) ? (opportunity.actionItems || []).filter(action => !action.isCompleted && new Date(action.dueDate) < now).map(action => ({ id: `alert-action-${opportunity.id}-${action.id}`, title: 'Overdue follow-up', message: `${action.title} is overdue for ${opportunity.clientName}.`, type: 'sla_breach', timestamp: action.dueDate, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem)) : []),
     ...(['draft', 'pending_sa_lead', 'pending_sales_vp', 'pending_finance'].includes(opportunity.boq?.approvalStatus || '') ? [{ id: `alert-boq-${opportunity.id}`, title: 'BOQ approval required', message: `${opportunity.code} is awaiting BOQ approval before commercial handoff.`, type: 'approval_required', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
     ...(['active_testing', 'validating_kpis'].includes(opportunity.poc?.status) ? [{ id: `alert-poc-${opportunity.id}`, title: 'POC milestone active', message: `${opportunity.code} has an active POC validation milestone.`, type: 'poc_milestone', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
     ...(opportunity.stage === 'closed_won' && !opportunity.handover?.isHandedOver ? [{ id: `alert-handover-${opportunity.id}`, title: 'Implementation handover pending', message: `${opportunity.code} is closed won and awaiting delivery handover.`, type: 'info', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),

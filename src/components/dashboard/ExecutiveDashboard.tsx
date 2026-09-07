@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { PriorityBadge, StageBadge } from '../common/Badge';
 import { formatCurrency } from '../../utils/currency';
+import { isTerminalOpportunity } from '../../utils/opportunityStatus';
 
 interface ExecutiveDashboardProps {
   opportunities: Opportunity[];
@@ -55,8 +56,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const wonOpportunities = opportunities.filter(o => o.stage === 'closed_won' || o.outcome?.outcome === 'won').length;
   const lostOpportunities = opportunities.filter(o => o.stage === 'closed_lost' || o.outcome?.outcome === 'lost').length;
   const onHoldOpportunities = opportunities.filter(o => o.outcome?.outcome === 'on_hold').length;
-  const pendingFollowUps = opportunities.reduce((total, o) => total + (o.actionItems || []).filter(a => !a.isCompleted).length, 0);
-  const overdueFollowUps = opportunities.reduce((total, o) => total + (o.actionItems || []).filter(a => !a.isCompleted && new Date(a.dueDate || 0) < now).length, 0);
+  const pendingFollowUps = opportunities.reduce((total, o) => total + (!isTerminalOpportunity(o.stage) ? (o.actionItems || []).filter(a => !a.isCompleted).length : 0), 0);
+  const overdueFollowUps = opportunities.reduce((total, o) => total + (!isTerminalOpportunity(o.stage) ? (o.actionItems || []).filter(a => !a.isCompleted && new Date(a.dueDate || 0) < now).length : 0), 0);
   const upcomingFollowUps = pendingFollowUps - overdueFollowUps;
   const pendingBOQs = opportunities.filter(o => ['draft', 'pending_sa_lead', 'pending_sales_vp', 'pending_finance'].includes(o.boq?.approvalStatus || '')).length;
   const completedBOQs = opportunities.filter(o => o.boq?.approvalStatus === 'approved').length;

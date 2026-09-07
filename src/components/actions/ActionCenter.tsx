@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CheckSquare, AlertTriangle, Clock, Plus, Check, Filter, ExternalLink, User } from 'lucide-react';
 import { Opportunity, ActionItem } from '../../types';
 import { PriorityBadge } from '../common/Badge';
+import { isTerminalOpportunity } from '../../utils/opportunityStatus';
 
 interface ActionCenterProps {
   opportunities: Opportunity[];
@@ -18,7 +19,7 @@ export const ActionCenter: React.FC<ActionCenterProps> = ({
   const [showCompleted, setShowCompleted] = useState<boolean>(false);
 
   // Flatten all action items with their parent opportunity metadata
-  const allActions = opportunities.flatMap(opp => 
+  const allActions = opportunities.filter(opp => !isTerminalOpportunity(opp.stage)).flatMap(opp => 
     opp.actionItems.map(act => ({
       ...act,
       opportunityId: opp.id,

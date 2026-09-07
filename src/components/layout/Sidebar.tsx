@@ -25,6 +25,7 @@ import {
   Plus,
   LogOut
 } from 'lucide-react';
+import { isTerminalOpportunity } from '../../utils/opportunityStatus';
 import { ActiveTab, Opportunity, UserAccount } from '../../types';
 
 interface SidebarProps {
@@ -71,7 +72,7 @@ interface NavSection {
   const totalOpps = opportunities.length;
   const activePocs = opportunities.filter(o => o?.poc && ['active_testing', 'scoping', 'provisioning', 'validating_kpis'].includes(o.poc.status)).length;
   const pendingBoqs = opportunities.filter(o => o?.boq?.approvalStatus?.startsWith('pending')).length;
-  const openActions = opportunities.reduce((acc, o) => acc + (o.actionItems || []).filter(a => !a.isCompleted).length, 0);
+  const openActions = opportunities.reduce((acc, o) => acc + (!isTerminalOpportunity(o.stage) ? (o.actionItems || []).filter(a => !a.isCompleted).length : 0), 0);
   const pendingHandovers = opportunities.filter(o => o.stage === 'closed_won' && o?.handover && !o.handover.isHandedOver).length;
 
   const sections: NavSection[] = [
