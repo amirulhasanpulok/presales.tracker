@@ -691,7 +691,7 @@ export default function App() {
                   }}
                   onUpdateUser={async (user) => {
                     const roleId = resolveRole(roles, user)?.id ?? user.roleId ?? 'role-sa';
-                    await api.updateUser(user.id, { name: user.name, email: user.email, role: user.role, roleId, department: user.department, region: user.region, status: user.status, });
+                    await api.updateUser(user.id, { name: user.name, email: user.email, role: user.role, roleId, department: user.department, region: user.region, phone: user.phone, manager: user.manager, salesTeam: user.salesTeam, skills: user.skills, certifications: user.certifications, mfaEnabled: user.mfaEnabled, status: user.status, });
                     setUsers(current => current.map(item => item.id === user.id ? { ...item, ...user, roleId } : item));
                   }}
                 />

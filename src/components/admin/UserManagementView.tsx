@@ -404,6 +404,13 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Email</span><input type="email" value={editingUser.email} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Department</span><input value={editingUser.department || ''} onChange={e => setEditingUser({ ...editingUser, department: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Region</span><input value={editingUser.region || ''} onChange={e => setEditingUser({ ...editingUser, region: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Manager</span><input value={editingUser.manager || ''} onChange={e => setEditingUser({ ...editingUser, manager: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+              </div>
+
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                  <label><span className="block text-xs font-semibold text-gray-700 mb-1">Phone</span><input value={editingUser.phone || ''} onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
                  <label><span className="block text-xs font-semibold text-gray-700 mb-1">Team</span><input value={editingUser.salesTeam || ''} onChange={e => setEditingUser({ ...editingUser, salesTeam: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
@@ -418,11 +425,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
                   className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
                 >
-                  {!['presales_architect', 'sales_kam', 'presales_lead', 'super_admin'].includes(editingUser.role) && <option value={editingUser.role}>{editingUser.role.replace(/_/g, ' ')}</option>}
-                  <option value="presales_architect">Solutions Architect</option>
-                  <option value="sales_kam">Sales KAM</option>
-                  <option value="presales_lead">Presales Lead</option>
-                  <option value="super_admin">Super Admin</option>
+                   {roleOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </div>
 
@@ -434,8 +437,8 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                     onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value as any })}
                     className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive / Suspended</option>
+                     <option value="Active">Active</option>
+                     <option value="Inactive">Inactive / Suspended</option>
                   </select>
                 </div>
 

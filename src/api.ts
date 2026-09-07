@@ -194,7 +194,7 @@ export const api = {
   createUser: (payload: { name: string; email: string; role: string; roleId: string; department?: string; salesTeam?: string; region?: string; phone?: string; manager?: string; skills?: string[]; certifications?: string[]; password?: string }) =>
     request('/users', { method: 'POST', body: JSON.stringify(payload) }),
 
-  updateUser: (id: string, payload: { name?: string; email?: string; role?: string; roleId?: string; department?: string; salesTeam?: string; region?: string; phone?: string; manager?: string; skills?: string[]; certifications?: string[]; status?: string; password?: string }) =>
+  updateUser: (id: string, payload: { name?: string; email?: string; role?: string; roleId?: string; department?: string; salesTeam?: string; region?: string; phone?: string; manager?: string; skills?: string[]; certifications?: string[]; status?: string; mfaEnabled?: boolean; password?: string }) =>
     request<any>(`/users/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
 
   bulkImport: (entity: string, rows: Record<string, unknown>[]) =>

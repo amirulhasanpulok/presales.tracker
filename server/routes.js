@@ -748,7 +748,7 @@ router.post('/users', authenticate, requirePermission('sys.users'), async (req, 
 });
 
 router.put('/users/:id', authenticate, requirePermission('sys.users'), async (req, res) => {
-  const { name, email, role, roleId, department, salesTeam, phone, manager, skills, certifications, region, status, password } = req.body || {};
+  const { name, email, role, roleId, department, salesTeam, phone, manager, skills, certifications, region, status, mfaEnabled, password } = req.body || {};
   const fields = [];
   const values = [];
   if (name !== undefined) { values.push(String(name)); fields.push(`name = $${values.length}`); }
@@ -763,6 +763,7 @@ router.put('/users/:id', authenticate, requirePermission('sys.users'), async (re
   if (skills !== undefined) { values.push(JSON.stringify(Array.isArray(skills) ? skills : [])); fields.push(`skills = $${values.length}::jsonb`); }
   if (certifications !== undefined) { values.push(JSON.stringify(Array.isArray(certifications) ? certifications : [])); fields.push(`certifications = $${values.length}::jsonb`); }
   if (status !== undefined) { values.push(String(status)); fields.push(`status = $${values.length}`); }
+  if (mfaEnabled !== undefined) { values.push(Boolean(mfaEnabled)); fields.push(`mfa_enabled = $${values.length}`); }
   if (password !== undefined) {
     const passwordReasons = validatePassword(String(password));
     if (passwordReasons.length) return res.status(400).json({ error: 'weak_password', hints: passwordReasons });
