@@ -26,6 +26,7 @@ interface UserManagementViewProps {
     salesTeam?: string;
     skills?: string[];
     certifications?: string[];
+    password?: string;
   }) => Promise<any>;
   onUpdateUser?: (user: UserAccount) => Promise<any>;
   roles?: RolePermission[];

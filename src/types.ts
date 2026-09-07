@@ -137,6 +137,7 @@ export interface PresalesActivity {
   nextFollowUpDate?: string;
   attachments?: string[];
   metadata?: Record<string, unknown>;
+  _clientAdded?: boolean;
 }
 
 export interface ActionItem {
@@ -217,6 +218,7 @@ export interface Opportunity {
   technicalFitScore: TechnicalFitScore;
   primaryTechStack: CloudProvider;
   technologies: string[];
+  secondaryTechnologies?: string[];
   // Section 5: selected multi-select scopes from the managed catalog
   scopes?: string[];
   
@@ -523,9 +525,11 @@ export type ActiveTab =
   | 'team_capacity'
   | 'sales_kam'
   | 'reports'
+  | 'analytics'
   | 'documents'
   | 'handover_queue'
   | 'notification_center'
+  | 'notifications'
   | 'scope_catalog'
   | 'oem_catalog'
   | 'product_catalog'
@@ -533,8 +537,13 @@ export type ActiveTab =
   | 'audit_logs'
   | 'user_management'
   | 'role_management'
+  | 'role_permissions'
+  | 'sales_kams'
   | 'master_config'
   | 'system_settings';
+
+// Runtime navigation uses these canonical names; legacy aliases remain for persisted links.
+export type RuntimeActiveTab = ActiveTab | 'analytics' | 'sales_kams' | 'notifications' | 'role_permissions';
 
 export type OpportunitySubView =
   | 'overview'

@@ -212,7 +212,7 @@ router.post('/auth/change-password', authenticate, async (req, res) => {
     return res.status(400).json({ error: 'weak_password', hints: reasons });
   }
 
-  await query('UPDATE users SET password_hash = $2, must_change_password = false, login_attempts = 0 WHERE id = $1', [
+  await query('UPDATE users SET password_hash = $2, must_change_password = false, login_attempts = 0, locked_until = NULL WHERE id = $1', [
     req.user.id,
     await hashPassword(String(newPassword)),
   ]);
@@ -509,12 +509,15 @@ router.post('/opportunities/:id/outcome', authenticate, requirePermission('promo
     cancelled: 'cancelled',
   };
   const stage = stageByOutcome[requested.outcome] || (['closed_won', 'closed_lost', 'on_hold', 'cancelled'].includes(previous.stage) ? 'qualification' : previous.stage);
+  const workflow = await getWorkflowStages();
+  const prerequisites = stagePrerequisites(previous, stage, workflow);
+  if (prerequisites.length) return res.status(422).json({ error: 'stage_prerequisites_incomplete', stage, missing: prerequisites });
   const outcome = { ...requested, outcome: requested.outcome };
   const entry = makeActivity({ req, type: 'Deal Outcome', title: `Opportunity marked ${requested.outcome}`, summary: `Deal outcome changed to ${requested.outcome} by ${req.user?.name || 'Unknown'}.` });
   const out = { ...previous, id: req.params.id, stage, outcome, activities: prependActivities(previous, [entry]), updatedAt: new Date().toISOString() };
   await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1', [req.params.id, JSON.stringify(out)]);
   await audit({ req, action: `opportunity.outcome.${requested.outcome}`, targetType: 'opportunity', targetId: req.params.id, meta: { previous: { stage: previous.stage, outcome: previous.outcome || null }, next: { stage, outcome } } });
-  res.status(200).json(out);
+  res.status(200).json(stripDocumentContent(out));
 });
 
 router.post('/opportunities/:id/documents', authenticate, requireAnyEditPermission(), async (req, res) => {
@@ -558,8 +561,6 @@ router.post('/opportunities/:id/handover/signoff', authenticate, requirePermissi
   const previous = current.rows[0].doc || {};
   if (!canAccessOpportunity(req, previous)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
   const handover = previous.handover || {};
-  const missing = ['technicalRunbookReady', 'credentialsSecurelyTransferred', 'customerTechKickoffScheduled'].filter(field => !handover[field]);
-  if (missing.length) return res.status(422).json({ error: 'handover_gates_incomplete', missing });
    const handoverInput = req.body && typeof req.body === 'object' ? req.body : {};
    const allowedHandoverFields = ['technicalRunbookReady', 'credentialsSecurelyTransferred', 'customerTechKickoffScheduled', 'knownTechnicalDebtOrRisks', 'specialSLAsAgreed', 'status'];
    const sanitizedHandover = Object.fromEntries(Object.entries(handoverInput).filter(([key]) => allowedHandoverFields.includes(key)));
@@ -605,7 +606,7 @@ router.post('/opportunities/:id/stage', authenticate, requirePermission('promote
     JSON.stringify(doc),
   ]);
   await audit({ req, action: 'opportunity.stage', targetType: 'opportunity', targetId: req.params.id, meta: { stage } });
-  res.json(result.rows[0].doc);
+  res.json(stripDocumentContent(result.rows[0].doc));
 });
 
 router.delete('/opportunities/:id', authenticate, requirePermission('delete_opportunity'), async (req, res) => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Opportunity, OpportunityStage, DealPriority, DealComplexity } from '../../types';
+import { Opportunity, OpportunityStage, DealPriority, DealComplexity, TechnicalFitScore } from '../../types';
 import { 
   Plus, 
   Building2, 
@@ -24,11 +24,11 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [clientName, setClientName] = useState('');
-  const [clientIndustry, setClientIndustry] = useState('FinTech & Banking');
-  const [region, setRegion] = useState('North America East');
+  const [clientIndustry, setClientIndustry] = useState<Opportunity['clientIndustry']>('FinTech / Banking');
+  const [region, setRegion] = useState<Opportunity['region']>('North America (US-East)');
   const [leadSolutionArchitect, setLeadSolutionArchitect] = useState('Dr. Marcus Vance');
   const [accountExecutive, setAccountExecutive] = useState('Rachel Adams');
-  const [primaryTechStack, setPrimaryTechStack] = useState('AWS / Kubernetes');
+  const [primaryTechStack, setPrimaryTechStack] = useState<Opportunity['primaryTechStack']>('AWS');
   const [contractValue, setContractValue] = useState<number>(450000);
   const [arr, setArr] = useState<number>(180000);
   const [winProbability, setWinProbability] = useState<number>(65);
@@ -37,7 +37,7 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
   const [dealComplexity, setDealComplexity] = useState<DealComplexity>('high');
   const [proposedArchitecture, setProposedArchitecture] = useState('');
   const [currentLegacyStack, setCurrentLegacyStack] = useState('');
-  const [techFitScore, setTechFitScore] = useState<number>(90);
+  const [techFitScore, setTechFitScore] = useState<TechnicalFitScore>('good');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,7 +218,7 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
               <label className="block text-[11px] font-semibold text-gray-700 mb-1">Industry Vertical</label>
               <select
                 value={clientIndustry}
-                onChange={(e) => setClientIndustry(e.target.value)}
+                onChange={(e) => setClientIndustry(e.target.value as Opportunity['clientIndustry'])}
                 className="enterprise-select w-full text-xs"
               >
                 <option value="FinTech & Banking">FinTech & Banking</option>
@@ -234,7 +234,7 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
               <label className="block text-[11px] font-semibold text-gray-700 mb-1">Region / Geo</label>
               <select
                 value={region}
-                onChange={(e) => setRegion(e.target.value)}
+                onChange={(e) => setRegion(e.target.value as Opportunity['region'])}
                 className="enterprise-select w-full text-xs"
               >
                 <option value="North America East">North America East</option>
@@ -333,7 +333,7 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
               <label className="block text-[11px] font-semibold text-gray-700 mb-1">Primary Tech Stack</label>
               <select
                 value={primaryTechStack}
-                onChange={(e) => setPrimaryTechStack(e.target.value)}
+                onChange={(e) => setPrimaryTechStack(e.target.value as Opportunity['primaryTechStack'])}
                 className="enterprise-select w-full text-xs"
               >
                 <option value="AWS / Kubernetes">AWS / Kubernetes (EKS)</option>

@@ -54,7 +54,7 @@ export const PresalesCalendar: React.FC<PresalesCalendarProps> = ({
       date: newDate,
       time: newTime,
       clientName: matchedOpp ? matchedOpp.clientName : 'Enterprise Customer',
-      opportunityCode: newOppCode || undefined,
+      opportunityCode: newOppCode || '',
       attendees: newAttendees.split(',').map(a => a.trim()).filter(Boolean),
       location: newLocation,
       status: 'Confirmed'

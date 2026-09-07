@@ -23,10 +23,10 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
   onUpdateOpportunity,
 }) => {
   const [poc, setPoc] = useState(() => ({
-    status: 'not_started',
-    successCriteria: [],
-    blockers: [],
     ...(opportunity.poc || {}),
+    status: opportunity.poc?.status || 'not_started',
+    successCriteria: opportunity.poc?.successCriteria || [],
+    blockers: opportunity.poc?.blockers || [],
   }));
   const [secReviewStatus, setSecReviewStatus] = useState(opportunity.securityReviewStatus);
   const [scopeAnalysis, setScopeAnalysis] = useState({ requirementDetails: opportunity.requirementDetails || '', clientPainPoint: opportunity.clientPainPoint || '', expectedSolution: opportunity.expectedSolution || '', currentLegacyStack: opportunity.currentLegacyStack || '', proposedArchitecture: opportunity.proposedArchitecture || '', requirements: (opportunity.keyTechnicalRequirements || []).join(', ') });

@@ -581,8 +581,8 @@ export default function App() {
 
               {activeTab === 'opportunities' && (
                 <>
-                  <div className="hidden md:block"><OpportunityTable opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateStage={handleUpdateStage} onOpenNewModal={() => setIsNewModalOpen(true)} density={density} /></div>
-                  <div className="md:hidden"><MobileOpportunityScreen opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateStage={handleUpdateStage} onOpenNewModal={() => setIsNewModalOpen(true)} /></div>
+                  <div className="hidden md:block"><OpportunityTable opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateStage={handleUpdateStage} onOpenNewModal={handleCreateOpportunityRequest} density={density} /></div>
+                  <div className="md:hidden"><MobileOpportunityScreen opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateStage={handleUpdateStage} onOpenNewModal={handleCreateOpportunityRequest} /></div>
                 </>
               )}
 
