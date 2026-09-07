@@ -11,7 +11,7 @@ interface Props {
   onDelete: (id: string) => Promise<any>;
 }
 
-type Tab = 'overview' | 'certifications' | 'products';
+type Tab = 'overview' | 'partner' | 'products';
 type Form = { name: string; website: string; description: string; status: 'Active' | 'Inactive'; partnerPortalUrl: string; partnershipStatus: string; partnerTier: string; salesCertifications: string; presalesCertifications: string; postsalesCertifications: string; requiredCertifications: string };
 const blank: Form = { name: '', website: '', description: '', status: 'Active', partnerPortalUrl: '', partnershipStatus: '', partnerTier: '', salesCertifications: '', presalesCertifications: '', postsalesCertifications: '', requiredCertifications: '' };
 const list = (value: string) => value.split(',').map(item => item.trim()).filter(Boolean);
