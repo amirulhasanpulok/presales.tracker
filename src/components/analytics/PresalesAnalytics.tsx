@@ -13,6 +13,11 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
   const [search, setSearch] = useState('');
   const [stage, setStage] = useState('all');
   const [kam, setKam] = useState('all');
+  const [presales, setPresales] = useState('all');
+  const [region, setRegion] = useState('all');
+  const [priority, setPriority] = useState('all');
+  const [outcome, setOutcome] = useState('all');
+  const [boqStatus, setBoqStatus] = useState('all');
   const [scope, setScope] = useState('all');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -39,6 +44,11 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
   const filterOptions = useMemo(() => ({
     stages: [...new Set(opportunities.map(o => o.stage))],
     kams: [...new Set(opportunities.map(o => o.accountExecutive).filter(Boolean))],
+    presales: [...new Set(opportunities.map(o => o.leadSolutionArchitect).filter(Boolean))],
+    regions: [...new Set(opportunities.map(o => o.region).filter(Boolean))],
+    priorities: [...new Set(opportunities.map(o => o.priority).filter(Boolean))],
+    outcomes: [...new Set(opportunities.map(o => o.outcome?.outcome || (o.stage === 'closed_won' ? 'won' : o.stage === 'closed_lost' ? 'lost' : 'open')).filter(Boolean))],
+    boqStatuses: [...new Set(opportunities.map(o => o.boq?.approvalStatus).filter(Boolean))],
     scopes: [...new Set(opportunities.flatMap(o => o.scopes || []))].sort(),
   }), [opportunities]);
 
@@ -52,13 +62,14 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
     const matchesSearch = !query || [opportunity.clientName, opportunity.name, opportunity.code, opportunity.accountExecutive, opportunity.leadSolutionArchitect, ...(opportunity.scopes || []), ...(opportunity.boq?.items || []).map(item => `${item.oem || ''} ${item.productName || ''} ${item.model || ''} ${item.partNumber || ''}`)].join(' ').toLowerCase().includes(query);
     const activityDate = latest?.timestamp ? new Date(latest.timestamp) : new Date(opportunity.updatedAt);
     const matchesDate = (!fromDate || activityDate >= new Date(`${fromDate}T00:00:00`)) && (!toDate || activityDate <= new Date(`${toDate}T23:59:59`));
-    return matchesSearch && (stage === 'all' || opportunity.stage === stage) && (kam === 'all' || opportunity.accountExecutive === kam) && (scope === 'all' || (opportunity.scopes || []).includes(scope)) && matchesDate;
-  }).sort((a, b) => new Date(b.latest?.timestamp || b.opportunity.updatedAt).getTime() - new Date(a.latest?.timestamp || a.opportunity.updatedAt).getTime()), [opportunities, search, stage, kam, scope, fromDate, toDate]);
+    const currentOutcome = opportunity.outcome?.outcome || (opportunity.stage === 'closed_won' ? 'won' : opportunity.stage === 'closed_lost' ? 'lost' : 'open');
+    return matchesSearch && (stage === 'all' || opportunity.stage === stage) && (kam === 'all' || opportunity.accountExecutive === kam) && (presales === 'all' || opportunity.leadSolutionArchitect === presales) && (region === 'all' || opportunity.region === region) && (priority === 'all' || opportunity.priority === priority) && (outcome === 'all' || currentOutcome === outcome) && (boqStatus === 'all' || opportunity.boq?.approvalStatus === boqStatus) && (scope === 'all' || (opportunity.scopes || []).includes(scope)) && matchesDate;
+  }).sort((a, b) => new Date(b.latest?.timestamp || b.opportunity.updatedAt).getTime() - new Date(a.latest?.timestamp || a.opportunity.updatedAt).getTime()), [opportunities, search, stage, kam, presales, region, priority, outcome, boqStatus, scope, fromDate, toDate]);
 
   const exportActivityReport = () => {
-    const csvValue = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-    const headers = ['Client', 'Opportunity', 'Scope', 'Sales KAM', 'Presales Owner', 'Stage', 'Status', 'Last Update', 'Last Updated By', 'Last Activity Date', 'Next Action', 'Next Follow-up Date'];
-    const rows = activityRows.map(({ opportunity, latest, nextAction }) => [
+     const escapeHtml = (value: unknown) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+     const headers = ['Client', 'Opportunity', 'Scope', 'Sales KAM', 'Presales Owner', 'Stage', 'Status', 'Last Update', 'Last Updated By', 'Last Activity Date', 'Next Action', 'Next Follow-up Date'];
+     const rows = activityRows.map(({ opportunity, latest, nextAction }) => [
       opportunity.clientName,
       `${opportunity.name} (${opportunity.code})`,
       (opportunity.scopes || []).join('; '),
@@ -71,12 +82,13 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
       latest?.timestamp || opportunity.updatedAt,
       nextAction?.title || '',
       nextAction?.dueDate || '',
-    ].map(csvValue).join(','));
-    const blob = new Blob([[headers.map(csvValue).join(','), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+     ]);
+     const table = `<table><thead><tr>${headers.map(header => `<th>${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(escapeHtml).map(value => `<td>${value}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+     const blob = new Blob([`<html><meta charset="utf-8"><body>${table}</body></html>`], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `recent_client_activity_${new Date().toISOString().slice(0, 10)}.csv`;
+     link.download = `presales_filtered_report_${new Date().toISOString().slice(0, 10)}.xls`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -218,7 +230,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
             </div>
           </div>
           <button onClick={exportActivityReport} className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100">
-            <Download className="w-3.5 h-3.5" /> Export Excel CSV ({activityRows.length})
+             <Download className="w-3.5 h-3.5" /> Download Excel ({activityRows.length})
           </button>
         </div>
 
@@ -228,7 +240,12 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
             <input value={search} onChange={e => setSearch(e.target.value)} className="enterprise-input w-full text-xs" placeholder="Search..." />
           </label>
           <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Stage</span><select value={stage} onChange={e => setStage(e.target.value)} className="enterprise-select w-full text-xs"><option value="all">All stages</option>{filterOptions.stages.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
-          <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Sales KAM</span><select value={kam} onChange={e => setKam(e.target.value)} className="enterprise-select w-full text-xs"><option value="all">All KAMs</option>{filterOptions.kams.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+           <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Sales KAM</span><select value={kam} onChange={e => setKam(e.target.value)} className="enterprise-select w-full text-xs"><option value="all">All KAMs</option>{filterOptions.kams.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+           <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Presales Owner</span><select value={presales} onChange={e => setPresales(e.target.value)} className="enterprise-select w-full text-xs"><option value="all">All presales</option>{filterOptions.presales.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+           <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Region</span><select value={region} onChange={e => setRegion(e.target.value)} className="enterprise-select w-full text-xs"><option value="all">All regions</option>{filterOptions.regions.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+           <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Priority</span><select value={priority} onChange={e => setPriority(e.target.value)} className="enterprise-select w-full text-xs"><option value="all">All priorities</option>{filterOptions.priorities.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+           <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Outcome</span><select value={outcome} onChange={e => setOutcome(e.target.value)} className="enterprise-select w-full text-xs"><option value="all">All outcomes</option>{filterOptions.outcomes.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+           <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">BOQ Status</span><select value={boqStatus} onChange={e => setBoqStatus(e.target.value)} className="enterprise-select w-full text-xs"><option value="all">All BOQ statuses</option>{filterOptions.boqStatuses.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
           <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Scope</span><select value={scope} onChange={e => setScope(e.target.value)} className="enterprise-select w-full text-xs"><option value="all">All scopes</option>{filterOptions.scopes.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
           <div className="grid grid-cols-2 gap-2 lg:col-span-6">
             <label><span className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Activity From</span><input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="enterprise-input w-full text-xs" /></label>
