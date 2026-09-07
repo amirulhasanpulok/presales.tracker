@@ -29,7 +29,7 @@ export const OEMCatalogView: React.FC<Props> = ({ oems, canManage, products = []
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
 
-  const tiers = useMemo(() => [...new Set(oems.map(oem => oem.partner_tier).filter(Boolean))].sort(), [oems]);
+  const tiers = useMemo(() => [...new Set(oems.map(oem => oem.partner_tier).filter((value): value is string => Boolean(value)))].sort(), [oems]);
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return oems.filter(oem => (status === 'all' || oem.status === status) && (tier === 'all' || oem.partner_tier === tier) && (!needle || `${oem.name} ${oem.description || ''} ${oem.partner_tier || ''}`.toLowerCase().includes(needle))).sort((a, b) => a.name.localeCompare(b.name));
