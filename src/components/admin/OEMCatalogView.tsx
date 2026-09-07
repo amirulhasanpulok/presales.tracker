@@ -63,6 +63,11 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [oems, query, statusFilter]);
 
+  const activeCount = oems.filter(oem => oem.status === 'Active').length;
+  const portalCoverage = oems.filter(oem => oem.partner_portal_url).length;
+  const certificationProfiles = oems.filter(oem => (oem.required_certifications || []).length > 0).length;
+  const linkedProducts = products.filter(product => product.oem_id).length;
+
   const showMsg = (msg: string) => {
     setSavedMsg(msg);
     setError('');
@@ -155,19 +160,26 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
       <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-base font-bold text-gray-900 tracking-tight">OEM Management</h1>
+            <h1 className="text-base font-bold text-gray-900 tracking-tight">OEM Management Center</h1>
             <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">
               PARTNERS
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            Centrally managed OEM partners that supply products for BOQ line items.
+            Govern partner relationships, certification readiness, portals, and product coverage from one workspace.
           </p>
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold font-mono text-gray-900">{oems.length}</div>
           <div className="text-[10px] uppercase font-semibold text-gray-500">OEM partners</div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-white border border-gray-200 rounded p-3"><div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Active Partners</div><div className="text-2xl font-bold font-mono text-emerald-700 mt-1">{activeCount}</div><div className="text-[10px] text-gray-500">of {oems.length} registered OEMs</div></div>
+        <div className="bg-white border border-gray-200 rounded p-3"><div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Product Coverage</div><div className="text-2xl font-bold font-mono text-blue-700 mt-1">{linkedProducts}</div><div className="text-[10px] text-gray-500">catalog products linked to OEMs</div></div>
+        <div className="bg-white border border-gray-200 rounded p-3"><div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Portal Coverage</div><div className="text-2xl font-bold font-mono text-purple-700 mt-1">{portalCoverage}</div><div className="text-[10px] text-gray-500">partner portals configured</div></div>
+        <div className="bg-white border border-gray-200 rounded p-3"><div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Certification Profiles</div><div className="text-2xl font-bold font-mono text-amber-700 mt-1">{certificationProfiles}</div><div className="text-[10px] text-gray-500">profiles with requirements</div></div>
       </div>
 
       {savedMsg && (
