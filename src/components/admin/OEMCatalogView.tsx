@@ -193,6 +193,15 @@ export const OEMCatalogView: React.FC<OEMCatalogViewProps> = ({
         <div className="bg-white border border-gray-200 rounded p-3"><div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Certification Profiles</div><div className="text-2xl font-bold font-mono text-amber-700 mt-1">{certificationProfiles}</div><div className="text-[10px] text-gray-500">profiles with requirements</div></div>
       </div>
 
+      <div className="bg-white border border-gray-200 rounded p-1.5 flex flex-wrap gap-1 shadow-2xs">
+        {([
+          ['overview', 'Partner Directory'],
+          ['partner', 'Profiles & Certifications'],
+          ['products', 'Product Portfolio'],
+        ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => setProfileTab(tab)} className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${profileTab === tab ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}>{label}</button>)}
+        <span className="ml-auto self-center px-2 text-[10px] font-mono text-gray-400 uppercase tracking-wider">Single-page partner workspace</span>
+      </div>
+
       {savedMsg && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800 font-medium flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
