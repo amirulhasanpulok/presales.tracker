@@ -112,7 +112,7 @@ interface NavSection {
         { id: 'user_management' as ActiveTab, label: 'User Management', icon: UserCheck, perm: 'sys.users' },
         { id: 'role_permissions' as ActiveTab, label: 'Role & Permissions', icon: KeyRound, perm: 'sys.rbac' },
         { id: 'scope_catalog' as ActiveTab, label: 'Scope Catalog', icon: Layers, perm: 'manage_scope_catalog' },
-        { id: 'oem_catalog' as ActiveTab, label: 'OEM Catalog', icon: Factory, perm: 'manage_oem_catalog' },
+         { id: 'oem_catalog' as ActiveTab, label: 'OEM Management', icon: Factory, perm: 'manage_oem_catalog' },
         { id: 'product_catalog' as ActiveTab, label: 'Product Catalog', icon: Boxes, perm: 'manage_oem_catalog' },
         { id: 'bulk_upload' as ActiveTab, label: 'Bulk Excel Upload', icon: FileText, perm: 'sys.integrations' },
         { id: 'master_config' as ActiveTab, label: 'Master Configuration', icon: Sliders, perm: 'sys.integrations' },
