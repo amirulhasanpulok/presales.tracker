@@ -24,6 +24,7 @@ export const OEMCatalogView: React.FC<Props> = ({ oems, canManage, products = []
   const [tab, setTab] = useState<Tab>('overview');
   const [productQuery, setProductQuery] = useState('');
   const [editing, setEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(blank);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -44,6 +45,7 @@ export const OEMCatalogView: React.FC<Props> = ({ oems, canManage, products = []
 
   const beginEdit = (oem?: OEMEntry) => {
     const source = oem || selected;
+    setEditingId(source?.id || null);
     setForm(source ? { name: source.name, website: source.website || '', description: source.description || '', status: source.status === 'Inactive' ? 'Inactive' : 'Active', partnerPortalUrl: source.partner_portal_url || '', partnershipStatus: source.partnership_status || '', partnerTier: source.partner_tier || '', salesCertifications: (source.sales_certifications || []).join(', '), presalesCertifications: (source.presales_certifications || []).join(', '), postsalesCertifications: (source.postsales_certifications || []).join(', '), requiredCertifications: (source.required_certifications || []).join(', ') } : blank);
     setEditing(true); setError('');
   };
@@ -52,7 +54,7 @@ export const OEMCatalogView: React.FC<Props> = ({ oems, canManage, products = []
     event.preventDefault();
     if (!form.name.trim()) return setError('OEM name is required.');
     const payload = { name: form.name.trim(), website: form.website.trim() || undefined, description: form.description.trim() || undefined, status: form.status, partnerPortalUrl: form.partnerPortalUrl.trim() || undefined, partnershipStatus: form.partnershipStatus.trim() || undefined, partnerTier: form.partnerTier.trim() || undefined, salesCertifications: list(form.salesCertifications), presalesCertifications: list(form.presalesCertifications), postsalesCertifications: list(form.postsalesCertifications), requiredCertifications: list(form.requiredCertifications) };
-    try { const result = selected && oems.some(oem => oem.id === selected.id) && form.name === selected.name ? await onUpdate(selected.id, payload) : await onCreate(payload); setSelectedId(result?.id || selectedId); setEditing(false); setNotice('OEM profile saved.'); window.setTimeout(() => setNotice(''), 2500); } catch (err: any) { setError(err?.message || 'Could not save OEM profile.'); }
+    try { const result = editingId ? await onUpdate(editingId, payload) : await onCreate(payload); setSelectedId(result?.id || editingId || selectedId); setEditing(false); setEditingId(null); setNotice('OEM profile saved.'); window.setTimeout(() => setNotice(''), 2500); } catch (err: any) { setError(err?.message || 'Could not save OEM profile.'); }
   };
 
   const remove = async () => {
@@ -64,7 +66,7 @@ export const OEMCatalogView: React.FC<Props> = ({ oems, canManage, products = []
     <section className="rounded-xl overflow-hidden bg-slate-950 text-white border border-slate-800 shadow-lg">
       <div className="p-5 sm:p-7 flex flex-col lg:flex-row lg:items-end justify-between gap-5">
         <div><div className="text-[10px] tracking-[0.2em] uppercase text-blue-300 font-mono">Partner Operations / Master Data</div><h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-2">OEM Management Center</h1><p className="text-sm text-slate-300 mt-2 max-w-2xl">Manage partner health, certification readiness, portals, and product coverage from one operational workspace.</p></div>
-        {canManage && <button onClick={() => { setForm(blank); setSelectedId(null); setEditing(true); }} className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-400 rounded-lg text-sm font-semibold"><Plus className="w-4 h-4" />Onboard OEM</button>}
+        {canManage && <button onClick={() => { setForm(blank); setEditingId(null); setEditing(true); }} className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-400 rounded-lg text-sm font-semibold"><Plus className="w-4 h-4" />Onboard OEM</button>}
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 border-t border-white/10 bg-white/5">
         {[['Active Partners', active, 'of ' + oems.length + ' registered'], ['Product Coverage', linkedProducts, 'catalog links'], ['Portal Coverage', withPortal, 'partner portals'], ['Certification Profiles', withCertifications, 'requirements tracked']].map(([label, value, detail]) => <div key={String(label)} className="p-4 border-r border-white/10 last:border-r-0"><div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{label}</div><div className="text-2xl font-bold font-mono mt-1">{value}</div><div className="text-[10px] text-slate-400 mt-1">{detail}</div></div>)}
