@@ -56,6 +56,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const lostOpportunities = opportunities.filter(o => o.stage === 'closed_lost' || o.outcome?.outcome === 'lost').length;
   const onHoldOpportunities = opportunities.filter(o => o.outcome?.outcome === 'on_hold').length;
   const pendingFollowUps = opportunities.reduce((total, o) => total + (o.actionItems || []).filter(a => !a.isCompleted).length, 0);
+  const overdueFollowUps = opportunities.reduce((total, o) => total + (o.actionItems || []).filter(a => !a.isCompleted && new Date(a.dueDate || 0) < now).length, 0);
+  const upcomingFollowUps = pendingFollowUps - overdueFollowUps;
   const pendingBOQs = opportunities.filter(o => ['draft', 'pending_sa_lead', 'pending_sales_vp', 'pending_finance'].includes(o.boq?.approvalStatus || '')).length;
   const completedBOQs = opportunities.filter(o => o.boq?.approvalStatus === 'approved').length;
   const proposalsSubmitted = opportunities.filter(o => (o.activities || []).some(a => a.type === 'RFP / RFI Response') || ['commercial_negotiation', 'closed_won', 'closed_lost'].includes(o.stage)).length;
@@ -253,7 +255,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             { label: 'Won / Matured', value: wonOpportunities, tone: 'text-emerald-700' },
             { label: 'Lost', value: lostOpportunities, tone: 'text-red-700' },
             { label: 'On Hold', value: onHoldOpportunities, tone: 'text-amber-700' },
-            { label: 'Pending Follow-ups', value: pendingFollowUps, tone: 'text-amber-700' },
+             { label: 'Pending Follow-ups', value: pendingFollowUps, detail: `${overdueFollowUps} overdue · ${upcomingFollowUps} upcoming`, tone: 'text-amber-700' },
             { label: 'Pending BOQs', value: pendingBOQs, tone: 'text-purple-700' },
             { label: 'BOQs Completed', value: completedBOQs, tone: 'text-emerald-700' },
             { label: 'Proposals Submitted', value: proposalsSubmitted, tone: 'text-blue-700' },
@@ -262,6 +264,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <div key={metric.label} className="bg-gray-50 border border-gray-200 rounded p-2.5">
               <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">{metric.label}</div>
               <div className={`text-xl font-bold font-mono mt-1 ${metric.tone}`}>{metric.value}</div>
+              {'detail' in metric && <div className="text-[10px] text-gray-500 mt-0.5">{metric.detail}</div>}
             </div>
           ))}
         </div>
