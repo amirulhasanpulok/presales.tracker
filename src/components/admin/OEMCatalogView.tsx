@@ -63,13 +63,13 @@ export const OEMCatalogView: React.FC<Props> = ({ oems, canManage, products = []
   };
 
   return <div className="space-y-4 max-w-7xl mx-auto">
-    <section className="rounded-xl overflow-hidden bg-slate-950 text-white border border-slate-800 shadow-lg">
+    <section className="rounded-lg overflow-hidden bg-white text-gray-900 border border-gray-200 shadow-2xs">
       <div className="p-5 sm:p-7 flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-        <div><div className="text-[10px] tracking-[0.2em] uppercase text-blue-300 font-mono">Partner Operations / Master Data</div><h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-2">OEM Management Center</h1><p className="text-sm text-slate-300 mt-2 max-w-2xl">Manage partner health, certification readiness, portals, and product coverage from one operational workspace.</p></div>
-        {canManage && <button onClick={() => { setForm(blank); setEditingId(null); setEditing(true); }} className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-400 rounded-lg text-sm font-semibold"><Plus className="w-4 h-4" />Onboard OEM</button>}
+        <div><div className="text-[10px] tracking-[0.2em] uppercase text-blue-600 font-mono">Partner Operations / Master Data</div><h1 className="text-base sm:text-lg font-bold tracking-tight mt-1">OEM Management Center</h1><p className="text-xs text-gray-500 mt-1 max-w-2xl">Manage partner health, certification readiness, portals, and product coverage from one operational workspace.</p></div>
+        {canManage && <button onClick={() => { setForm(blank); setEditingId(null); setEditing(true); }} className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold shadow-xs"><Plus className="w-3.5 h-3.5" />Onboard OEM</button>}
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 border-t border-white/10 bg-white/5">
-        {[['Active Partners', active, 'of ' + oems.length + ' registered'], ['Product Coverage', linkedProducts, 'catalog links'], ['Portal Coverage', withPortal, 'partner portals'], ['Certification Profiles', withCertifications, 'requirements tracked']].map(([label, value, detail]) => <div key={String(label)} className="p-4 border-r border-white/10 last:border-r-0"><div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{label}</div><div className="text-2xl font-bold font-mono mt-1">{value}</div><div className="text-[10px] text-slate-400 mt-1">{detail}</div></div>)}
+      <div className="grid grid-cols-2 lg:grid-cols-4 border-t border-gray-200 bg-gray-50">
+        {[['Active Partners', active, 'of ' + oems.length + ' registered'], ['Product Coverage', linkedProducts, 'catalog links'], ['Portal Coverage', withPortal, 'partner portals'], ['Certification Profiles', withCertifications, 'requirements tracked']].map(([label, value, detail]) => <div key={String(label)} className="p-3 border-r border-gray-200 last:border-r-0"><div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">{label}</div><div className="text-xl font-bold font-mono text-gray-900 mt-1">{value}</div><div className="text-[10px] text-gray-500 mt-1">{detail}</div></div>)}
       </div>
     </section>
 
