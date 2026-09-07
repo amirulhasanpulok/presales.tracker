@@ -17,6 +17,17 @@ function deriveStage(group) {
   return 'qualification';
 }
 
+function deriveTechStack(group) {
+  const text = [...group.scopes, ...group.activities.map(activity => `${activity.type} ${activity.title} ${activity.metadata?.mainDomain || ''}`)].join(' ').toLowerCase();
+  if (/cctv|surveillance|camera|access control|attendance/.test(text)) return 'CCTV & Video Surveillance';
+  if (/firewall|cyber|security|edr|xdr|nac|vpn/.test(text)) return 'Network Security';
+  if (/server|storage|san|nas|backup|disaster|vps|vmware|virtual/.test(text)) return 'Data Center Infrastructure';
+  if (/wifi|wireless|wlan|access point/.test(text)) return 'Enterprise Wi-Fi';
+  if (/cloud|aws|azure|gcp|kubernetes|vps/.test(text)) return 'Cloud Infrastructure';
+  if (/lan|wan|router|switch|network|internet|connectivity|data/.test(text)) return 'Network Infrastructure';
+  return 'Professional Services';
+}
+
 function parseTSV(input) {
   const rows = [[]]; let cell = ''; let quoted = false;
   for (let i = 0; i < input.length; i += 1) {
@@ -87,7 +98,8 @@ const opportunities = [...groups.values()].map(group => {
   const derivedStage = deriveStage(group);
    const stage = outcome === 'won' ? 'closed_won' : outcome === 'lost' ? 'closed_lost' : outcome === 'cancelled' ? 'cancelled' : outcome === 'on_hold' ? 'on_hold' : derivedStage;
   const salesKams = [...group.salesKams]; const presalesEngineers = [...group.presalesEngineers];
-  return { id: `import-opp-${digest}`, code: `IMPORT-${digest.slice(0, 8).toUpperCase()}`, name: `${group.clientName} Presales Activity`, clientName: group.clientName, stage, outcome: { outcome }, lastStatus: group.lastStatus, statusSource: group.statusSource, statusDate: group.statusDate, boq: { approvalStatus: group.boqCompleted ? 'approved' : group.boqSubmitted ? 'pending_sa_lead' : 'draft', sourceSubmitted: group.boqSubmitted, sourceCompleted: group.boqCompleted }, accountExecutive: salesKams[0] || 'Unassigned', leadSolutionArchitect: presalesEngineers[0] || 'Unassigned', salesKams, presalesEngineers, assignmentReviewRequired: !salesKams.length || !presalesEngineers.length, priority: 'p2_medium', primaryTechStack: 'Unassigned', technologies: [...group.scopes], scopes: [...group.scopes], activities: group.activities, sourceFiles: [...group.sources], importReviewRequired: true };
+  const primaryTechStack = deriveTechStack(group);
+  return { id: `import-opp-${digest}`, code: `IMPORT-${digest.slice(0, 8).toUpperCase()}`, name: `${group.clientName} Presales Activity`, clientName: group.clientName, stage, outcome: { outcome }, lastStatus: group.lastStatus, statusSource: group.statusSource, statusDate: group.statusDate, boq: { approvalStatus: group.boqCompleted ? 'approved' : group.boqSubmitted ? 'pending_sa_lead' : 'draft', sourceSubmitted: group.boqSubmitted, sourceCompleted: group.boqCompleted }, accountExecutive: salesKams[0] || 'Unassigned', leadSolutionArchitect: presalesEngineers[0] || 'Unassigned', salesKams, presalesEngineers, assignmentReviewRequired: !salesKams.length || !presalesEngineers.length, priority: 'p2_medium', primaryTechStack, technologies: [...group.scopes], scopes: [...group.scopes], activities: group.activities, sourceFiles: [...group.sources], importReviewRequired: true };
 });
 
 const statusCounts = Object.fromEntries([...opportunities.reduce((counts, item) => counts.set(item.lastStatus || 'EMPTY', (counts.get(item.lastStatus || 'EMPTY') || 0) + 1), new Map()).entries()]);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus, Layers, DollarSign, Calendar, Shield, Cpu, Search, Check } from 'lucide-react';
 import { Opportunity, OpportunityStage, CloudProvider, DealComplexity, DealPriority, TechnicalFitScore, ScopeCatalogEntry, UserAccount } from '../../types';
-import { CLOUD_PROVIDERS, DEFAULT_INDUSTRIES, getConfiguredTaxonomy } from '../../utils/taxonomy';
+import { CLOUD_PROVIDERS, DEFAULT_INDUSTRIES, DEFAULT_REGIONS, getConfiguredTaxonomy } from '../../utils/taxonomy';
 
 interface NewOpportunityModalProps {
   isOpen: boolean;
@@ -22,10 +22,12 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
   const salesUsers = users.filter(user => user.roleId === 'role-kam' || user.role === 'Sales KAM');
   const postsalesUsers = users.filter(user => user.roleId === 'role-postsales' || user.roleId === 'role-delivery' || user.role === 'Postsales / Delivery Manager' || user.role === 'Delivery Manager');
   const engineers = presalesUsers;
+  const configuredTechStacks = getConfiguredTaxonomy('techStacks', CLOUD_PROVIDERS as unknown as string[]);
+  const configuredRegions = getConfiguredTaxonomy('regions', DEFAULT_REGIONS);
   const [name, setName] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientIndustry, setClientIndustry] = useState<Opportunity['clientIndustry']>('FinTech / Banking');
-  const [region, setRegion] = useState<Opportunity['region']>('North America (US-East)');
+  const [region, setRegion] = useState<Opportunity['region']>(configuredRegions[0] as Opportunity['region']);
   const [stage, setStage] = useState<OpportunityStage>('qualification');
   const [priority, setPriority] = useState<DealPriority>('p1_high');
   const [complexity, setComplexity] = useState<DealComplexity>('medium');
@@ -219,7 +221,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
                   onChange={(e) => setPrimaryTechStack(e.target.value as any)}
                   className="w-full enterprise-input font-mono"
                 >
-                  {CLOUD_PROVIDERS.map(value => <option key={value} value={value}>{value}</option>)}
+                   {configuredTechStacks.map(value => <option key={value} value={value}>{value}</option>)}
                 </select>
               </div>
             </div>
