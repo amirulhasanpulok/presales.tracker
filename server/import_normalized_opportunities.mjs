@@ -104,7 +104,7 @@ function buildOpportunity(source) {
     stakeholders: [],
     documents: [],
     poc: { status: 'not_started', allocatedBudget: 0, successCriteria: [], blockers: [] },
-    boq: { items: [], subtotalCost: 0, subtotalListPrice: 0, totalDiscountAmount: 0, totalContractValue: 0, annualRecurringRevenue: 0, oneTimeServicesValue: 0, overallMarginPercent: 0, approvalStatus: source.boq?.approvalStatus || 'draft', sourceSubmitted: Boolean(source.boq?.sourceSubmitted), version: 1 },
+    boq: { items: [], subtotalCost: 0, subtotalListPrice: 0, totalDiscountAmount: 0, totalContractValue: 0, annualRecurringRevenue: 0, oneTimeServicesValue: 0, overallMarginPercent: 0, approvalStatus: source.boq?.approvalStatus || 'draft', sourceSubmitted: Boolean(source.boq?.sourceSubmitted), sourceCompleted: Boolean(source.boq?.sourceCompleted), version: 1 },
     actionItems,
     handover: { isHandedOver: false, technicalRunbookReady: false, credentialsSecurelyTransferred: false, customerTechKickoffScheduled: false, knownTechnicalDebtOrRisks: [], specialSLAsAgreed: [] },
     outcome: { outcome, ...(statusDate ? (outcome === 'won' ? { wonDate: statusDate.slice(0, 10) } : outcome === 'lost' ? { lostDate: statusDate.slice(0, 10) } : {}) : {}) },
