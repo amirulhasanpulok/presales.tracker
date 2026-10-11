@@ -19,6 +19,7 @@ export const WORK_LABELS: Record<string, string> = {
   cancelled: "Cancel",
   delivery: "Delivery · SCM",
   deployment: "Deployment",
+  testing: "Testing & UAT",
   completed: "Completed",
   client_handover: "Handover to Client",
   declined: "Declined",
@@ -42,6 +43,7 @@ export const FLOW = [
   "won",
   "delivery",
   "deployment",
+  "testing",
   "completed",
   "client_handover",
 ];
@@ -78,5 +80,23 @@ export function localDate(value?: string | null) {
 
         timeStyle: "short",
       })
-    : "â€”";
+    : "—";
+}
+
+export function reviewDeadline(o: Opportunity) {
+  return (
+    o.collaboration?.reviewDueAt ||
+    (o.collaboration && o.createdAt
+      ? new Date(Date.parse(o.createdAt) + 86400000).toISOString()
+      : undefined)
+  );
+}
+export function reviewOverdue(o: Opportunity, now = Date.now()) {
+  return (
+    !!o.collaboration &&
+    ["lead", "review"].includes(currentStatus(o)) &&
+    !o.collaboration.reviewDecisionAt &&
+    !!reviewDeadline(o) &&
+    Date.parse(reviewDeadline(o)!) < now
+  );
 }

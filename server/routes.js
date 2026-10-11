@@ -62,7 +62,7 @@ async function getWorkflowStages() {
 
 function canAccessOpportunity(req, doc) {
   if (can(req.role, req.user, 'sys.users') || can(req.role, req.user, 'sys.rbac')) return true;
-  if (can(req.role, req.user, 'workflow.review')) return true;
+  if (can(req.role, req.user, 'workflow.review') || can(req.role,req.user,'workflow.sales_head') || can(req.role,req.user,'workflow.presales_head')) return true;
   const roleId = req.user?.roleId || req.user?.role_id;
   if (roleId === 'role-kam') return doc.accountExecutive === req.user?.name;
   if (roleId === 'role-sa') return doc.leadSolutionArchitect === req.user?.name || doc.presalesEngineerSecondary === req.user?.name || (doc.supportingPresalesEngineers || []).includes(req.user?.name);
@@ -73,7 +73,7 @@ function canAccessOpportunity(req, doc) {
 }
 
 function stripDocumentContent(doc, req) {
-  if (req && !can(req.role,req.user,'sys.rbac') && !can(req.role,req.user,'workflow.finance') && !can(req.role,req.user,'workflow.sales') && (req.user.roleId || req.user.role_id)!=='role-scm' && (doc.collaboration?.costing || doc.collaboration?.costingHistory)) {
+  if (req && !can(req.role,req.user,'sys.rbac') && !can(req.role,req.user,'workflow.sales_head') && !can(req.role,req.user,'workflow.sales') && (req.user.roleId || req.user.role_id)!=='role-scm' && (doc.collaboration?.costing || doc.collaboration?.costingHistory)) {
     doc={...doc,collaboration:{...doc.collaboration,costing:undefined,costingHistory:undefined,costingApproved:!!doc.collaboration.costing?.approvedAt}};
   }
   if (!Array.isArray(doc?.documents)) return doc;
@@ -239,7 +239,7 @@ router.get('/bootstrap', authenticate, async (req, res) => {
   const isAdministrator = (req.user?.roleId || req.user?.role_id) === 'role-admin' || (can(req.role, req.user, 'sys.users') && can(req.role, req.user, 'sys.rbac'));
   const scope = isAdministrator
     ? { sql: null, params: [] }
-    : can(req.role, req.user, 'workflow.review')
+    : (can(req.role, req.user, 'workflow.review') || can(req.role,req.user,'workflow.sales_head') || can(req.role,req.user,'workflow.presales_head'))
       ? { sql: 'true', params: [] }
     : roleId === 'role-kam'
       ? { sql: "o.doc->>'accountExecutive' = $1", params: [req.user?.name] }
@@ -374,6 +374,7 @@ router.post('/opportunities', authenticate, requirePermission('create_opportunit
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
+  out.collaboration = initialCollaboration(new Date(out.createdAt));
   if (!String(out.name || '').trim() || !String(out.clientName || '').trim()) return res.status(400).json({ error: 'invalid_opportunity', hint: 'Client and opportunity name are required.' });
   const salesOwner = await query("SELECT 1 FROM users WHERE name=$1 AND role_id='role-kam' AND lower(status)='active'", [out.accountExecutive]);
   if (!salesOwner.rowCount) return res.status(422).json({ error: 'invalid_sales_owner', hint: 'Choose an active Sales owner.' });
@@ -428,7 +429,7 @@ router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async
   if (changed(previousDoc, doc, 'collaboration')) return res.status(403).json({ error: 'workflow_action_required', hint: 'Use the collaboration workspace for workflow changes.' });
   if (previousDoc.collaboration) {
     if (doc.updatedAt !== previousDoc.updatedAt) return res.status(409).json({ error: 'stale_update', hint: 'This opportunity changed. Refresh before saving.' });
-    for (const field of ['collaboration', 'leadSolutionArchitect', 'presalesEngineerSecondary', 'supportingPresalesEngineers', 'postsalesOwner', 'scmOwner', 'stage', 'outcome', 'accountExecutive', 'handover']) {
+    for (const field of ['collaboration', 'leadSolutionArchitect', 'presalesEngineerSecondary', 'supportingPresalesEngineers', 'postsalesOwner', 'scmOwner', 'createdAt', 'stage', 'outcome', 'accountExecutive', 'handover']) {
       if (changed(previousDoc, doc, field)) return res.status(403).json({ error: 'workflow_action_required', hint: 'Use the collaboration workspace for assignment and lifecycle changes.' });
     }
   }
@@ -516,10 +517,11 @@ router.post('/opportunities/:id/collaboration', authenticate, async (req, res) =
     id: req.user.id, name: req.user.name,
     review: admin || can(req.role, req.user, 'workflow.review'),
     sales: admin || (can(req.role, req.user, 'workflow.sales') && previous.accountExecutive === req.user.name),
-    presales: admin || can(req.role, req.user, 'workflow.review') || (can(req.role, req.user, 'author_boq') && [previous.leadSolutionArchitect, previous.presalesEngineerSecondary, ...(previous.supportingPresalesEngineers || [])].includes(req.user.name)),
+    presales: admin || can(req.role,req.user,'workflow.presales_head') || can(req.role, req.user, 'workflow.review') || (can(req.role, req.user, 'author_boq') && [previous.leadSolutionArchitect, previous.presalesEngineerSecondary, ...(previous.supportingPresalesEngineers || [])].includes(req.user.name)),
     scm: admin || (roleId === 'role-scm' && (previous.scmOwner === req.user.name || ['costing','costing_approval','proposal','followup','negotiation'].includes(previous.collaboration?.status))),
-    finance: admin || can(req.role, req.user, 'workflow.finance'),
-    postsales: admin || (['role-delivery', 'role-postsales'].includes(roleId) && previous.postsalesOwner === req.user.name),
+    salesHead: admin || can(req.role,req.user,'workflow.sales_head'),
+    presalesHead: admin || can(req.role,req.user,'workflow.presales_head'),
+    postsales: admin || can(req.role,req.user,'workflow.presales_head') || (['role-delivery', 'role-postsales'].includes(roleId) && previous.postsalesOwner === req.user.name),
   };
   try {
     if (['assign', 'close_won'].includes(req.body.action)) {

@@ -26,15 +26,19 @@ export const STAGE_IDS = {
   declined: "cancelled",
   delivery: "delivery",
   deployment: "deployment",
+  testing: "testing",
   completed: "completed",
   client_handover: "client_handover",
 };
 import { randomUUID } from "node:crypto";
 
 export const DAY = 86400000;
-export const initialCollaboration = () => ({
+export const initialCollaboration = (now = new Date()) => ({
   status: "lead",
-  version: 2,
+  version: 3,
+  reviewStartedAt: now.toISOString(),
+  reviewDueAt: new Date(now.getTime() + DAY).toISOString(),
+  reviewHistory: [],
   cycle: 0,
   solutions: [],
   extensions: [],
@@ -67,7 +71,12 @@ export function transition(doc, input, actor, now = new Date()) {
     client_followup: "followup",
   };
   w.status = legacy[w.status] || w.status;
-  w.version = 2;
+  w.version = 3;
+  w.reviewHistory ||= [];
+  if (!w.reviewDueAt && ["lead", "review"].includes(w.status)) {
+    w.reviewStartedAt = doc.createdAt || now.toISOString();
+    w.reviewDueAt = new Date(Date.parse(w.reviewStartedAt) + DAY).toISOString();
+  }
   w.stageNotes ||= {};
   const setStage = (status) => {
     w.status = status;
@@ -92,6 +101,7 @@ export function transition(doc, input, actor, now = new Date()) {
     "completed",
     "client_handover",
     "deployment",
+    "testing",
     "cancelled",
     "hold",
     "declined",
@@ -118,6 +128,7 @@ export function transition(doc, input, actor, now = new Date()) {
       requireRole("review");
       need(
         w.status === "review" ||
+          w.status === "lead" ||
           w.status === "needs_info" ||
           !doc.collaboration,
         "Lead is already reviewed.",
@@ -150,7 +161,26 @@ export function transition(doc, input, actor, now = new Date()) {
       w.cycle = 1;
       w.assignedAt = stamp;
       w.assignedBy = actor.name;
-      w.originalDueAt = new Date(now.getTime() + 4 * DAY).toISOString();
+      need(
+        Number.isFinite(w.slaHours) && w.slaHours > 0,
+        "Sales Head must set the Solution SLA before assignment.",
+      );
+      w.originalDueAt = new Date(
+        now.getTime() + w.slaHours * 3600000,
+      ).toISOString();
+      w.cycleStartedAt = stamp;
+      w.reviewOwner = actor.name;
+      if (!w.reviewDecisionAt) {
+        w.reviewDecisionAt = stamp;
+        w.reviewHistory.push({
+          decision: "qualified",
+          at: stamp,
+          by: actor.name,
+          dueAt: w.reviewDueAt,
+          criteria: structuredClone(input.criteria),
+          note,
+        });
+      }
       w.dueAt = w.originalDueAt;
       next.stage = "tech_discovery";
       title = "Lead accepted and Presales assigned";
@@ -158,13 +188,19 @@ export function transition(doc, input, actor, now = new Date()) {
     }
     case "decline":
       requireRole("review");
-      need(
-        ["review", "needs_info"].includes(w.status),
-        "Lead is already reviewed.",
-      );
+      need(["lead", "review"].includes(w.status), "Lead is already reviewed.");
       need(note, "Explain why the lead is declined.");
       w.status = "declined";
       w.declineReason = note;
+      w.reviewDecisionAt = stamp;
+      w.reviewOwner = actor.name;
+      w.reviewHistory.push({
+        decision: "declined",
+        at: stamp,
+        by: actor.name,
+        dueAt: w.reviewDueAt,
+        note,
+      });
       next.stage = "cancelled";
       title = "Lead declined";
       break;
@@ -197,7 +233,7 @@ export function transition(doc, input, actor, now = new Date()) {
       break;
     case "approve_extension":
     case "reject_extension": {
-      requireRole("sales");
+      requireRole("salesHead");
       working();
       const e = w.extensions.find(
         (e) =>
@@ -227,6 +263,7 @@ export function transition(doc, input, actor, now = new Date()) {
     case "submit_solution": {
       requireRole("presales");
       at("design");
+      need(!w.awaitingSLA, "Sales Head must set the revision SLA first.");
       need(note, "Add the solution summary.");
       need(
         (next.boq?.items || []).length ||
@@ -330,7 +367,16 @@ export function transition(doc, input, actor, now = new Date()) {
       }
       w.costing = undefined;
       w.cycle += 1;
-      w.dueAt = new Date(now.getTime() + 4 * DAY).toISOString();
+      w.dueAt = undefined;
+      w.awaitingSLA = true;
+      w.cycleStartedAt = stamp;
+      w.slaHistory ||= [];
+      w.slaHistory.push({
+        event: "revision_requested",
+        at: stamp,
+        by: actor.name,
+        cycle: w.cycle,
+      });
       w.slaFinishedAt = undefined;
       w.changeRequest = note;
       w.revisionRequestedAt = stamp;
@@ -444,7 +490,7 @@ export function transition(doc, input, actor, now = new Date()) {
     case "accept_delivery":
       requireRole("postsales");
       need(
-        w.status === "deployment",
+        w.status === "testing",
         "Complete deployment before client acceptance.",
       );
       need(
@@ -453,29 +499,47 @@ export function transition(doc, input, actor, now = new Date()) {
       );
       w.acceptanceReference = text(input.acceptanceReference);
       need(note, "Record client acceptance details.");
-      setStage("completed");
+      setStage("testing");
+      w.uatPassedAt = stamp;
+      w.completionApprovedAt = undefined;
       w.acceptedAt = stamp;
       w.acceptedBy = actor.name;
       w.acceptanceNote = note;
-      title = "Delivery completed and client acceptance recorded";
+      title =
+        "Testing & UAT passed; awaiting Postsales Head completion approval";
       break;
     case "submit_lead":
       requireRole("sales");
       at("lead", "needs_info");
       record();
+      if (w.status === "needs_info") {
+        w.reviewStartedAt = stamp;
+        w.reviewDueAt = new Date(now.getTime() + DAY).toISOString();
+        w.reviewDecisionAt = undefined;
+      }
       setStage("review");
       title = "Lead submitted to Review Gate";
       break;
     case "request_info":
       requireRole("review");
-      at("review");
+      at("lead", "review");
       record();
+      w.reviewDecisionAt = stamp;
+      w.reviewOwner = actor.name;
+      w.reviewHistory.push({
+        decision: "need_more_information",
+        at: stamp,
+        by: actor.name,
+        dueAt: w.reviewDueAt,
+        note,
+      });
       setStage("needs_info");
       title = "Review Gate requested more information";
       break;
     case "finish_requirements":
       requireRole("presales");
       at("requirements");
+      need(!w.awaitingSLA, "Sales Head must set the revision SLA first.");
       need(
         text(next.requirementDetails),
         "Save client requirements before completing analysis.",
@@ -485,7 +549,7 @@ export function transition(doc, input, actor, now = new Date()) {
       title = "Requirements Analysis completed";
       break;
     case "approve_solution": {
-      requireRole("review");
+      requireRole("presalesHead");
       at("solution_review");
       record();
       const s = w.solutions.at(-1);
@@ -498,7 +562,7 @@ export function transition(doc, input, actor, now = new Date()) {
       break;
     }
     case "return_solution":
-      requireRole("review");
+      requireRole("presalesHead");
       at("solution_review");
       record();
       setStage("design");
@@ -594,7 +658,7 @@ export function transition(doc, input, actor, now = new Date()) {
       break;
     }
     case "approve_costing":
-      requireRole("finance");
+      requireRole("salesHead");
       at("costing_approval");
       record();
       need(w.costing, "Save costing first.");
@@ -605,7 +669,7 @@ export function transition(doc, input, actor, now = new Date()) {
       title = "Costing and selling price approved";
       break;
     case "return_costing":
-      requireRole("finance");
+      requireRole("salesHead");
       at("costing_approval");
       record();
       w.costing.approvedAt = undefined;
@@ -744,6 +808,14 @@ export function transition(doc, input, actor, now = new Date()) {
         text(input.acknowledgement),
         "Add client handover acknowledgement reference.",
       );
+      if (w.clientHandover)
+        (w.handoverHistory ||= []).push({
+          package: w.clientHandover,
+          approvals: w.handoverApprovals || {},
+          at: stamp,
+          by: actor.name,
+          note: "Package superseded",
+        });
       w.clientHandover = {
         checklist: structuredClone(input.handoverChecklist),
         acknowledgement: text(input.acknowledgement),
@@ -751,8 +823,179 @@ export function transition(doc, input, actor, now = new Date()) {
         by: actor.name,
         note,
       };
-      setStage("client_handover");
-      title = "Handover to Client completed; project closed";
+      w.handoverApprovals = {};
+      title = "Client handover package submitted; awaiting both Head approvals";
+      break;
+    case "claim_review":
+      requireRole("review");
+      at("lead", "review");
+      need(!w.reviewDecisionAt, "Gate decision already recorded.");
+      w.reviewOwner = actor.name;
+      title = "Presales Lead claimed Review Gate";
+      break;
+    case "qualify":
+      requireRole("review");
+      at("lead", "review");
+      need(!w.reviewDecisionAt, "Gate decision already recorded.");
+      need(
+        GATE_KEYS.every((k) => input.criteria?.[k] === true),
+        "Complete all qualification criteria.",
+      );
+      record();
+      w.reviewDecisionAt = stamp;
+      w.reviewOwner = actor.name;
+      w.qualification = {
+        criteria: structuredClone(input.criteria),
+        decision: "qualified",
+        note,
+        at: stamp,
+        by: actor.name,
+      };
+      w.reviewHistory.push({
+        decision: "qualified",
+        at: stamp,
+        by: actor.name,
+        dueAt: w.reviewDueAt,
+        criteria: structuredClone(input.criteria),
+        note,
+      });
+      setStage("review");
+      title = "Lead qualified; ready for SLA and assignment";
+      break;
+    case "set_sla": {
+      requireRole("salesHead");
+      need(
+        ["lead", "review", "needs_info"].includes(w.status) || w.awaitingSLA,
+        "Use an extension request to change an active SLA.",
+      );
+      record();
+      const hours = Number(input.slaHours);
+      need(
+        Number.isFinite(hours) && hours >= 1 && hours <= 8760,
+        "Choose an SLA between 1 and 8760 hours.",
+      );
+      w.slaHours = hours;
+      w.slaSetBy = actor.name;
+      w.slaSetAt = stamp;
+      if (w.awaitingSLA) {
+        const due = new Date(Date.parse(w.cycleStartedAt) + hours * 3600000);
+        need(
+          due.getTime() > now.getTime(),
+          "Choose a duration with a future deadline from revision start.",
+        );
+        w.dueAt = due.toISOString();
+        w.awaitingSLA = false;
+      }
+      w.slaHistory ||= [];
+      w.slaHistory.push({
+        event: "sla_set",
+        hours,
+        dueAt: w.dueAt,
+        cycle: w.cycle,
+        at: stamp,
+        by: actor.name,
+        note,
+      });
+      title = "Sales Head set Solution SLA";
+      break;
+    }
+    case "start_testing":
+      requireRole("postsales");
+      at("deployment");
+      record();
+      w.uatPassedAt = undefined;
+      w.acceptanceReference = undefined;
+      w.acceptanceNote = undefined;
+      setStage("testing");
+      title = "Deployment ready for Testing & UAT";
+      break;
+    case "uat_failed":
+      requireRole("postsales");
+      at("testing");
+      record();
+      w.uatPassedAt = undefined;
+      w.completionApprovedAt = undefined;
+      setStage("deployment");
+      title = "Testing & UAT failed; correction and retest required";
+      break;
+    case "approve_completion":
+      requireRole("presalesHead");
+      at("testing");
+      need(
+        w.uatPassedAt && w.acceptanceReference,
+        "Record successful UAT and client sign-off first.",
+      );
+      record();
+      w.completionApprovedAt = stamp;
+      w.completionApprovedBy = actor.name;
+      setStage("completed");
+      title = "Postsales Head confirmed completion";
+      break;
+    case "return_completion":
+      requireRole("presalesHead");
+      at("testing");
+      record();
+      w.uatPassedAt = undefined;
+      setStage("deployment");
+      title = "Postsales Head returned implementation for correction";
+      break;
+    case "approve_client_handover": {
+      at("completed");
+      need(w.clientHandover, "Submit the client handover package first.");
+      need(
+        ["sales", "presales"].includes(input.side),
+        "Choose an approval responsibility.",
+      );
+      requireRole(input.side === "sales" ? "salesHead" : "presalesHead");
+      record();
+      w.handoverApprovals ||= {};
+      const other =
+        w.handoverApprovals[input.side === "sales" ? "presales" : "sales"];
+      need(
+        !other || other.id !== actor.id,
+        "Final handover requires two different Head approvers.",
+      );
+      need(
+        !w.handoverApprovals[input.side],
+        "This Head approval is already recorded.",
+      );
+      w.handoverApprovals[input.side] = {
+        id: actor.id,
+        name: actor.name,
+        at: stamp,
+        note,
+      };
+      if (w.handoverApprovals.sales && w.handoverApprovals.presales) {
+        setStage("client_handover");
+        w.finalClosedAt = stamp;
+        title = "Both Heads approved client handover; project closed";
+      } else
+        title =
+          "Client handover approved by " +
+          input.side +
+          " Head; second approval pending";
+      break;
+    }
+    case "return_client_handover":
+      need(
+        actor.salesHead || actor.presalesHead,
+        "Only a Head can return handover.",
+        403,
+      );
+      at("completed");
+      need(w.clientHandover, "No handover package submitted.");
+      record();
+      w.handoverHistory ||= [];
+      w.handoverHistory.push({
+        package: w.clientHandover,
+        approvals: w.handoverApprovals,
+        note,
+        at: stamp,
+        by: actor.name,
+      });
+      w.clientHandover = undefined;
+      w.handoverApprovals = {};
+      title = "Head returned client handover package for correction";
       break;
     default:
       throw workflowError("Unknown workflow action.", 400);

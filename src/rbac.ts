@@ -1,4 +1,4 @@
-import { RolePermission, UserAccount } from './types';
+import { RolePermission, UserAccount } from "./types";
 
 export interface PermissionDef {
   key: string;
@@ -9,62 +9,164 @@ export interface PermissionDef {
 // Canonical permission catalog — single source of truth consumed by both the
 // RoleManagementView editor and the runtime access-control layer.
 export const PERMISSION_CATALOG: PermissionDef[] = [
-  {key:'workflow.scm',name:'Manage SCM costing and delivery',module:'Team Workflow'},
-  {key:'workflow.finance',name:'Approve costing and selling price',module:'Team Workflow'},
-  { key: 'workflow.review', name: 'Review leads and assign Presales', module: 'Team Workflow' },
-  { key: 'workflow.sales', name: 'Approve SLA extensions and close own Sales deals', module: 'Team Workflow' },
+  {
+    key: "workflow.sales_head",
+    name: "Set SLA, approve extensions/costing and joint client handover",
+    module: "Team Workflow",
+  },
+  {
+    key: "workflow.presales_head",
+    name: "Review solutions, confirm Postsales completion and joint client handover",
+    module: "Team Workflow",
+  },
+  {
+    key: "workflow.scm",
+    name: "Manage SCM costing and delivery",
+    module: "Team Workflow",
+  },
+  {
+    key: "workflow.finance",
+    name: "Legacy Finance access",
+    module: "Team Workflow",
+  },
+  {
+    key: "workflow.review",
+    name: "Review leads and assign Presales",
+    module: "Team Workflow",
+  },
+  {
+    key: "workflow.sales",
+    name: "Approve SLA extensions and close own Sales deals",
+    module: "Team Workflow",
+  },
   // Opportunities & Deals
-  { key: 'create_opportunity', name: 'Create New Opportunity', module: 'Opportunities & Deals' },
-  { key: 'edit_opportunity_core', name: 'Edit Core Deal Terms & TCV', module: 'Opportunities & Deals' },
-  { key: 'promote_stage', name: 'Promote Opportunity Stage', module: 'Opportunities & Deals' },
-  { key: 'delete_opportunity', name: 'Delete / Purge Opportunity', module: 'Opportunities & Deals' },
+  {
+    key: "create_opportunity",
+    name: "Create New Opportunity",
+    module: "Opportunities & Deals",
+  },
+  {
+    key: "edit_opportunity_core",
+    name: "Edit Core Deal Terms & TCV",
+    module: "Opportunities & Deals",
+  },
+  {
+    key: "promote_stage",
+    name: "Promote Opportunity Stage",
+    module: "Opportunities & Deals",
+  },
+  {
+    key: "delete_opportunity",
+    name: "Delete / Purge Opportunity",
+    module: "Opportunities & Deals",
+  },
   // Technical Architecture & SADD
-  { key: 'author_sadd', name: 'Author & Publish SADD Blueprints', module: 'Technical Architecture & SADD' },
-  { key: 'approve_sadd', name: 'Approve Architecture Design (Lead SA)', module: 'Technical Architecture & SADD' },
-  { key: 'run_poc_benchmarks', name: 'Execute POC Benchmark Matrix', module: 'Technical Architecture & SADD' },
-  { key: 'security_signoff', name: 'Grant InfoSec & Compliance Waiver', module: 'Technical Architecture & SADD' },
+  {
+    key: "author_sadd",
+    name: "Author & Publish SADD Blueprints",
+    module: "Technical Architecture & SADD",
+  },
+  {
+    key: "approve_sadd",
+    name: "Approve Architecture Design (Lead SA)",
+    module: "Technical Architecture & SADD",
+  },
+  {
+    key: "run_poc_benchmarks",
+    name: "Execute POC Benchmark Matrix",
+    module: "Technical Architecture & SADD",
+  },
+  {
+    key: "security_signoff",
+    name: "Grant InfoSec & Compliance Waiver",
+    module: "Technical Architecture & SADD",
+  },
   // BOQ Workbench & Commercial Margin
-  { key: 'author_boq', name: 'Build & Modify BOQ Line Items', module: 'BOQ Workbench & Commercial Margin' },
-  { key: 'override_margin', name: 'Override Floor Margins (<35%)', module: 'BOQ Workbench & Commercial Margin' },
-  { key: 'approve_boq_discount', name: 'Approve Discount Packages', module: 'BOQ Workbench & Commercial Margin' },
+  {
+    key: "author_boq",
+    name: "Build & Modify BOQ Line Items",
+    module: "BOQ Workbench & Commercial Margin",
+  },
+  {
+    key: "override_margin",
+    name: "Override Floor Margins (<35%)",
+    module: "BOQ Workbench & Commercial Margin",
+  },
+  {
+    key: "approve_boq_discount",
+    name: "Approve Discount Packages",
+    module: "BOQ Workbench & Commercial Margin",
+  },
   // Implementation & Delivery Handover
-  { key: 'initiate_handover', name: 'Initiate Delivery Handover', module: 'Implementation & Delivery Handover' },
-  { key: 'signoff_handover', name: 'Sign-off Delivery Readiness', module: 'Implementation & Delivery Handover' },
+  {
+    key: "initiate_handover",
+    name: "Initiate Delivery Handover",
+    module: "Implementation & Delivery Handover",
+  },
+  {
+    key: "signoff_handover",
+    name: "Sign-off Delivery Readiness",
+    module: "Implementation & Delivery Handover",
+  },
   // System Configuration & Governance
-  { key: 'sys.users', name: 'Manage User Accounts & Roles', module: 'System Configuration & Governance' },
-  { key: 'sys.rbac', name: 'Modify RBAC Policy Matrix', module: 'System Configuration & Governance' },
-  { key: 'sys.audit', name: 'Access Immutable Audit Trail', module: 'System Configuration & Governance' },
-  { key: 'sys.integrations', name: 'Configure CRM / ERP / Cloud Integrations', module: 'System Configuration & Governance' },
+  {
+    key: "sys.users",
+    name: "Manage User Accounts & Roles",
+    module: "System Configuration & Governance",
+  },
+  {
+    key: "sys.rbac",
+    name: "Modify RBAC Policy Matrix",
+    module: "System Configuration & Governance",
+  },
+  {
+    key: "sys.audit",
+    name: "Access Immutable Audit Trail",
+    module: "System Configuration & Governance",
+  },
+  {
+    key: "sys.integrations",
+    name: "Configure CRM / ERP / Cloud Integrations",
+    module: "System Configuration & Governance",
+  },
   // Master Data & Taxonomy
-  { key: 'manage_scope_catalog', name: 'Manage Scope / Solution Catalog', module: 'Master Data & Taxonomy' },
-  { key: 'manage_oem_catalog', name: 'Manage OEM & Product Catalog', module: 'Master Data & Taxonomy' },
+  {
+    key: "manage_scope_catalog",
+    name: "Manage Scope / Solution Catalog",
+    module: "Master Data & Taxonomy",
+  },
+  {
+    key: "manage_oem_catalog",
+    name: "Manage OEM & Product Catalog",
+    module: "Master Data & Taxonomy",
+  },
 ];
 
 // Minimum permission required to open each navigation tab.
 export const TAB_PERMISSIONS: Record<string, string> = {
-  dashboard: 'app.access',
-  opportunities: 'app.access',
-  board: 'app.access',
-  calendar: 'app.access',
-  poc_center: 'run_poc_benchmarks',
-  boq_workbench: 'author_boq',
-  action_center: 'app.access',
-  handover_queue: 'initiate_handover',
-  team_capacity: 'app.access',
-  documents: 'author_sadd',
-  analytics: 'app.access',
-  clients: 'app.access',
-  sales_kams: 'app.access',
-  notifications: 'app.access',
-  audit_logs: 'sys.audit',
-  user_management: 'sys.users',
-  role_permissions: 'sys.rbac',
-  master_config: 'sys.integrations',
-  system_settings: 'sys.integrations',
-  scope_catalog: 'manage_scope_catalog',
-  oem_catalog: 'manage_oem_catalog',
-  product_catalog: 'manage_oem_catalog',
-  bulk_upload: 'sys.integrations',
+  dashboard: "app.access",
+  opportunities: "app.access",
+  board: "app.access",
+  calendar: "app.access",
+  poc_center: "run_poc_benchmarks",
+  boq_workbench: "author_boq",
+  action_center: "app.access",
+  handover_queue: "initiate_handover",
+  team_capacity: "app.access",
+  documents: "author_sadd",
+  analytics: "app.access",
+  clients: "app.access",
+  sales_kams: "app.access",
+  notifications: "app.access",
+  audit_logs: "sys.audit",
+  user_management: "sys.users",
+  role_permissions: "sys.rbac",
+  master_config: "sys.integrations",
+  system_settings: "sys.integrations",
+  scope_catalog: "manage_scope_catalog",
+  oem_catalog: "manage_oem_catalog",
+  product_catalog: "manage_oem_catalog",
+  bulk_upload: "sys.integrations",
 };
 
 export interface RbacRole {
@@ -81,71 +183,126 @@ export interface RbacRole {
 // (System Administrator). Every defined role implicitly carries `app.access`
 // (see can() below) so its user can log into the platform.
 export const DEFAULT_ROLES: RbacRole[] = [
-  {id:'role-scm',roleName:'Supply Chain Management',description:'Procurement, costing and delivery',usersCount:0,isSystemRole:true,matchingRoles:['SCM','Supply Chain Management'],permissions:['workflow.scm','initiate_handover']},
-  {id:'role-finance',roleName:'Finance / Management',description:'Costing and selling price approval',usersCount:0,isSystemRole:true,matchingRoles:['Finance','Management'],permissions:['workflow.finance']},
   {
-    id: 'role-sa',
-    roleName: 'Presales Lead / Principal Architect',
-    description: 'Full authorization over solution designs, technical discovery, and BOQ pricing up to 20% discount.',
-    usersCount: 6,
+    id: "role-sales-head",
+    roleName: "Sales Head",
+    description: "SLA, costing and client handover approval",
+    usersCount: 0,
     isSystemRole: true,
-    matchingRoles: ['Principal Solutions Architect', 'Presales Lead / Architect', 'presales_architect', 'presales_lead'],
+    matchingRoles: ["Sales Head"],
+    permissions: ["workflow.sales_head"],
+  },
+  {
+    id: "role-presales-head",
+    roleName: "Presales Head / Postsales Head",
+    description:
+      "Solution review, implementation supervision and joint handover approval",
+    usersCount: 0,
+    isSystemRole: true,
+    matchingRoles: ["Presales Head", "Postsales Head"],
     permissions: [
-      'create_opportunity',
-      'edit_opportunity_core',
-      'promote_stage',
-      'author_sadd',
-      'approve_sadd',
-      'run_poc_benchmarks',
-      'author_boq',
-      'approve_boq_discount',
-      'initiate_handover',
-      'signoff_handover',
+      "workflow.presales_head",
+      "author_boq",
+      "author_sadd",
+      "initiate_handover",
+      "signoff_handover",
     ],
   },
   {
-    id: 'role-kam',
-    roleName: 'Sales KAM / Account Executive',
-    description: 'Commercial deal owner with CRM sync, stakeholder engagement, and contract value updates.',
-    usersCount: 14,
-    isSystemRole: true,
-    matchingRoles: ['Sales KAM', 'sales_kam'],
-    permissions: ['create_opportunity', 'edit_opportunity_core'],
-  },
-  {
-    id: 'role-delivery',
-    roleName: 'Delivery Manager',
-    description: 'Owns post-sales technical implementation readiness and SOW handover sign-off.',
-    usersCount: 3,
-    isSystemRole: true,
-    matchingRoles: ['Delivery Manager'],
-    permissions: ['create_opportunity', 'initiate_handover', 'signoff_handover'],
-  },
-  {
-    id: 'role-postsales',
-    roleName: 'Postsales / Delivery Manager',
-    description: 'Owns post-sales implementation, service transition, and acceptance.',
+    id: "role-scm",
+    roleName: "Supply Chain Management",
+    description: "Procurement, costing and delivery",
     usersCount: 0,
     isSystemRole: true,
-    matchingRoles: ['Postsales Manager', 'Postsales', 'Delivery Manager'],
-    permissions: ['initiate_handover', 'signoff_handover'],
+    matchingRoles: ["SCM", "Supply Chain Management"],
+    permissions: ["workflow.scm", "initiate_handover"],
   },
   {
-    id: 'role-admin',
-    roleName: 'System Administrator',
-    description: 'Unrestricted enterprise administrative permissions across users, audit logs, and master configurations.',
+    id: "role-finance",
+    roleName: "Finance / Management",
+    description: "Legacy Finance access; approval requires Sales Head",
+    usersCount: 0,
+    isSystemRole: true,
+    matchingRoles: ["Finance", "Management"],
+    permissions: ["workflow.finance"],
+  },
+  {
+    id: "role-sa",
+    roleName: "Presales Lead / Principal Architect",
+    description:
+      "Full authorization over solution designs, technical discovery, and BOQ pricing up to 20% discount.",
+    usersCount: 6,
+    isSystemRole: true,
+    matchingRoles: [
+      "Principal Solutions Architect",
+      "Presales Lead / Architect",
+      "presales_architect",
+      "presales_lead",
+    ],
+    permissions: [
+      "create_opportunity",
+      "edit_opportunity_core",
+      "promote_stage",
+      "author_sadd",
+      "approve_sadd",
+      "run_poc_benchmarks",
+      "author_boq",
+      "approve_boq_discount",
+      "initiate_handover",
+      "signoff_handover",
+    ],
+  },
+  {
+    id: "role-kam",
+    roleName: "Sales KAM / Account Executive",
+    description:
+      "Commercial deal owner with CRM sync, stakeholder engagement, and contract value updates.",
+    usersCount: 14,
+    isSystemRole: true,
+    matchingRoles: ["Sales KAM", "sales_kam"],
+    permissions: ["create_opportunity", "edit_opportunity_core"],
+  },
+  {
+    id: "role-delivery",
+    roleName: "Delivery Manager",
+    description:
+      "Owns post-sales technical implementation readiness and SOW handover sign-off.",
+    usersCount: 3,
+    isSystemRole: true,
+    matchingRoles: ["Delivery Manager"],
+    permissions: [
+      "create_opportunity",
+      "initiate_handover",
+      "signoff_handover",
+    ],
+  },
+  {
+    id: "role-postsales",
+    roleName: "Postsales / Delivery Manager",
+    description:
+      "Owns post-sales implementation, service transition, and acceptance.",
+    usersCount: 0,
+    isSystemRole: true,
+    matchingRoles: ["Postsales Manager", "Postsales", "Delivery Manager"],
+    permissions: ["initiate_handover", "signoff_handover"],
+  },
+  {
+    id: "role-admin",
+    roleName: "System Administrator",
+    description:
+      "Unrestricted enterprise administrative permissions across users, audit logs, and master configurations.",
     usersCount: 2,
     isSystemRole: true,
-    matchingRoles: ['System Administrator', 'super_admin'],
-    permissions: ['all'],
+    matchingRoles: ["System Administrator", "super_admin"],
+    permissions: ["all"],
   },
 ];
 
 // ---------------------------------------------------------------------------
 // Storage keys
 // ---------------------------------------------------------------------------
-const ROLES_KEY = 'presales_tracker_rbac_roles_v1';
-const CURRENT_USER_KEY = 'presales_tracker_rbac_current_user_v1';
+const ROLES_KEY = "presales_tracker_rbac_roles_v1";
+const CURRENT_USER_KEY = "presales_tracker_rbac_current_user_v1";
 
 // ---------------------------------------------------------------------------
 // Lookup helpers
@@ -154,13 +311,18 @@ const CURRENT_USER_KEY = 'presales_tracker_rbac_current_user_v1';
 // Determine whether a role grants a given permission key. Supports both the
 // canonical flat string[] form and the legacy object-group form
 // ([{ items: [{ key, granted }] }]).
-export function roleHasKey(role: RolePermission | RbacRole | null | undefined, key: string): boolean {
+export function roleHasKey(
+  role: RolePermission | RbacRole | null | undefined,
+  key: string,
+): boolean {
   if (!role) return false;
   const perms = (role as unknown as { permissions?: unknown }).permissions;
   if (!Array.isArray(perms)) return false;
 
-  if (perms.length > 0 && typeof perms[0] === 'string') {
-    return (perms as string[]).includes('all') || (perms as string[]).includes(key);
+  if (perms.length > 0 && typeof perms[0] === "string") {
+    return (
+      (perms as string[]).includes("all") || (perms as string[]).includes(key)
+    );
   }
 
   const granted = perms.flatMap((grp: any) =>
@@ -168,7 +330,7 @@ export function roleHasKey(role: RolePermission | RbacRole | null | undefined, k
   );
   return (
     granted.some((p: any) => p && p.key === key && p.granted) ||
-    granted.some((p: any) => p && p.key === 'all' && p.granted)
+    granted.some((p: any) => p && p.key === "all" && p.granted)
   );
 }
 
@@ -179,14 +341,17 @@ export function resolveRole(
 ): RolePermission | RbacRole | null {
   if (!user || !roles || !roles.length) return null;
 
-  const byId = roles.find(r => (r as unknown as { id?: string }).id === user.roleId);
+  const byId = roles.find(
+    (r) => (r as unknown as { id?: string }).id === user.roleId,
+  );
   if (byId) return byId;
 
   return (
-    roles.find(r => {
-      const matches = (r as unknown as { matchingRoles?: string[] }).matchingRoles;
+    roles.find((r) => {
+      const matches = (r as unknown as { matchingRoles?: string[] })
+        .matchingRoles;
       if (Array.isArray(matches)) {
-        return matches.some(m => m === user.role);
+        return matches.some((m) => m === user.role);
       }
       return (r as unknown as { roleName?: string }).roleName === user.role;
     }) || null
@@ -204,7 +369,7 @@ export function can(
   if (!user) return false;
   const role = resolveRole(roles, user);
   if (!role) return false;
-  if (key === 'app.access') return true;
+  if (key === "app.access") return true;
   return roleHasKey(role, key);
 }
 
@@ -213,7 +378,7 @@ export function canAny(
   user: UserAccount | null | undefined,
   keys: string[],
 ): boolean {
-  return keys.some(k => can(roles, user, k));
+  return keys.some((k) => can(roles, user, k));
 }
 
 export function canAll(
@@ -221,7 +386,7 @@ export function canAll(
   user: UserAccount | null | undefined,
   keys: string[],
 ): boolean {
-  return keys.every(k => can(roles, user, k));
+  return keys.every((k) => can(roles, user, k));
 }
 
 // ---------------------------------------------------------------------------
@@ -229,7 +394,7 @@ export function canAll(
 // ---------------------------------------------------------------------------
 
 export function loadRoles(): (RolePermission | RbacRole)[] {
-  if (typeof localStorage === 'undefined') return DEFAULT_ROLES;
+  if (typeof localStorage === "undefined") return DEFAULT_ROLES;
   try {
     const raw = localStorage.getItem(ROLES_KEY);
     if (raw) return JSON.parse(raw) as (RolePermission | RbacRole)[];
@@ -240,7 +405,7 @@ export function loadRoles(): (RolePermission | RbacRole)[] {
 }
 
 export function saveRoles(roles: (RolePermission | RbacRole)[]): void {
-  if (typeof localStorage === 'undefined') return;
+  if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(ROLES_KEY, JSON.stringify(roles));
   } catch {
@@ -249,13 +414,13 @@ export function saveRoles(roles: (RolePermission | RbacRole)[]): void {
 }
 
 export function loadCurrentUser(users: UserAccount[]): UserAccount {
-  if (typeof localStorage !== 'undefined') {
+  if (typeof localStorage !== "undefined") {
     try {
       const raw = localStorage.getItem(CURRENT_USER_KEY);
       if (raw) {
-        const parsed = { id: '' } as { id?: string };
+        const parsed = { id: "" } as { id?: string };
         Object.assign(parsed, JSON.parse(raw));
-        const found = users.find(u => u.id === parsed.id);
+        const found = users.find((u) => u.id === parsed.id);
         if (found) return found;
       }
     } catch {
@@ -266,7 +431,7 @@ export function loadCurrentUser(users: UserAccount[]): UserAccount {
 }
 
 export function saveCurrentUser(user: UserAccount): void {
-  if (typeof localStorage === 'undefined') return;
+  if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({ id: user.id }));
   } catch {

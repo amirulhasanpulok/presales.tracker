@@ -1,27 +1,31 @@
 # SI lead lifecycle
 
-Lead → Review Gate → Requirements Analysis → Solution Design → Solution Review → Handover to Sales → Price and Costing → Costing Approval → Proposal Submitted → Follow-up → Negotiation → Won / Lost / Hold / Cancel → Delivery → Deployment → Completed → Handover to Client.
+Lead → Review Gate → Requirements Analysis → Solution Design → Solution Review → Handover to Sales → Price and Costing → Costing Approval → Proposal Submitted → Follow-up → Negotiation → Won / Lost / Hold / Cancel → Delivery → Deployment → Testing & UAT → Completed → Handover to Client.
 
 ## Responsibilities and gates
 
-- Sales creates a Lead and submits it to Review Gate. Presales Lead either requests more information, declines with a reason, or confirms all six criteria and assigns active Presales members.
-- Criteria: clear scope, technical fit, budget feasibility (including documented uncertainty), feasible timeline, business viability and sufficient information.
-- Assignment starts one 96-hour SLA covering requirements, design, review and actual Sales handover. Submitting a design for review does not stop the SLA. Only Sales approves extensions; the original deadline is retained.
-- Assigned Presales completes analysis, submits an immutable solution/BOQ snapshot, and Presales Lead reviews or returns it. Reviewed snapshots are handed to Sales.
-- SCM can record missing vendor prices and keep costing pending, or request a product redesign when unavailable. Vendor prices and product availability must be confirmed before requesting approval. Technical changes repeat design review, Sales handover, costing and approval; old versions remain.
-- Sales/SCM prepares the cost sheet. The server calculates totals, net selling price and margin. Costing Approval is a distinct stage; Finance/Management approves or returns it. Proposal submission requires approval for the current solution version.
-- Sales records proposal reference, terms, validity, delivery timeline and warranty/support. Follow-up and negotiation have explicit stages. Sales and Presales can log client/Sales/OEM follow-ups with next action, owner and date.
-- A technical revision returns to requirements or design, preserves previous versions, clears the prior costing approval, and starts a new 96-hour revision deadline (longer periods require Sales-approved extension). Commercial revisions return to costing.
-- Sales closes Won with an order reference, final value, active SCM owner and active Postsales owner. Lost/Cancel require reasons. Hold requires a future review date and resumes the previous stage without silently resetting its SLA.
-- Assigned SCM accepts internal handover, tracks procurement/vendor, stock, shipment and pending items, then records delivery challan and receiving references.
-- Assigned Postsales tracks installation/configuration/testing and issues, records UAT/customer acceptance, then completes the as-built, backup, secure credential transfer, training, warranty and support checklist with client acknowledgement. Credentials themselves should not be pasted into notes.
+- Sales creates the Lead with customer, project/tender/RFP/RFQ, scope, dates, budget, KAM/RM, technical contact, additional information, supporting documents and survey details/report.
+- Presales Lead claims and reviews the gate against scope, technical capability, budget, timeline, business viability and sufficient information. The decision is Qualified, More information required, or Declined. The decision is recorded independently of staffing and solution SLA setup.
+- Gate decisions are due within 24 elapsed hours of Lead creation. Pending decisions past the deadline show Review Gate Overdue, creation time, deadline, hours late and reviewing Lead in the workspace. Sales Head and Presales Head can see all leads. Sales resubmission after a request for information starts a new 24-hour review; earlier decisions remain in history. Claiming a review does not reset its clock.
+- Sales Head sets the solution SLA in hours before Presales assignment (96 hours for a four-day SLA). Presales Lead assigns active engineers. The timer starts at assignment and ends only at actual Sales handover. Only Sales Head approves/rejects requested extensions; the original deadline and decisions remain visible.
+- Assigned Presales performs requirements analysis, client meetings, survey and OEM coordination, then creates architecture, sizing, products/licenses, integration plan and BOQ with risks and assumptions. Solution submission saves an immutable version.
+- Presales Head alone approves or returns the solution. Presales Lead's gate responsibility does not grant solution approval. Assigned Presales hands the reviewed version to Sales.
+- Sales and SCM prepare vendor-confirmed costing. Missing prices keep costing pending. Unavailable products return to design, then repeat Head review, Sales handover, costing and approval. Server-calculated totals, net price and margin prevent submitted totals from overriding calculations.
+- Sales Head alone approves or returns costing. Finance's legacy role does not grant this authority. Approval is tied to the current solution version; the approved commercial proposal records reference, validity, payment terms, delivery schedule and warranty/support.
+- Sales and Presales follow up with the client; Presales may also follow up with Sales/OEM. Each contact records notes, next action, owner and next follow-up date. Negotiation may change technical or commercial scope.
+- Client technical changes return to requirements or design and invalidate prior costing approval while preserving solution/proposal/cost histories. Sales Head sets the revision SLA, measured from the revision request; analysis/design submission waits for that SLA. Commercial changes return to costing and Sales Head approval.
+- Sales closes Won with order reference, value, SCM owner and Postsales owner. Lost/Cancel require a reason. Hold requires a future review date and resumes its previous stage without silently resetting the solution timer. Only Won proceeds to delivery.
+- SCM procures, coordinates vendors, allocates stock, ships and delivers final BOQ items; delivery challan, client receiving confirmation and pending items are tracked.
+- Postsales performs installation, configuration, integration and migration, recording progress/issues. Deployment then moves explicitly into Testing & UAT. Failed tests return to Deployment for correction and retest. Successful UAT requires customer acceptance reference.
+- Presales Head also acts as Postsales Head and confirms Completed only after passed UAT. The Head can return implementation for correction.
+- Postsales submits the final handover package: as-built diagram, backup, secure credential transfer confirmation, training/user guide, licenses/warranty and support information, plus client acknowledgement. Sales Head and Presales Head must each approve using two different user identities before formal closure. Returning or replacing a package clears its approvals and retains prior package history. Store credential-transfer confirmation, not passwords in notes.
 
 ## Access and existing data
 
-New `Supply Chain Management` and `Finance / Management` roles are created without assigning any existing users to them. An administrator assigns the appropriate staff. Finance approves costing; SCM cannot approve its own work unless the account separately has that authority. New cost sheets are returned only to Sales, SCM, Finance/Management and administrators.
+Sales Head and Presales Head / Postsales Head roles are created without automatically promoting existing staff. An administrator assigns the actual responsible staff. Gate Lead, SCM and Postsales retain separate responsibilities. Heads can view the full work queue; other staff retain scoped access. Cost sheets are restricted to Sales, SCM, Sales Head and administrators.
 
-Existing opportunity IDs, documents, activities and solution snapshots are preserved. Legacy collaboration statuses are translated when an action is taken. The stage catalog is upgraded once using a version marker; no historical records are bulk rewritten. Legacy POC records remain editable. API/internal names remain `opportunities` for compatibility; primary UI terminology is Lead.
+Existing IDs, documents, activities, clients and solution histories are preserved. Legacy collaboration statuses are translated on action. A versioned stage-catalog migration adds Testing & UAT without bulk rewriting historical records. API names remain opportunities for compatibility; primary UI terminology is Lead.
 
 ## Validation
 
-`npm run lint`, `npm run build`, `npm run validate:rbac`, `npm run test:workflow`, and `npm run test:workflow:api`. The API integration script creates and drops an isolated temporary PostgreSQL schema, testing role boundaries, concurrent writes, revisions and the complete cycle.
+Run npm run lint, npm run build, npm run validate:rbac, npm run test:workflow and npm run test:workflow:api. API tests use an isolated temporary PostgreSQL schema and remove it after completion, covering role boundaries, stale/concurrent writes, revisions, UAT and both Head approvals.

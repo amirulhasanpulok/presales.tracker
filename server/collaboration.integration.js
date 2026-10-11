@@ -49,6 +49,8 @@ try {
     ["admin", "role-admin"],
     ["scm", "role-scm"],
     ["finance", "role-finance"],
+    ["sales-head", "role-sales-head"],
+    ["presales-head", "role-presales-head"],
   ]) {
     const row = { id, name: id, email: `${id}@example.invalid`, role_id: role };
     users[id] = row;
@@ -193,7 +195,7 @@ try {
       );
     const leadBootstrap = await request("lead", "/bootstrap");
     assert.equal(leadBootstrap.opportunities.length, 1);
-    assert.equal(leadBootstrap.teamDirectory.length, 9);
+    assert.equal(leadBootstrap.teamDirectory.length, 11);
     const otherSales = await request("other-sales", "/bootstrap");
     assert.equal(otherSales.opportunities.length, 0);
     doc = await action(
@@ -214,6 +216,12 @@ try {
     await action("assign", { assignee: "engineer" }, "lead", 422);
     await action("assign", { assignee: "engineer" }, "sales", 403);
     await action("assign", { assignee: "sales" }, "lead", 422);
+    doc = await action("qualify", { criteria, note: "Gate qualified" });
+    doc = await action(
+      "set_sla",
+      { slaHours: 96, note: "Four day solution SLA" },
+      "sales-head",
+    );
     doc = await action("assign", { assignee: "engineer", criteria });
     assert.equal(
       (await request("engineer", "/bootstrap")).opportunities.length,
@@ -292,7 +300,7 @@ try {
         extensionId: doc.collaboration.extensions[0].id,
         note: "Scope requires OEM",
       },
-      "sales",
+      "sales-head",
     );
     doc = await action(
       "finish_requirements",
@@ -304,7 +312,17 @@ try {
       { note: "Firewall design" },
       "engineer",
     );
-    doc = await action("approve_solution", { note: "Design and BOQ verified" });
+    await action(
+      "approve_solution",
+      { note: "Gate Lead cannot review solution" },
+      "lead",
+      403,
+    );
+    doc = await action(
+      "approve_solution",
+      { note: "Design and BOQ verified" },
+      "presales-head",
+    );
     doc = await action(
       "handover_sales",
       { note: "Reviewed scope handed over" },
@@ -352,7 +370,7 @@ try {
     doc = await action(
       "approve_costing",
       { note: "Margin approved" },
-      "finance",
+      "sales-head",
     );
     const engineerView = (await request("engineer", "/bootstrap"))
       .opportunities[0];
@@ -417,6 +435,11 @@ try {
       },
       "sales",
     );
+    doc = await action(
+      "set_sla",
+      { slaHours: 96, note: "Revision SLA" },
+      "sales-head",
+    );
     doc = (await request("engineer", "/bootstrap")).opportunities[0];
     assert.equal(doc.collaboration.costingHistory, undefined);
     doc = await request("engineer", path, "PUT", {
@@ -429,7 +452,11 @@ try {
       doc.collaboration.solutions[0].architecture,
       "Firewall solution",
     );
-    doc = await action("approve_solution", { note: "HA solution approved" });
+    doc = await action(
+      "approve_solution",
+      { note: "HA solution approved" },
+      "presales-head",
+    );
     doc = await action(
       "handover_sales",
       { note: "Final reviewed solution" },
@@ -448,7 +475,7 @@ try {
     doc = await action(
       "approve_costing",
       { note: "Revised margin approved" },
-      "finance",
+      "sales-head",
     );
     doc = await action(
       "sent_client",
@@ -504,9 +531,26 @@ try {
       "scm",
     );
     doc = await action(
+      "start_testing",
+      { note: "Installation complete" },
+      "delivery",
+    );
+    await action(
+      "approve_completion",
+      { note: "Cannot bypass UAT" },
+      "presales-head",
+      422,
+    );
+    doc = await action(
       "accept_delivery",
       { note: "Client signed acceptance", acceptanceReference: "UAT-1" },
       "delivery",
+    );
+    assert.equal(doc.collaboration.status, "testing");
+    doc = await action(
+      "approve_completion",
+      { note: "UAT verified" },
+      "presales-head",
     );
     assert.equal(doc.collaboration.status, "completed");
     doc = await action(
@@ -526,6 +570,18 @@ try {
         ),
       },
       "delivery",
+    );
+    assert.equal(doc.collaboration.status, "completed");
+    doc = await action(
+      "approve_client_handover",
+      { side: "sales", note: "Commercial closure" },
+      "sales-head",
+    );
+    assert.equal(doc.collaboration.status, "completed");
+    doc = await action(
+      "approve_client_handover",
+      { side: "presales", note: "Technical closure" },
+      "presales-head",
     );
     assert.equal(doc.collaboration.status, "client_handover");
     const stored = (

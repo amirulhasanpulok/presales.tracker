@@ -12,12 +12,19 @@ const lead = { id: "l", name: "Lead", review: true, presales: true };
 const engineer = { id: "e", name: "Engineer", presales: true };
 const scm = { id: "scm", name: "SCM", scm: true };
 const finance = { id: "f", name: "Finance", finance: true };
+const salesHead = { id: "sh", name: "Sales Head", salesHead: true };
+const presalesHead = {
+  id: "ph",
+  name: "Presales Head",
+  presalesHead: true,
+  postsales: true,
+};
 const postsales = { id: "p", name: "Postsales", postsales: true };
 const criteria = Object.fromEntries(GATE_KEYS.map((k) => [k, true]));
 const base = () => ({
   id: "test",
   stage: "lead",
-  collaboration: initialCollaboration(),
+  collaboration: initialCollaboration(now),
   activities: [],
   requirementDetails: "Network upgrade",
   proposedArchitecture: "HA firewall",
@@ -33,11 +40,20 @@ const step = (d, action, actor, input = {}, time = now) =>
   );
 const reviewed = () => step(base(), "submit_lead", sales);
 const assigned = () =>
-  step(reviewed(), "assign", lead, { assignee: "Engineer", criteria });
+  step(
+    step(reviewed(), "set_sla", salesHead, { slaHours: 96 }),
+    "assign",
+    lead,
+    { assignee: "Engineer", criteria },
+  );
 const designed = () => step(assigned(), "finish_requirements", engineer);
 const submitted = () => step(designed(), "submit_solution", engineer);
 const handed = () =>
-  step(step(submitted(), "approve_solution", lead), "handover_sales", engineer);
+  step(
+    step(submitted(), "approve_solution", presalesHead),
+    "handover_sales",
+    engineer,
+  );
 const costs = {
   equipment: 100,
   license: 10,
@@ -55,7 +71,7 @@ const costed = () =>
     vendorReference: "OEM-Q1",
     supplyConfirmed: true,
   });
-const approved = () => step(costed(), "approve_costing", finance);
+const approved = () => step(costed(), "approve_costing", salesHead);
 const proposal = () =>
   step(approved(), "sent_client", sales, {
     proposalReference: "P-1",
@@ -100,7 +116,7 @@ test("Requirements, design, review and handover enforce stage and team gates", (
     status: 403,
   });
   assert.equal(
-    step(submitted(), "return_solution", lead).collaboration.status,
+    step(submitted(), "return_solution", presalesHead).collaboration.status,
     "design",
   );
   const d = handed();
@@ -111,7 +127,7 @@ test("Requirements, design, review and handover enforce stage and team gates", (
 });
 test("SLA ends at Sales handover, not at solution submission", () => {
   const d = step(
-    step(submitted(), "approve_solution", lead),
+    step(submitted(), "approve_solution", presalesHead),
     "handover_sales",
     engineer,
     {},
@@ -129,14 +145,14 @@ test("Extension requires Sales approval and retains original deadline", () => {
   assert.throws(() => step(d, "approve_extension", engineer, { extensionId }), {
     status: 403,
   });
-  d = step(d, "approve_extension", sales, { extensionId });
+  d = step(d, "approve_extension", salesHead, { extensionId });
   assert.equal(d.collaboration.originalDueAt, original);
   assert.equal(d.collaboration.dueAt, "2026-10-20T00:00:00.000Z");
   assert.throws(() =>
     step(assigned(), "request_extension", engineer, { dueAt: "2026-10-12" }),
   );
 });
-test("Costing Approval is separate; totals are calculated by server and only Finance approves", () => {
+test("Costing Approval is separate; totals are calculated by server and only Sales Head approves", () => {
   const d = costed();
   assert.equal(d.collaboration.status, "costing_approval");
   assert.equal(d.collaboration.costing.totalCost, 150);
@@ -144,7 +160,7 @@ test("Costing Approval is separate; totals are calculated by server and only Fin
   assert.throws(() => step(d, "approve_costing", sales), { status: 403 });
   assert.throws(() => step(d, "sent_client", sales));
   assert.equal(
-    step(d, "return_costing", finance).collaboration.status,
+    step(d, "return_costing", salesHead).collaboration.status,
     "costing",
   );
   assert.ok(approved().collaboration.costing.approvedAt);
@@ -187,8 +203,11 @@ test("Technical revisions preserve solution snapshots and invalidate costing app
   assert.equal(d.collaboration.status, "requirements");
   assert.equal(d.collaboration.costing, undefined);
   assert.equal(d.collaboration.costingHistory.length, 1);
-  assert.equal(d.collaboration.costingHistory[0].approvedBy, "Finance");
+  assert.equal(d.collaboration.costingHistory[0].approvedBy, "Sales Head");
   assert.equal(d.collaboration.slaFinishedAt, undefined);
+  assert.equal(d.collaboration.awaitingSLA, true);
+  assert.throws(() => step(d, "finish_requirements", engineer));
+  d = step(d, "set_sla", salesHead, { slaHours: 72 });
   d.proposedArchitecture = "Changed design";
   d = step(
     step(d, "finish_requirements", engineer),
@@ -229,7 +248,11 @@ test("SCM delivers; Postsales deploys, records acceptance and hands over to clie
     receivingReference: "RC-1",
   });
   assert.equal(d.collaboration.status, "deployment");
+  d = step(d, "start_testing", postsales);
+  assert.throws(() => step(d, "approve_completion", presalesHead));
   d = step(d, "accept_delivery", postsales, { acceptanceReference: "UAT-1" });
+  assert.equal(d.collaboration.status, "testing");
+  d = step(d, "approve_completion", presalesHead);
   assert.equal(d.collaboration.status, "completed");
   assert.throws(() =>
     step(d, "client_handover", postsales, { acknowledgement: "ACK" }),
@@ -247,6 +270,18 @@ test("SCM delivers; Postsales deploys, records acceptance and hands over to clie
       ].map((k) => [k, true]),
     ),
   });
+  assert.equal(d.collaboration.status, "completed");
+  d = step(d, "approve_client_handover", salesHead, { side: "sales" });
+  assert.equal(d.collaboration.status, "completed");
+  assert.throws(() =>
+    step(
+      d,
+      "approve_client_handover",
+      { ...presalesHead, id: salesHead.id },
+      { side: "presales" },
+    ),
+  );
+  d = step(d, "approve_client_handover", presalesHead, { side: "presales" });
   assert.equal(d.collaboration.status, "client_handover");
   assert.equal(d.stage, "client_handover");
 });
@@ -277,5 +312,44 @@ test("SCM missing prices block approval and unavailable products return to revie
   assert.equal(revision.collaboration.solutions.length, 1);
   assert.throws(() =>
     step(costed(), "revision", scm, { returnTo: "requirements" }),
+  );
+});
+
+test("Review Gate clock starts at creation and records decisions independently of SLA", () => {
+  let d = base();
+  assert.equal(Date.parse(d.collaboration.reviewDueAt) - now.getTime(), DAY);
+  d = step(d, "claim_review", lead);
+  assert.equal(d.collaboration.reviewOwner, "Lead");
+  d = step(d, "qualify", lead, { criteria });
+  assert.ok(d.collaboration.reviewDecisionAt);
+  assert.equal(d.collaboration.slaHours, undefined);
+  assert.throws(() =>
+    step(d, "assign", lead, { criteria, assignee: "Engineer" }),
+  );
+  const info = step(reviewed(), "request_info", lead);
+  const later = new Date(now.getTime() + 2 * DAY);
+  d = step(info, "submit_lead", sales, {}, later);
+  assert.equal(Date.parse(d.collaboration.reviewDueAt), later.getTime() + DAY);
+  assert.equal(d.collaboration.reviewDecisionAt, undefined);
+});
+test("Head responsibilities cannot be performed by Sales, Finance or Gate reviewer", () => {
+  assert.throws(() => step(reviewed(), "set_sla", sales, { slaHours: 96 }), {
+    status: 403,
+  });
+  assert.throws(() => step(submitted(), "approve_solution", lead), {
+    status: 403,
+  });
+  assert.throws(() => step(costed(), "approve_costing", finance), {
+    status: 403,
+  });
+  const d = step(assigned(), "request_extension", engineer, {
+    dueAt: "2026-10-20",
+  });
+  assert.throws(
+    () =>
+      step(d, "approve_extension", sales, {
+        extensionId: d.collaboration.extensions[0].id,
+      }),
+    { status: 403 },
   );
 });

@@ -1,22 +1,54 @@
-export type OpportunityStage = 
-  | 'lead' | 'solution_review' | 'handover_sales' | 'costing_approval' | 'costing' | 'followup' | 'delivery' | 'deployment' | 'completed' | 'client_handover'
-  | 'qualification'
-  | 'tech_discovery'
-  | 'solution_design'
-  | 'poc_demo'
-  | 'proposal_boq'
-  | 'commercial_negotiation'
-  | 'closed_won'
-  | 'closed_lost'
-  | 'on_hold'
-  | 'cancelled';
+export type OpportunityStage =
+  | "lead"
+  | "solution_review"
+  | "handover_sales"
+  | "costing_approval"
+  | "costing"
+  | "followup"
+  | "delivery"
+  | "testing"
+  | "deployment"
+  | "completed"
+  | "client_handover"
+  | "qualification"
+  | "tech_discovery"
+  | "solution_design"
+  | "poc_demo"
+  | "proposal_boq"
+  | "commercial_negotiation"
+  | "closed_won"
+  | "closed_lost"
+  | "on_hold"
+  | "cancelled";
 
-export type DealComplexity = 'low' | 'medium' | 'high' | 'critical';
-export type TechnicalFitScore = 'perfect' | 'good' | 'moderate' | 'challenging';
-export type DealPriority = 'p0_urgent' | 'p1_high' | 'p2_medium' | 'p3_low';
-export type CloudProvider = 'AWS' | 'Google Cloud' | 'Azure' | 'Hybrid / On-Prem' | 'Multi-Cloud' | 'Kubernetes' | 'AI / LLM Infra';
-export type POCStatus = 'not_started' | 'scoping' | 'provisioning' | 'active_testing' | 'validating_kpis' | 'passed' | 'failed' | 'cancelled';
-export type ApprovalStatus = 'draft' | 'pending_sa_lead' | 'pending_sales_vp' | 'pending_finance' | 'approved' | 'finalized' | 'rejected';
+export type DealComplexity = "low" | "medium" | "high" | "critical";
+export type TechnicalFitScore = "perfect" | "good" | "moderate" | "challenging";
+export type DealPriority = "p0_urgent" | "p1_high" | "p2_medium" | "p3_low";
+export type CloudProvider =
+  | "AWS"
+  | "Google Cloud"
+  | "Azure"
+  | "Hybrid / On-Prem"
+  | "Multi-Cloud"
+  | "Kubernetes"
+  | "AI / LLM Infra";
+export type POCStatus =
+  | "not_started"
+  | "scoping"
+  | "provisioning"
+  | "active_testing"
+  | "validating_kpis"
+  | "passed"
+  | "failed"
+  | "cancelled";
+export type ApprovalStatus =
+  | "draft"
+  | "pending_sa_lead"
+  | "pending_sales_vp"
+  | "pending_finance"
+  | "approved"
+  | "finalized"
+  | "rejected";
 
 export interface Stakeholder {
   id: string;
@@ -24,9 +56,15 @@ export interface Stakeholder {
   role: string;
   department: string;
   email: string;
-  influence: 'high' | 'medium' | 'low';
-  sentiment: 'champion' | 'supporter' | 'neutral' | 'skeptic' | 'blocker';
-  buyingRole: 'Economic Buyer' | 'Technical Gatekeeper' | 'User Influencer' | 'Procurement' | 'Security Officer' | 'Executive Sponsor';
+  influence: "high" | "medium" | "low";
+  sentiment: "champion" | "supporter" | "neutral" | "skeptic" | "blocker";
+  buyingRole:
+    | "Economic Buyer"
+    | "Technical Gatekeeper"
+    | "User Influencer"
+    | "Procurement"
+    | "Security Officer"
+    | "Executive Sponsor";
   notes?: string;
   lastContactDate: string;
 }
@@ -34,12 +72,21 @@ export interface Stakeholder {
 export interface OpportunityDocument {
   id: string;
   title: string;
-  type: 'Architecture Diagram' | 'SADD Blueprint' | 'RFP Response' | 'Security Whitepaper' | 'BOQ Sheet' | 'SOW Draft' | 'POC Report' | 'Supporting Document' | 'Survey Report';
+  type:
+    | "Architecture Diagram"
+    | "SADD Blueprint"
+    | "RFP Response"
+    | "Security Whitepaper"
+    | "BOQ Sheet"
+    | "SOW Draft"
+    | "POC Report"
+    | "Supporting Document"
+    | "Survey Report";
   version: string;
   size: string;
   uploadedBy: string;
   uploadedAt: string;
-  status: 'Approved' | 'In Review' | 'Draft' | 'Customer Signed';
+  status: "Approved" | "In Review" | "Draft" | "Customer Signed";
   fileUrl?: string;
   fileName?: string;
   fileData?: string;
@@ -48,10 +95,24 @@ export interface OpportunityDocument {
 
 export interface BOQItem {
   id: string;
-  category: 'Cloud Infrastructure' | 'Software Licenses' | 'Hardware' | 'Professional Services' | 'Managed Support' | 'Security & Compliance';
+  category:
+    | "Cloud Infrastructure"
+    | "Software Licenses"
+    | "Hardware"
+    | "Professional Services"
+    | "Managed Support"
+    | "Security & Compliance";
   itemCode: string;
   description: string;
-  unit: 'Instances/Mo' | 'TB/Mo' | 'Users/Yr' | 'Man-Days' | 'Core-Hrs' | 'Flat Fee' | 'License/Yr' | string;
+  unit:
+    | "Instances/Mo"
+    | "TB/Mo"
+    | "Users/Yr"
+    | "Man-Days"
+    | "Core-Hrs"
+    | "Flat Fee"
+    | "License/Yr"
+    | string;
   quantity: number;
   unitCost: number;
   unitListPrice: number;
@@ -72,7 +133,7 @@ export interface BOQRevision {
   savedAt: string;
   savedBy?: string;
   status: ApprovalStatus;
-  snapshot: Omit<BOQSummary, 'revisions'>;
+  snapshot: Omit<BOQSummary, "revisions">;
 }
 
 export interface BOQSummary {
@@ -107,12 +168,17 @@ export interface POCDetails {
     actualMetric?: string;
     verified: boolean;
     verifiedByCustomer?: string;
-    category: 'Performance' | 'Security' | 'Integration' | 'Reliability' | 'Cost Efficiency';
+    category:
+      | "Performance"
+      | "Security"
+      | "Integration"
+      | "Reliability"
+      | "Cost Efficiency";
   }[];
   blockers: {
     id: string;
     description: string;
-    severity: 'blocking' | 'critical' | 'minor';
+    severity: "blocking" | "critical" | "minor";
     openedAt: string;
     resolved: boolean;
     owner: string;
@@ -123,7 +189,32 @@ export interface POCDetails {
 
 export interface PresalesActivity {
   id: string;
-  type: 'Phone Call' | 'Email' | 'Client Meeting' | 'Internal Meeting' | 'Online Meeting' | 'Site Survey' | 'Requirement Gathering' | 'Technical Discussion' | 'OEM Discussion' | 'Solution Design' | 'BOQ Preparation' | 'Proposal Submission' | 'Follow-up' | 'Commercial Discussion' | 'Tender Activity' | 'Documentation' | 'Other' | 'Architectural Review' | 'Discovery Call' | 'Security Questionnaire' | 'Demo' | 'RFP / RFI Response' | 'Executive Briefing' | 'Whiteboarding' | 'BOQ Review';
+  type:
+    | "Phone Call"
+    | "Email"
+    | "Client Meeting"
+    | "Internal Meeting"
+    | "Online Meeting"
+    | "Site Survey"
+    | "Requirement Gathering"
+    | "Technical Discussion"
+    | "OEM Discussion"
+    | "Solution Design"
+    | "BOQ Preparation"
+    | "Proposal Submission"
+    | "Follow-up"
+    | "Commercial Discussion"
+    | "Tender Activity"
+    | "Documentation"
+    | "Other"
+    | "Architectural Review"
+    | "Discovery Call"
+    | "Security Questionnaire"
+    | "Demo"
+    | "RFP / RFI Response"
+    | "Executive Briefing"
+    | "Whiteboarding"
+    | "BOQ Review";
   title: string;
   timestamp: string;
   author: string;
@@ -149,7 +240,13 @@ export interface ActionItem {
   dueDate: string;
   isCompleted: boolean;
   priority: DealPriority;
-  category: 'Architecture' | 'Sizing & BOQ' | 'Security / Compliance' | 'Customer Follow-up' | 'Legal / SOW' | 'POC Execution';
+  category:
+    | "Architecture"
+    | "Sizing & BOQ"
+    | "Security / Compliance"
+    | "Customer Follow-up"
+    | "Legal / SOW"
+    | "POC Execution";
   notes?: string;
 }
 
@@ -159,7 +256,7 @@ export interface HandoverDetails {
   handedOverBy?: string;
   salesKAM?: string;
   boqVersion?: string;
-  status?: 'pending' | 'ready' | 'handed_over';
+  status?: "pending" | "ready" | "handed_over";
   technicalNotes?: string;
   attachedDocuments?: string[];
   assignedDeliveryLead?: string;
@@ -190,7 +287,7 @@ export interface TenderInfo {
 
 // Section 16: Deal Outcome (won/lost capture)
 export interface DealOutcome {
-  outcome: 'open' | 'won' | 'lost' | 'on_hold' | 'cancelled';
+  outcome: "open" | "won" | "lost" | "on_hold" | "cancelled";
   wonDate?: string;
   finalSolution?: string;
   finalNotes?: string;
@@ -212,9 +309,22 @@ export interface Opportunity {
   code: string;
   name: string;
   clientName: string;
-  clientIndustry: 'FinTech / Banking' | 'Healthcare / Life Sciences' | 'E-Commerce / Retail' | 'Enterprise SaaS' | 'Telecom / 5G' | 'Manufacturing & IoT' | 'Public Sector' | 'Energy / Utilities';
+  clientIndustry:
+    | "FinTech / Banking"
+    | "Healthcare / Life Sciences"
+    | "E-Commerce / Retail"
+    | "Enterprise SaaS"
+    | "Telecom / 5G"
+    | "Manufacturing & IoT"
+    | "Public Sector"
+    | "Energy / Utilities";
   clientLogo?: string;
-  region: 'North America (US-East)' | 'North America (US-West)' | 'EMEA (London/Frankfurt)' | 'APAC (Singapore/Tokyo)' | 'LATAM';
+  region:
+    | "North America (US-East)"
+    | "North America (US-West)"
+    | "EMEA (London/Frankfurt)"
+    | "APAC (Singapore/Tokyo)"
+    | "LATAM";
   stage: OpportunityStage;
   priority: DealPriority;
   dealComplexity: DealComplexity;
@@ -224,7 +334,7 @@ export interface Opportunity {
   secondaryTechnologies?: string[];
   // Section 5: selected multi-select scopes from the managed catalog
   scopes?: string[];
-  
+
   // Commercials
   contractValue: number;
   arr: number;
@@ -253,8 +363,11 @@ export interface Opportunity {
   expectedSolution?: string;
   proposedArchitecture: string;
   keyTechnicalRequirements: string[];
-  complianceRequirements: ('SOC2 Type II' | 'HIPAA' | 'PCI-DSS' | 'ISO 27001' | 'FedRAMP' | 'GDPR')[];
-  securityReviewStatus: 'Not Started' | 'In Review' | 'Exceptions Approved' | 'Cleared';
+  complianceRequirements: (
+    "SOC2 Type II" | "HIPAA" | "PCI-DSS" | "ISO 27001" | "FedRAMP" | "GDPR"
+  )[];
+  securityReviewStatus:
+    "Not Started" | "In Review" | "Exceptions Approved" | "Cleared";
 
   // Sub-modules
   activities: PresalesActivity[];
@@ -277,9 +390,9 @@ export interface Opportunity {
 }
 
 export interface LeadInformation {
-  requestType: 'Project' | 'Tender' | 'RFP' | 'RFQ';
-  supportingDocumentsStatus: 'Yes' | 'No' | 'NA';
-  surveyStatus: 'Yes' | 'No' | 'NA';
+  requestType: "Project" | "Tender" | "RFP" | "RFQ";
+  supportingDocumentsStatus: "Yes" | "No" | "NA";
+  surveyStatus: "Yes" | "No" | "NA";
   surveyNumber: string;
   surveyCompleted: boolean;
   technicalContact: { name: string; phone: string; designation: string };
@@ -287,24 +400,99 @@ export interface LeadInformation {
 }
 
 export interface Collaboration {
+  reviewStartedAt?: string;
+  reviewDueAt?: string;
+  reviewDecisionAt?: string;
+  reviewOwner?: string;
+  reviewHistory?: Array<{
+    decision: string;
+    at: string;
+    by: string;
+    dueAt?: string;
+    note: string;
+  }>;
+  slaHours?: number;
+  slaSetBy?: string;
+  slaSetAt?: string;
+  cycleStartedAt?: string;
+  awaitingSLA?: boolean;
+  slaHistory?: Array<Record<string, any>>;
+  uatPassedAt?: string;
+  completionApprovedAt?: string;
+  completionApprovedBy?: string;
+  handoverApprovals?: Record<
+    string,
+    { id: string; name: string; at: string; note: string }
+  >;
+  handoverHistory?: Array<Record<string, any>>;
   version?: number;
-  qualification?: {criteria:Record<string,boolean>;decision:string;note:string;at:string;by:string};
-  stageNotes?: Record<string,{note:string;at:string;by:string}>;
-  costing?: Record<string,any>;
+  qualification?: {
+    criteria: Record<string, boolean>;
+    decision: string;
+    note: string;
+    at: string;
+    by: string;
+  };
+  stageNotes?: Record<string, { note: string; at: string; by: string }>;
+  costing?: Record<string, any>;
   costingApproved?: boolean;
-  costingHistory?: Array<Record<string,any>>;
-  supplyProgress?: Record<string,string>;
-  supplyIssue?: {note:string;at:string;by:string};
-  deploymentProgress?: Record<string,string>;
-  proposals?: Array<Record<string,any>>;
-  order?: {reference:string;finalValue:number;note:string;at:string;by:string};
+  costingHistory?: Array<Record<string, any>>;
+  supplyProgress?: Record<string, string>;
+  supplyIssue?: { note: string; at: string; by: string };
+  deploymentProgress?: Record<string, string>;
+  proposals?: Array<Record<string, any>>;
+  order?: {
+    reference: string;
+    finalValue: number;
+    note: string;
+    at: string;
+    by: string;
+  };
   holdReviewAt?: string;
   resumeStatus?: string;
   slaFinishedAt?: string;
-  deliveryEvidence?: {challan:string;receiving:string;note:string;at:string;by:string};
+  deliveryEvidence?: {
+    challan: string;
+    receiving: string;
+    note: string;
+    at: string;
+    by: string;
+  };
   acceptanceReference?: string;
-  clientHandover?: {checklist:Record<string,boolean>;acknowledgement:string;note:string;at:string;by:string};
-  status: 'lead' | 'needs_info' | 'requirements' | 'design' | 'solution_review' | 'handover_sales' | 'costing_approval' | 'costing' | 'proposal' | 'followup' | 'negotiation' | 'hold' | 'cancelled' | 'deployment' | 'client_handover' | 'review' | 'working' | 'solution_ready' | 'client_followup' | 'revision' | 'declined' | 'won' | 'lost' | 'delivery' | 'completed';
+  clientHandover?: {
+    checklist: Record<string, boolean>;
+    acknowledgement: string;
+    note: string;
+    at: string;
+    by: string;
+  };
+  status:
+    | "lead"
+    | "needs_info"
+    | "requirements"
+    | "design"
+    | "solution_review"
+    | "handover_sales"
+    | "costing_approval"
+    | "costing"
+    | "proposal"
+    | "followup"
+    | "negotiation"
+    | "hold"
+    | "cancelled"
+    | "testing"
+    | "deployment"
+    | "client_handover"
+    | "review"
+    | "working"
+    | "solution_ready"
+    | "client_followup"
+    | "revision"
+    | "declined"
+    | "won"
+    | "lost"
+    | "delivery"
+    | "completed";
   cycle: number;
   assignedAt?: string;
   assignedBy?: string;
@@ -312,9 +500,50 @@ export interface Collaboration {
   dueAt?: string;
   changeRequest?: string;
   nextFollowUpAt?: string | null;
-  solutions: Array<{ id: string; version: number; cycle: number; summary: string; submittedAt: string; submittedBy: string; dueAt: string; onTime: boolean; architecture: string; boq: BOQSummary; documents: OpportunityDocument[]; reviewedAt?: string; reviewedBy?: string; reviewNote?: string; handedOverAt?: string; handedOverBy?: string; sentAt?: string; sentBy?: string; submissionNote?: string }>;
-  extensions: Array<{ id: string; cycle: number; status: 'pending' | 'approved' | 'rejected' | 'superseded'; reason: string; previousDueAt: string; requestedDueAt: string; requestedAt: string; requestedBy: string; decidedAt?: string; decidedBy?: string; decisionNote?: string }>;
-  followups: Array<{ id: string; target: string; note: string; author: string; at: string; nextAt?: string; owner?: string; nextAction?: string }>;
+  solutions: Array<{
+    id: string;
+    version: number;
+    cycle: number;
+    summary: string;
+    submittedAt: string;
+    submittedBy: string;
+    dueAt: string;
+    onTime: boolean;
+    architecture: string;
+    boq: BOQSummary;
+    documents: OpportunityDocument[];
+    reviewedAt?: string;
+    reviewedBy?: string;
+    reviewNote?: string;
+    handedOverAt?: string;
+    handedOverBy?: string;
+    sentAt?: string;
+    sentBy?: string;
+    submissionNote?: string;
+  }>;
+  extensions: Array<{
+    id: string;
+    cycle: number;
+    status: "pending" | "approved" | "rejected" | "superseded";
+    reason: string;
+    previousDueAt: string;
+    requestedDueAt: string;
+    requestedAt: string;
+    requestedBy: string;
+    decidedAt?: string;
+    decidedBy?: string;
+    decisionNote?: string;
+  }>;
+  followups: Array<{
+    id: string;
+    target: string;
+    note: string;
+    author: string;
+    at: string;
+    nextAt?: string;
+    owner?: string;
+    nextAction?: string;
+  }>;
   acceptanceNote?: string;
 }
 
@@ -349,10 +578,18 @@ export interface ClientAccount {
   id: string;
   name: string;
   code?: string;
-  industry: Opportunity['clientIndustry'] | string;
+  industry: Opportunity["clientIndustry"] | string;
   region?: string;
   domain?: string;
-  tier: 'Strategic Global' | 'Enterprise Plus' | 'Mid-Market' | 'Growth' | 'Strategic Tier 1' | 'Enterprise Tier 2' | 'Commercial Tier 3' | string;
+  tier:
+    | "Strategic Global"
+    | "Enterprise Plus"
+    | "Mid-Market"
+    | "Growth"
+    | "Strategic Tier 1"
+    | "Enterprise Tier 2"
+    | "Commercial Tier 3"
+    | string;
   totalActiveTCV?: number;
   totalContractedTCV?: number;
   annualRecurringRevenue?: number;
@@ -362,7 +599,7 @@ export interface ClientAccount {
   assignedLeadSA?: string;
   assignedKAM?: string;
   assignedSalesKAM?: string;
-  healthScore?: 'Healthy' | 'Needs Attention' | 'At Risk' | string;
+  healthScore?: "Healthy" | "Needs Attention" | "At Risk" | string;
   primaryTechStack: CloudProvider | string;
   joinedDate?: string;
   createdDate?: string;
@@ -386,11 +623,11 @@ export interface ClientContact {
 }
 
 export interface ClientBankRecord {
-  'Subscriber ID': string;
+  "Subscriber ID": string;
   SLNO: string;
-  'Branch Code': string;
-  'Subscriber Name': string;
-  'Branch Name': string;
+  "Branch Code": string;
+  "Subscriber Name": string;
+  "Branch Name": string;
   Category: string;
   Group: string;
   Address: string;
@@ -400,21 +637,42 @@ export interface ClientBankRecord {
 export interface CalendarEvent {
   id: string;
   title: string;
-  type: 'Discovery Session' | 'Architecture Workshop' | 'POC Milestone' | 'RFP Due Date' | 'Executive Demo' | 'Handover Kickoff' | string;
+  type:
+    | "Discovery Session"
+    | "Architecture Workshop"
+    | "POC Milestone"
+    | "RFP Due Date"
+    | "Executive Demo"
+    | "Handover Kickoff"
+    | string;
   date: string;
   time: string;
   opportunityCode: string;
   clientName: string;
   attendees: string[];
   location: string;
-  status: 'Confirmed' | 'Pending' | 'Completed' | string;
+  status: "Confirmed" | "Pending" | "Completed" | string;
 }
 
 export interface CentralDocument {
   id: string;
   title: string;
-  category: 'Reference Architecture' | 'RFP Answer Bank' | 'SOW Template' | 'Security Whitepaper' | 'Cost Estimation Guide' | 'OEM Sizing Guide' | 'sadd_template' | 'rfp_response' | 'security_whitepaper' | 'boq_calculator' | 'sow_standard' | 'case_study' | string;
-  fileType: 'PDF' | 'DOCX' | 'PPTX' | 'XLSX' | 'ZIP' | 'PDF / Markdown' | string;
+  category:
+    | "Reference Architecture"
+    | "RFP Answer Bank"
+    | "SOW Template"
+    | "Security Whitepaper"
+    | "Cost Estimation Guide"
+    | "OEM Sizing Guide"
+    | "sadd_template"
+    | "rfp_response"
+    | "security_whitepaper"
+    | "boq_calculator"
+    | "sow_standard"
+    | "case_study"
+    | string;
+  fileType:
+    "PDF" | "DOCX" | "PPTX" | "XLSX" | "ZIP" | "PDF / Markdown" | string;
   size?: string;
   fileSize?: string;
   updatedAt?: string;
@@ -431,7 +689,14 @@ export interface NotificationItem {
   id: string;
   title: string;
   message: string;
-  type: 'sla_breach' | 'approval_required' | 'oem_update' | 'deal_assigned' | 'poc_milestone' | 'info' | string;
+  type:
+    | "sla_breach"
+    | "approval_required"
+    | "oem_update"
+    | "deal_assigned"
+    | "poc_milestone"
+    | "info"
+    | string;
   timestamp: string;
   read: boolean;
   opportunityId?: string;
@@ -445,7 +710,14 @@ export interface AuditLogEntry {
   actorName?: string;
   actorRole: string;
   action: string;
-  targetType?: 'Opportunity' | 'BOQ' | 'POC' | 'Security Signoff' | 'User Role' | 'System Config' | string;
+  targetType?:
+    | "Opportunity"
+    | "BOQ"
+    | "POC"
+    | "Security Signoff"
+    | "User Role"
+    | "System Config"
+    | string;
   targetId?: string;
   targetName?: string;
   entityCode?: string;
@@ -458,15 +730,31 @@ export interface UserAccount {
   id: string;
   name: string;
   email: string;
-  role: 'Presales Lead / Architect' | 'Principal Solutions Architect' | 'Sales KAM' | 'Delivery Manager' | 'System Administrator' | 'presales_architect' | 'sales_kam' | 'presales_lead' | 'super_admin' | string;
+  role:
+    | "Presales Lead / Architect"
+    | "Principal Solutions Architect"
+    | "Sales KAM"
+    | "Delivery Manager"
+    | "System Administrator"
+    | "presales_architect"
+    | "sales_kam"
+    | "presales_lead"
+    | "super_admin"
+    | string;
   roleId?: string;
-  department: 'Solutions Engineering' | 'Sales' | 'Delivery & Services' | 'Information Security' | 'Operations' | string;
+  department:
+    | "Solutions Engineering"
+    | "Sales"
+    | "Delivery & Services"
+    | "Information Security"
+    | "Operations"
+    | string;
   salesTeam?: string;
   phone?: string;
   manager?: string;
   skills?: string[];
   certifications?: string[];
-  status: 'Active' | 'Inactive' | 'Invited' | 'active' | 'inactive' | string;
+  status: "Active" | "Inactive" | "Invited" | "active" | "inactive" | string;
   lastActive?: string;
   lastLoginAt?: string;
   mustChangePassword?: boolean;
@@ -493,18 +781,18 @@ export interface ScopeCatalogEntry {
   name: string;
   category: string;
   description?: string | null;
-  status: 'Active' | 'Inactive' | string;
+  status: "Active" | "Inactive" | string;
   sort_order: number;
 }
 
 export const SCOPE_CATEGORIES = [
-  'NETWORK',
-  'SECURITY',
-  'SYSTEM',
-  'STORAGE & BACKUP',
-  'DATA CENTER',
-  'SURVEILLANCE',
-  'COLLABORATION & COMMUNICATION',
+  "NETWORK",
+  "SECURITY",
+  "SYSTEM",
+  "STORAGE & BACKUP",
+  "DATA CENTER",
+  "SURVEILLANCE",
+  "COLLABORATION & COMMUNICATION",
 ] as const;
 
 // Section 10: OEM entry
@@ -513,7 +801,7 @@ export interface OEMEntry {
   name: string;
   website?: string | null;
   description?: string | null;
-  status: 'Active' | 'Inactive' | string;
+  status: "Active" | "Inactive" | string;
   partner_portal_url?: string | null;
   partnership_status?: string | null;
   partner_tier?: string | null;
@@ -535,71 +823,78 @@ export interface ProductCatalogEntry {
   part_number?: string | null;
   description?: string | null;
   unit?: string | null;
-  status: 'Active' | 'Inactive' | string;
+  status: "Active" | "Inactive" | string;
 }
 
 export interface PresalesFilterState {
   searchQuery: string;
-  stage: OpportunityStage | 'all';
-  leadArchitect: string | 'all';
-  primaryTechStack: CloudProvider | 'all';
-  complexity: DealComplexity | 'all';
-  region: string | 'all';
-  priority: DealPriority | 'all';
-  pocStatus: POCStatus | 'all';
+  stage: OpportunityStage | "all";
+  leadArchitect: string | "all";
+  primaryTechStack: CloudProvider | "all";
+  complexity: DealComplexity | "all";
+  region: string | "all";
+  priority: DealPriority | "all";
+  pocStatus: POCStatus | "all";
   minContractValue?: number;
   maxContractValue?: number;
   hasOverdueActions: boolean;
   requiresHandover: boolean;
-  sortBy: 'contractValue' | 'updatedAt' | 'expectedCloseDate' | 'winProbability' | 'daysInCurrentStage' | 'name';
-  sortOrder: 'asc' | 'desc';
+  sortBy:
+    | "contractValue"
+    | "updatedAt"
+    | "expectedCloseDate"
+    | "winProbability"
+    | "daysInCurrentStage"
+    | "name";
+  sortOrder: "asc" | "desc";
 }
 
-export type ActiveTab = 
-  | 'dashboard'
-  | 'mobile_capture'
-  | 'opportunities'
-  | 'board'
-  | 'new_opportunity'
-  | 'opportunity_detail'
-  | 'calendar'
-  | 'action_center'
-  | 'clients'
-  | 'client_details'
-  | 'poc_center'
-  | 'boq_workbench'
-  | 'team_capacity'
-  | 'sales_kam'
-  | 'reports'
-  | 'analytics'
-  | 'documents'
-  | 'handover_queue'
-  | 'notification_center'
-  | 'notifications'
-  | 'scope_catalog'
-  | 'oem_catalog'
-  | 'product_catalog'
-  | 'bulk_upload'
-  | 'audit_logs'
-  | 'user_management'
-  | 'role_management'
-  | 'role_permissions'
-  | 'sales_kams'
-  | 'master_config'
-  | 'system_settings';
+export type ActiveTab =
+  | "dashboard"
+  | "mobile_capture"
+  | "opportunities"
+  | "board"
+  | "new_opportunity"
+  | "opportunity_detail"
+  | "calendar"
+  | "action_center"
+  | "clients"
+  | "client_details"
+  | "poc_center"
+  | "boq_workbench"
+  | "team_capacity"
+  | "sales_kam"
+  | "reports"
+  | "analytics"
+  | "documents"
+  | "handover_queue"
+  | "notification_center"
+  | "notifications"
+  | "scope_catalog"
+  | "oem_catalog"
+  | "product_catalog"
+  | "bulk_upload"
+  | "audit_logs"
+  | "user_management"
+  | "role_management"
+  | "role_permissions"
+  | "sales_kams"
+  | "master_config"
+  | "system_settings";
 
 // Runtime navigation uses these canonical names; legacy aliases remain for persisted links.
-export type RuntimeActiveTab = ActiveTab | 'analytics' | 'sales_kams' | 'notifications' | 'role_permissions';
+export type RuntimeActiveTab =
+  ActiveTab | "analytics" | "sales_kams" | "notifications" | "role_permissions";
 
 export type OpportunitySubView =
-  | 'workspace'
-  | 'overview'
-  | 'timeline'
-  | 'tasks'
-  | 'stakeholders'
-  | 'documents'
-  | 'boq'
-  | 'technical'
-  | 'sales'
-  | 'implementation'
-  | 'tender';
+  | "workspace"
+  | "overview"
+  | "timeline"
+  | "tasks"
+  | "stakeholders"
+  | "documents"
+  | "boq"
+  | "technical"
+  | "sales"
+  | "implementation"
+  | "tender";

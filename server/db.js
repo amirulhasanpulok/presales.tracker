@@ -216,7 +216,7 @@ export const DEFAULT_WORKFLOW_STAGES = [
   ['solution_review', 'Solution Review', 'Solution Review', 'Solution Review', false, false],
   ['handover_sales', 'Handover to Sales', 'Handover to Sales', 'Handover to Sales', false, false],
   ['costing', 'Price and Costing', 'Price and Costing', 'Price and Costing', false, false],
-  ['costing_approval', 'Costing Approval', 'Costing Approval', 'Finance / Management approves cost and selling price', false, false],
+  ['costing_approval', 'Costing Approval', 'Costing Approval', 'Sales Head approves cost and selling price', false, false],
   ['proposal_boq', 'Proposal Submitted', 'Proposal Submitted', 'Proposal Submitted', false, false],
   ['followup', 'Follow-up', 'Follow-up', 'Follow-up', false, false],
   ['commercial_negotiation', 'Negotiation', 'Negotiation', 'Negotiation', false, false],
@@ -226,17 +226,18 @@ export const DEFAULT_WORKFLOW_STAGES = [
   ['cancelled', 'Cancel', 'Cancel', 'Cancel', false, false],
   ['delivery', 'Delivery', 'Delivery', 'Delivery', false, false],
   ['deployment', 'Deployment', 'Deployment', 'Deployment', false, false],
+  ['testing', 'Testing & UAT', 'Testing & UAT', 'Technical testing, client UAT, correction and retest', false, false],
   ['completed', 'Completed', 'Completed', 'Completed', false, false],
   ['client_handover', 'Handover to Client', 'Handover to Client', 'Handover to Client', false, false],
 ];
 
 export async function ensureWorkflowConfig() {
-  const migrated = await query("SELECT 1 FROM system_settings WHERE setting_key='si_cycle_v2'");
+  const migrated = await query("SELECT 1 FROM system_settings WHERE setting_key='si_cycle_v3'");
   const stages = DEFAULT_WORKFLOW_STAGES.map(([id, label, shortLabel, description, requiresScope, requiresApprovedBOQ]) => ({ id, label, shortLabel, description, requiresScope, requiresApprovedBOQ }));
   await query("INSERT INTO system_settings (setting_key, setting_value, updated_at) VALUES ('workflow_stages', $1, now()) ON CONFLICT (setting_key) DO NOTHING", [JSON.stringify(stages)]);
   if (!migrated.rowCount) {
     await query("INSERT INTO system_settings (setting_key,setting_value) VALUES ('workflow_stages', $1) ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value, updated_at=now()", [JSON.stringify(stages)]);
-    await query("INSERT INTO system_settings (setting_key,setting_value) VALUES ('si_cycle_v2','applied') ON CONFLICT DO NOTHING");
+    await query("INSERT INTO system_settings (setting_key,setting_value) VALUES ('si_cycle_v3','applied') ON CONFLICT DO NOTHING");
   }
 }
 
@@ -333,8 +334,12 @@ export async function seedOEMCatalog() {
 
 export async function ensureSystemRoles() {
   await query(`INSERT INTO roles (id,role_name,name,description,permissions,is_system_role) VALUES
+    ('role-sales-head','Sales Head','Sales Head','Sets Solution SLA, approves extensions and costing, jointly approves client handover.','["workflow.sales_head"]'::jsonb,true),
+    ('role-presales-head','Presales Head / Postsales Head','Presales Head / Postsales Head','Reviews solutions, supervises implementation, confirms completion and jointly approves client handover.','["workflow.presales_head","author_boq","author_sadd","initiate_handover","signoff_handover"]'::jsonb,true)
+    ON CONFLICT (id) DO NOTHING`);
+  await query(`INSERT INTO roles (id,role_name,name,description,permissions,is_system_role) VALUES
     ('role-scm','Supply Chain Management','Supply Chain Management','Procurement, costing and delivery.','["workflow.scm","initiate_handover"]'::jsonb,true),
-    ('role-finance','Finance / Management','Finance / Management','Approves cost sheets and selling prices.','["workflow.finance"]'::jsonb,true)
+    ('role-finance','Finance / Management','Finance / Management','Legacy Finance access; costing approval requires Sales Head.','["workflow.finance"]'::jsonb,true)
     ON CONFLICT (id) DO NOTHING`);
   await query(`INSERT INTO roles (id, role_name, name, description, users_count, is_system_role, matching_roles, permissions)
     VALUES ('role-presales-lead', 'Presales Team Lead', 'Presales Team Lead', 'Reviews Sales leads and assigns Presales engineers.', 0, true, '["Presales Team Lead"]'::jsonb,

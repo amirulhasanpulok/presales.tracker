@@ -8,6 +8,8 @@ import {
   currentStatus,
   localDate,
   overdue,
+  reviewOverdue,
+  reviewDeadline,
 } from "../../utils/collaboration";
 import { exportBOQCSV } from "../../utils/exportUtils";
 import { LeadInformation } from "./LeadInformation";
@@ -48,11 +50,19 @@ export function CollaborationWorkspace({
   const [error, setError] = useState("");
   const admin = can("sys.rbac");
   const review = admin || can("workflow.review");
+  const salesHead = admin || can("workflow.sales_head");
+  const presalesHead = admin || can("workflow.presales_head");
+  const [clock, setClock] = useState(Date.now());
+  React.useEffect(() => {
+    const id = setInterval(() => setClock(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
   const sales =
     admin || (can("workflow.sales") && o.accountExecutive === user.name);
   const presales =
     admin ||
     review ||
+    presalesHead ||
     (can("author_boq") &&
       [
         o.leadSolutionArchitect,
@@ -61,6 +71,7 @@ export function CollaborationWorkspace({
       ].includes(user.name));
   const postsales =
     admin ||
+    presalesHead ||
     (["role-delivery", "role-postsales"].includes(user.roleId || "") &&
       o.postsalesOwner === user.name);
   const scm =
@@ -74,7 +85,7 @@ export function CollaborationWorkspace({
           "followup",
           "negotiation",
         ].includes(status)));
-  const finance = admin || can("workflow.finance");
+  const finance = salesHead;
   const working = activeSLA(o);
   const open =
     !!w &&
@@ -86,6 +97,7 @@ export function CollaborationWorkspace({
       "cancelled",
       "delivery",
       "deployment",
+      "testing",
       "completed",
       "client_handover",
     ].includes(status);
@@ -106,15 +118,15 @@ export function CollaborationWorkspace({
   const choices: Array<[string, string]> = [];
   if (sales && ["lead", "needs_info"].includes(status))
     choices.push(["submit_lead", "Submit to Review Gate"]);
-  if (review && (!w || ["review", "needs_info"].includes(status)))
+  if (review && (!w || ["lead", "review"].includes(status)))
     choices.push(["assign", "Qualify & assign"], ["decline", "Decline lead"]);
-  if (review && status === "review")
+  if (review && ["lead", "review"].includes(status))
     choices.push(["request_info", "Request more information"]);
   if (presales && status === "requirements")
     choices.push(["finish_requirements", "Complete Requirements Analysis"]);
   if (presales && status === "design")
     choices.push(["submit_solution", "Submit for Solution Review"]);
-  if (review && status === "solution_review")
+  if (presalesHead && status === "solution_review")
     choices.push(
       ["approve_solution", "Approve solution"],
       ["return_solution", "Return to Solution Design"],
@@ -185,10 +197,49 @@ export function CollaborationWorkspace({
   if (postsales && status === "deployment")
     choices.push(
       ["deployment_update", "Update deployment progress"],
-      ["accept_delivery", "Complete deployment & record acceptance"],
+      ["start_testing", "Start Testing & UAT"],
     );
+  if (postsales && status === "testing")
+    choices.push(
+      ["accept_delivery", "Record passed UAT / client sign-off"],
+      ["uat_failed", "Testing failed — return to Deployment"],
+    );
+  if (presalesHead && status === "testing")
+    choices.push(["return_completion", "Return implementation for correction"]);
+  if (presalesHead && status === "testing" && w?.uatPassedAt)
+    choices.push(["approve_completion", "Confirm Completed"]);
   if (postsales && status === "completed")
-    choices.push(["client_handover", "Complete Handover to Client"]);
+    choices.push([
+      "client_handover",
+      "Submit / revise client handover package",
+    ]);
+  if (status === "completed" && w?.clientHandover) {
+    if (salesHead && !w.handoverApprovals?.sales)
+      choices.push([
+        "approve_handover_sales",
+        "Sales Head — approve client handover",
+      ]);
+    if (presalesHead && !w.handoverApprovals?.presales)
+      choices.push([
+        "approve_handover_presales",
+        "Presales Head — approve client handover",
+      ]);
+    if (salesHead || presalesHead)
+      choices.push([
+        "return_client_handover",
+        "Return handover for correction",
+      ]);
+  }
+  if (review && ["lead", "review"].includes(status) && !w?.reviewDecisionAt)
+    choices.push(
+      ["claim_review", "Take responsibility for Review Gate"],
+      ["qualify", "Qualify lead"],
+    );
+  if (
+    salesHead &&
+    (["lead", "review", "needs_info"].includes(status) || w?.awaitingSLA)
+  )
+    choices.push(["set_sla", "Set Solution SLA"]);
   const uniqueChoices = choices.filter(
     ([key], i) => choices.findIndex(([k]) => k === key) === i,
   );
@@ -209,7 +260,15 @@ export function CollaborationWorkspace({
     setError("");
     try {
       const saved = await api.workflowAction(o.id, {
-        action,
+        action: action.startsWith("approve_handover_")
+          ? "approve_client_handover"
+          : action,
+        side:
+          action === "approve_handover_sales"
+            ? "sales"
+            : action === "approve_handover_presales"
+              ? "presales"
+              : undefined,
         note,
         assignee,
         supporters,
@@ -252,6 +311,39 @@ export function CollaborationWorkspace({
         ))}
       </nav>
       <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+        {["lead", "review"].includes(status) && !w?.reviewDecisionAt && (
+          <div
+            className={`text-sm rounded-lg p-3 ${reviewOverdue(o, clock) ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-800"}`}
+          >
+            <p className="font-semibold">
+              {reviewOverdue(o, clock)
+                ? "Review Gate Overdue"
+                : "Review Gate · 24-hour decision SLA"}
+            </p>
+            <p>
+              Due: {localDate(reviewDeadline(o))} · Presales Lead:{" "}
+              {w?.reviewOwner || "Unassigned — Presales Lead team"}
+            </p>
+            {reviewOverdue(o, clock) && (
+              <p>
+                {Math.floor((clock - Date.parse(reviewDeadline(o)!)) / 3600000)}{" "}
+                hours overdue
+              </p>
+            )}
+          </div>
+        )}
+        {w?.awaitingSLA && (
+          <p className="text-sm bg-amber-50 text-amber-800 p-3 rounded-lg">
+            Revision requested — awaiting Sales Head SLA. Analysis/design
+            completion is blocked until a deadline is set.
+          </p>
+        )}
+        {w?.slaHours && (
+          <p className="text-xs text-slate-500">
+            Solution SLA: {w.slaHours} hours · set by{" "}
+            {w.slaSetBy || "Sales Head"}
+          </p>
+        )}
         <div className="flex flex-wrap justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">
@@ -298,8 +390,8 @@ export function CollaborationWorkspace({
         </div>
         {w?.originalDueAt && (
           <p className="text-xs text-slate-500">
-            First SLA deadline: {localDate(w.originalDueAt)} · 4 calendar days
-            from assignment
+            First SLA deadline: {localDate(w.originalDueAt)} · Sales
+            Head-defined SLA from assignment
           </p>
         )}
         {status === "hold" && (
@@ -334,7 +426,7 @@ export function CollaborationWorkspace({
               Cost sheet ·{" "}
               {w.costing.approvedAt
                 ? "Approved"
-                : "Awaiting Finance / Management approval"}
+                : "Awaiting Sales Head approval"}
             </h3>
             <div className="grid sm:grid-cols-3 gap-2 mt-2">
               {[
@@ -446,6 +538,56 @@ export function CollaborationWorkspace({
         {w?.acceptanceReference && (
           <p className="text-sm">UAT / acceptance: {w.acceptanceReference}</p>
         )}
+        {!!w?.reviewHistory?.length && (
+          <details className="border rounded-lg p-3 text-sm">
+            <summary>Review Gate history</summary>
+            {w.reviewHistory.map((r, i) => (
+              <p key={i} className="mt-2">
+                {r.decision} · {r.by} · {localDate(r.at)} · deadline{" "}
+                {localDate(r.dueAt)} · {r.note}
+              </p>
+            ))}
+          </details>
+        )}
+        {!!w?.slaHistory?.length && (
+          <details className="border rounded-lg p-3 text-sm">
+            <summary>Sales Head SLA history</summary>
+            {w.slaHistory.map((r, i) => (
+              <p key={i} className="mt-2">
+                {r.event} · {r.hours ? `${r.hours} hours · ` : ""}
+                {r.by} · {localDate(r.at)} · {r.note}
+              </p>
+            ))}
+          </details>
+        )}
+        {w?.uatPassedAt && (
+          <p className="text-sm text-green-700">
+            UAT passed: {localDate(w.uatPassedAt)} · {w.acceptanceReference}
+          </p>
+        )}
+        {w?.completionApprovedBy && (
+          <p className="text-sm">
+            Completion confirmed by {w.completionApprovedBy}
+          </p>
+        )}
+        {w?.clientHandover && (
+          <div className="text-sm border rounded-lg p-3">
+            <h3 className="font-medium">
+              Final handover approvals — two different Heads required
+            </h3>
+            {["sales", "presales"].map((k) => (
+              <p key={k}>
+                {k === "sales"
+                  ? "Sales Head"
+                  : "Presales Head / Postsales Head"}
+                :{" "}
+                {w.handoverApprovals?.[k]
+                  ? `${w.handoverApprovals[k].name} · ${localDate(w.handoverApprovals[k].at)}`
+                  : "Pending"}
+              </p>
+            ))}
+          </div>
+        )}
         {w?.clientHandover && (
           <p className="text-sm text-green-700">
             Client handover: {w.clientHandover.acknowledgement} ·{" "}
@@ -502,7 +644,7 @@ export function CollaborationWorkspace({
                     {x.decidedBy}: {x.decisionNote}
                   </p>
                 )}
-                {sales && working && x.status === "pending" && (
+                {salesHead && working && x.status === "pending" && (
                   <div className="flex gap-3 mt-2">
                     <button
                       className="text-blue-700"
@@ -545,7 +687,7 @@ export function CollaborationWorkspace({
                 </select>
               </label>
             )}
-            {action === "assign" && (
+            {["assign", "qualify"].includes(action) && (
               <fieldset className="grid sm:grid-cols-2 gap-2">
                 <legend className="text-sm font-medium mb-2">
                   Qualification criteria — all required
@@ -631,10 +773,27 @@ export function CollaborationWorkspace({
                 />
               </label>
             )}
+            {action === "set_sla" && (
+              <label className="block text-xs">
+                Solution SLA duration (hours)
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  max="8760"
+                  step="1"
+                  value={extras.slaHours || ""}
+                  onChange={(e) =>
+                    setExtras({ ...extras, slaHours: e.target.value })
+                  }
+                  className={field}
+                />
+              </label>
+            )}
             {action === "revision" && (
               <p className="text-xs text-slate-500">
-                A new 4-day revision SLA starts now. More time requires a
-                Sales-approved extension.
+                Sales Head must set the revision SLA. Further extensions also
+                require Sales Head approval.
               </p>
             )}
             {action === "close_won" && (
@@ -903,7 +1062,7 @@ export function CollaborationWorkspace({
             <details key={s.id} className="border rounded-lg p-3">
               <summary className="cursor-pointer text-sm font-medium">
                 Version {s.version} ·{" "}
-                {s.onTime ? "Within SLA" : "Submitted late"} ·{" "}
+                {s.onTime ? "Within SLA at handover" : "Late at handover"} ·{" "}
                 {s.sentAt ? "Sent to client" : "Awaiting Sales"}
               </summary>
               <div className="space-y-2 text-sm pt-3">

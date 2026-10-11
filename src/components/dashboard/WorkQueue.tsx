@@ -5,6 +5,8 @@ import {
   overdue,
   activeSLA,
   localDate,
+  reviewOverdue,
+  reviewDeadline,
 } from "../../utils/collaboration";
 
 export function WorkQueue({
@@ -28,6 +30,7 @@ export function WorkQueue({
   const matches = (o: Opportunity, key: string) => {
     const s = o.collaboration?.status;
     if (key === "all") return true;
+    if (key === "gate_overdue") return reviewOverdue(o, now);
     if (key === "approvals")
       return (
         s === "costing_approval" &&
@@ -54,7 +57,9 @@ export function WorkQueue({
         "client_followup",
       ].includes(s || "");
     if (key === "delivery")
-      return ["won", "delivery", "deployment", "completed"].includes(s || "");
+      return ["won", "delivery", "deployment", "testing", "completed"].includes(
+        s || "",
+      );
     return s
       ? !["client_handover", "lost", "declined", "cancelled", "hold"].includes(
           s,
@@ -66,7 +71,8 @@ export function WorkQueue({
     ["review", "Needs review"],
     ["approvals", "Costing approvals"],
     ["hold", "On hold"],
-    ["overdue", "SLA overdue"],
+    ["gate_overdue", "Review Gate Overdue"],
+    ["overdue", "Solution SLA overdue"],
     ["extensions", "Extension requests"],
     ["followup", "Sales follow-up"],
     ["delivery", "SCM & Postsales"],
@@ -145,6 +151,11 @@ export function WorkQueue({
               </p>
             </div>
             <div className="md:col-span-3 text-xs text-slate-600 space-y-1">
+              <p>
+                Review Lead ·{" "}
+                {o.collaboration?.reviewOwner ||
+                  "Unassigned Presales Lead team"}
+              </p>
               <p>Sales · {o.accountExecutive || "Unassigned"}</p>
               <p>Presales · {o.leadSolutionArchitect || "Unassigned"}</p>
               {o.postsalesOwner && o.postsalesOwner !== "Unassigned" && (
@@ -159,6 +170,21 @@ export function WorkQueue({
             <div
               className={`md:col-span-3 text-xs space-y-1 ${overdue(o, now) ? "text-red-600" : "text-slate-500"}`}
             >
+              {reviewOverdue(o, now) && (
+                <p className="text-red-600 font-medium">
+                  Review Gate Overdue ·{" "}
+                  {Math.floor((now - Date.parse(reviewDeadline(o)!)) / 3600000)}{" "}
+                  hours late
+                </p>
+              )}
+              {["lead", "review"].includes(o.collaboration?.status || "") &&
+                !o.collaboration?.reviewDecisionAt && (
+                  <p>
+                    Created · {localDate(o.createdAt)}
+                    <br />
+                    Gate due · {localDate(reviewDeadline(o))}
+                  </p>
+                )}
               <p>
                 {activeSLA(o)
                   ? `${overdue(o, now) ? "Overdue · " : "Solution due · "}${localDate(o.collaboration?.dueAt)}`
@@ -177,8 +203,8 @@ export function WorkQueue({
         )}
       </div>
       <p className="text-xs text-slate-500">
-        Initial SLA: 4 calendar days from Presales assignment. Extensions
-        require Sales approval.
+        Review Gate: 24 hours from Lead creation. Solution SLA and extensions
+        are set by Sales Head.
       </p>
     </section>
   );
