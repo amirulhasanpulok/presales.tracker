@@ -3,6 +3,7 @@ import { Opportunity, UserAccount } from "../../types";
 import { api } from "../../api";
 import { WORK_LABELS, localDate, overdue } from "../../utils/collaboration";
 import { exportBOQCSV } from "../../utils/exportUtils";
+import { LeadInformation } from './LeadInformation';
 
 type Props = {
   opportunity: Opportunity;
@@ -367,6 +368,7 @@ export function CollaborationWorkspace({
           </form>
         )}
       </div>
+      <LeadInformation opportunity={o} canEdit={sales || review} onSaved={onSaved} onDocuments={()=>onNavigate('documents')} />
       <div className="flex flex-wrap gap-2">
         {[
           ["technical", "Requirements & solution"],

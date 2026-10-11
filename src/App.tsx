@@ -371,7 +371,7 @@ export default function App() {
   }, [updateOpportunityLocally]);
 
   const handleCreateOpportunity = useCallback((newOpp: Opportunity) => {
-    api.createOpportunity(newOpp).then(created => {
+    return api.createOpportunity(newOpp).then(created => {
       setOpportunities(prev => [created, ...prev]);
       setIsNewModalOpen(false);
       setFullDetailOpportunity(created);

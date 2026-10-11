@@ -115,6 +115,42 @@ try {
         stage: "closed_won",
         activities: [],
         requirementDetails: "Firewall",
+        contractValue: 125000,
+        tender: {
+          isTender: true,
+          publishDate: "2026-10-11",
+          submissionDeadline: "2026-10-20",
+        },
+        leadInfo: {
+          requestType: "RFQ",
+          supportingDocumentsStatus: "Yes",
+          surveyStatus: "Yes",
+          surveyNumber: "SUR-42",
+          surveyCompleted: true,
+          technicalContact: {
+            name: "Customer engineer",
+            phone: "0123456789",
+            designation: "IT Manager",
+          },
+          additionalInfo: "RM feedback test",
+        },
+        documents: [
+          {
+            id: "support-test",
+            title: "rfq.pdf",
+            fileName: "rfq.pdf",
+            description: "Lead supporting document",
+            fileData: "data:application/pdf;base64,YQ==",
+            uploadedBy: "forged",
+          },
+          {
+            id: "survey-test",
+            title: "survey.pdf",
+            fileName: "survey.pdf",
+            description: "Lead survey report",
+            fileData: "data:application/pdf;base64,YQ==",
+          },
+        ],
         proposedArchitecture: "Firewall solution",
         boq: { items: [], approvalStatus: "draft" },
         handover: { isHandedOver: false },
@@ -125,6 +161,26 @@ try {
     assert.equal(doc.stage, "qualification");
     assert.equal(doc.leadSolutionArchitect, "Unassigned");
     const path = "/opportunities/" + doc.id;
+    assert.equal(doc.leadInfo.surveyNumber, "SUR-42");
+    assert.equal(doc.leadInfo.technicalContact.phone, "0123456789");
+    assert.equal(doc.documents[0].uploadedBy, "sales");
+    assert.equal(doc.documents[0].fileData, undefined);
+    assert.equal(
+      (await request("sales", path + "/documents/survey-test")).fileData,
+      "data:application/pdf;base64,YQ==",
+    );
+    await request(
+      "sales",
+      path,
+      "PUT",
+      { ...doc, tender: { ...doc.tender, submissionDeadline: "2026-10-01" } },
+      422,
+    );
+    doc = await request("sales", path, "PUT", {
+      ...doc,
+      leadInfo: { ...doc.leadInfo, additionalInfo: "Updated RM feedback" },
+    });
+    assert.equal(doc.leadInfo.additionalInfo, "Updated RM feedback");
     const action = (name, input = {}, user = "lead", status = 200) =>
       request(
         user,

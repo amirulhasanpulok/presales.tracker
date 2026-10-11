@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { emptyLeadInfo, LeadInfoFields, readLeadFiles } from "./LeadInfoFields";
 import {
   Opportunity,
   ScopeCatalogEntry,
@@ -33,9 +34,15 @@ export function NewOpportunityModal({
   const [close, setClose] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [leadInfo, setLeadInfo] = useState(emptyLeadInfo);
+  const [published, setPublished] = useState("");
+  const [submission, setSubmission] = useState("");
+  const [supportFiles, setSupportFiles] = useState<File[]>([]);
+  const [surveyFiles, setSurveyFiles] = useState<File[]>([]);
+  const [busy, setBusy] = useState(false);
   const field =
     "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm mt-1";
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !client.trim() || !requirement.trim() || !sales) {
       setError("Enter the client, opportunity, requirement and Sales owner.");
@@ -43,70 +50,115 @@ export function NewOpportunityModal({
     }
     const now = new Date().toISOString();
     const value = Number(budget) || 0;
-    const o: Opportunity = {
-      id: `opp-${crypto.randomUUID()}`,
-      code: `OPP-${new Date().getFullYear()}-${Date.now().toString().slice(-7)}`,
-      name: name.trim(),
-      clientName: client.trim(),
-      clientIndustry: "Enterprise SaaS",
-      region: "APAC (Singapore/Tokyo)",
-      stage: "qualification",
-      priority: "p2_medium",
-      dealComplexity: "medium",
-      technicalFitScore: "moderate",
-      primaryTechStack: (selected[0] ||
-        "Hybrid / On-Prem") as Opportunity["primaryTechStack"],
-      technologies: selected,
-      scopes: selected,
-      contractValue: value,
-      arr: 0,
-      winProbability: 10,
-      expectedCloseDate: close,
-      leadSolutionArchitect: "Unassigned",
-      accountExecutive: sales,
-      postsalesOwner: "Unassigned",
-      currentLegacyStack: "",
-      requirementDetails: requirement.trim(),
-      proposedArchitecture: "",
-      keyTechnicalRequirements: [],
-      complianceRequirements: [],
-      securityReviewStatus: "Not Started",
-      activities: [],
-      stakeholders: [],
-      documents: [],
-      actionItems: [],
-      poc: {
-        status: "not_started",
-        allocatedBudget: 0,
-        successCriteria: [],
-        blockers: [],
-      },
-      boq: {
-        items: [],
-        subtotalCost: 0,
-        subtotalListPrice: 0,
-        totalDiscountAmount: 0,
-        totalContractValue: 0,
-        annualRecurringRevenue: 0,
-        oneTimeServicesValue: 0,
-        overallMarginPercent: 0,
-        approvalStatus: "draft",
-        version: 1,
-      },
-      handover: {
-        isHandedOver: false,
-        technicalRunbookReady: false,
-        credentialsSecurelyTransferred: false,
-        customerTechKickoffScheduled: false,
-        knownTechnicalDebtOrRisks: [],
-        specialSLAsAgreed: [],
-      },
-      createdAt: now,
-      updatedAt: now,
-      lastContactedAt: now,
-      daysInCurrentStage: 0,
-    };
-    onCreateOpportunity(o);
+    const files = [
+      ...(leadInfo.supportingDocumentsStatus === "Yes" ? supportFiles : []),
+      ...(leadInfo.surveyCompleted ? surveyFiles : []),
+    ];
+    if (files.reduce((sum, f) => sum + f.size, 0) > 4 * 1024 * 1024) {
+      setError("Attachments must total 4 MB or less.");
+      return;
+    }
+    if (leadInfo.supportingDocumentsStatus === "Yes" && !supportFiles.length) {
+      setError("Attach the supporting documents or choose No / NA.");
+      return;
+    }
+    if (leadInfo.surveyCompleted && !surveyFiles.length) {
+      setError("Attach the completed survey report.");
+      return;
+    }
+    if (published && submission && submission < published) {
+      setError("Submission date cannot be before published date.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const documents = [
+        ...(await readLeadFiles(
+          leadInfo.supportingDocumentsStatus === "Yes" ? supportFiles : [],
+          false,
+        )),
+        ...(await readLeadFiles(
+          leadInfo.surveyCompleted ? surveyFiles : [],
+          true,
+        )),
+      ];
+      const o: Opportunity = {
+        leadInfo,
+        tender: {
+          isTender: leadInfo.requestType !== "Project",
+          tenderName: name.trim(),
+          publishDate: published,
+          submissionDeadline: submission,
+        },
+        id: `opp-${crypto.randomUUID()}`,
+        code: `OPP-${new Date().getFullYear()}-${Date.now().toString().slice(-7)}`,
+        name: name.trim(),
+        clientName: client.trim(),
+        clientIndustry: "Enterprise SaaS",
+        region: "APAC (Singapore/Tokyo)",
+        stage: "qualification",
+        priority: "p2_medium",
+        dealComplexity: "medium",
+        technicalFitScore: "moderate",
+        primaryTechStack: (selected[0] ||
+          "Hybrid / On-Prem") as Opportunity["primaryTechStack"],
+        technologies: selected,
+        scopes: selected,
+        contractValue: value,
+        arr: 0,
+        winProbability: 10,
+        expectedCloseDate: close,
+        leadSolutionArchitect: "Unassigned",
+        accountExecutive: sales,
+        postsalesOwner: "Unassigned",
+        currentLegacyStack: "",
+        requirementDetails: requirement.trim(),
+        proposedArchitecture: "",
+        keyTechnicalRequirements: [],
+        complianceRequirements: [],
+        securityReviewStatus: "Not Started",
+        activities: [],
+        stakeholders: [],
+        documents,
+        actionItems: [],
+        poc: {
+          status: "not_started",
+          allocatedBudget: 0,
+          successCriteria: [],
+          blockers: [],
+        },
+        boq: {
+          items: [],
+          subtotalCost: 0,
+          subtotalListPrice: 0,
+          totalDiscountAmount: 0,
+          totalContractValue: 0,
+          annualRecurringRevenue: 0,
+          oneTimeServicesValue: 0,
+          overallMarginPercent: 0,
+          approvalStatus: "draft",
+          version: 1,
+        },
+        handover: {
+          isHandedOver: false,
+          technicalRunbookReady: false,
+          credentialsSecurelyTransferred: false,
+          customerTechKickoffScheduled: false,
+          knownTechnicalDebtOrRisks: [],
+          specialSLAsAgreed: [],
+        },
+        createdAt: now,
+        updatedAt: now,
+        lastContactedAt: now,
+        daysInCurrentStage: 0,
+      };
+      await onCreateOpportunity(o);
+    } catch (error: any) {
+      setError(error.message || "Could not read attachments.");
+    } finally {
+      setBusy(false);
+    }
   };
   if (!isOpen) return null;
   return (
@@ -136,7 +188,7 @@ export function NewOpportunityModal({
         </div>
         <form onSubmit={submit} className="p-6 space-y-4">
           <label className="block text-sm">
-            Client
+            Name of the customer
             <input
               list="lead-clients"
               required
@@ -152,7 +204,7 @@ export function NewOpportunityModal({
             </datalist>
           </label>
           <label className="block text-sm">
-            Opportunity name
+            Title of the Project / Tender / RFP / RFQ
             <input
               required
               value={name}
@@ -162,7 +214,7 @@ export function NewOpportunityModal({
             />
           </label>
           <label className="block text-sm">
-            Requirement
+            Scope details
             <textarea
               required
               rows={3}
@@ -173,7 +225,7 @@ export function NewOpportunityModal({
             />
           </label>
           <label className="block text-sm">
-            Sales owner
+            Sales KAM / RM
             <select
               required
               disabled={currentUser?.roleId === "role-kam"}
@@ -193,7 +245,7 @@ export function NewOpportunityModal({
           </label>
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="text-sm">
-              Estimated budget (BDT) · optional
+              Approx. project value / budget (BDT)
               <input
                 type="number"
                 min="0"
@@ -212,6 +264,21 @@ export function NewOpportunityModal({
               />
             </label>
           </div>
+          <LeadInfoFields
+            value={leadInfo}
+            onChange={setLeadInfo}
+            published={published}
+            submission={submission}
+            onPublished={setPublished}
+            onSubmission={setSubmission}
+            onFiles={(files, survey) =>
+              survey ? setSurveyFiles(files) : setSupportFiles(files)
+            }
+          />
+          <p className="text-xs text-slate-500">
+            Supporting documents and survey reports are saved under Documents.
+            Total attachments: up to 4 MB.
+          </p>
           <details className="text-sm">
             <summary className="cursor-pointer text-slate-600">
               Scope / solutions (optional)
@@ -253,8 +320,11 @@ export function NewOpportunityModal({
             >
               Cancel
             </button>
-            <button className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm">
-              Submit for review
+            <button
+              disabled={busy}
+              className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50"
+            >
+              {busy ? "Preparing…" : "Submit for review"}
             </button>
           </div>
         </form>

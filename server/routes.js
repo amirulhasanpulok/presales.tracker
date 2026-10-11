@@ -8,6 +8,7 @@ import { can, requirePermission, requireAnyEditPermission } from './rbac.js';
 import { audit } from './audit.js';
 import { initialCollaboration, transition } from './collaboration.js';
 import { isDeepStrictEqual } from 'node:util';
+import { validateLeadIntake } from './lead-intake.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -350,6 +351,7 @@ router.post('/opportunities', authenticate, requirePermission('create_opportunit
   }
   const out = {
     ...doc,
+    documents: (Array.isArray(doc.documents) ? doc.documents : []).map(d => ({...d, uploadedBy:req.user.name,uploadedAt:new Date().toISOString()})),
     stage: 'qualification',
     accountExecutive: (req.user?.roleId || req.user?.role_id) === 'role-kam' ? req.user.name : doc.accountExecutive,
     leadSolutionArchitect: 'Unassigned',
@@ -365,6 +367,7 @@ router.post('/opportunities', authenticate, requirePermission('create_opportunit
   if (!String(out.name || '').trim() || !String(out.clientName || '').trim()) return res.status(400).json({ error: 'invalid_opportunity', hint: 'Client and opportunity name are required.' });
   const salesOwner = await query("SELECT 1 FROM users WHERE name=$1 AND role_id='role-kam' AND lower(status)='active'", [out.accountExecutive]);
   if (!salesOwner.rowCount) return res.status(422).json({ error: 'invalid_sales_owner', hint: 'Choose an active Sales owner.' });
+  try {validateLeadIntake(out);} catch(error) {return res.status(422).json({error:'invalid_lead_information',hint:error.message});}
   await query('INSERT INTO opportunities (id, doc, owner_id, updated_at) VALUES ($1, $2, $3, now())', [
     out.id,
     JSON.stringify(out),
@@ -465,6 +468,7 @@ router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async
   delete out.updateNote;
   out.activities = [out.activities[0], ...(previousDoc.activities || [])];
   out.documents = (out.documents || []).map(d => ({ ...d, ...(previousDoc.documents || []).find(p => p.id === d.id && p.fileData) }));
+  try {validateLeadIntake(out, previousDoc);} catch(error) {return res.status(422).json({error:'invalid_lead_information',hint:error.message});}
   const result = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 AND doc = $3::jsonb RETURNING id', [
     req.params.id,
     JSON.stringify(out),

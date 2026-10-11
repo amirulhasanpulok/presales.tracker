@@ -161,7 +161,7 @@ export const api = {
   createOpportunity: (doc: unknown) =>
     request<any>('/opportunities', { method: 'POST', body: JSON.stringify(doc) }),
 
-  updateOpportunity: (doc: unknown & { id: string }) =>
+  updateOpportunity: <T extends { id: string }>(doc: T) =>
     request<any>(`/opportunities/${encodeURIComponent(doc.id)}`, { method: 'PUT', body: JSON.stringify(doc) }),
 
   addActivity: (opportunityId: string, activity: unknown) =>

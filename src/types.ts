@@ -33,7 +33,7 @@ export interface Stakeholder {
 export interface OpportunityDocument {
   id: string;
   title: string;
-  type: 'Architecture Diagram' | 'SADD Blueprint' | 'RFP Response' | 'Security Whitepaper' | 'BOQ Sheet' | 'SOW Draft' | 'POC Report';
+  type: 'Architecture Diagram' | 'SADD Blueprint' | 'RFP Response' | 'Security Whitepaper' | 'BOQ Sheet' | 'SOW Draft' | 'POC Report' | 'Supporting Document' | 'Survey Report';
   version: string;
   size: string;
   uploadedBy: string;
@@ -205,6 +205,7 @@ export interface DealOutcome {
 }
 
 export interface Opportunity {
+  leadInfo?: LeadInformation;
   collaboration?: Collaboration;
   id: string;
   code: string;
@@ -271,6 +272,16 @@ export interface Opportunity {
   updatedAt: string;
   lastContactedAt: string;
   daysInCurrentStage: number;
+}
+
+export interface LeadInformation {
+  requestType: 'Project' | 'Tender' | 'RFP' | 'RFQ';
+  supportingDocumentsStatus: 'Yes' | 'No' | 'NA';
+  surveyStatus: 'Yes' | 'No' | 'NA';
+  surveyNumber: string;
+  surveyCompleted: boolean;
+  technicalContact: { name: string; phone: string; designation: string };
+  additionalInfo: string;
 }
 
 export interface Collaboration {
