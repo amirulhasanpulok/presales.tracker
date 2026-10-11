@@ -50,9 +50,9 @@ export const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ user
   return (
     <div className="h-screen overflow-hidden bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-xs p-8">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-blue-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
               PT
             </div>
             <div>
@@ -61,8 +61,8 @@ export const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ user
             </div>
           </div>
 
-          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800 flex items-start gap-2 mb-4">
-            <ShieldCheck className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.25" />
+          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-sm text-xs text-amber-800 flex items-start gap-2 mb-4">
+            <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.25" />
             <span>
               For your security, you must set a personal password before using the platform. Your temporary password
               is still active until you complete this step.
@@ -81,7 +81,7 @@ export const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ user
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   disabled={submitting}
-                  className="w-full text-xs border border-gray-300 rounded pl-8 pr-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                  className="w-full text-xs border border-gray-300 rounded-sm pl-8 pr-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
                 />
               </div>
             </div>
@@ -98,7 +98,7 @@ export const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ user
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   disabled={submitting}
-                  className="w-full text-xs border border-gray-300 rounded pl-8 pr-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                  className="w-full text-xs border border-gray-300 rounded-sm pl-8 pr-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
                 />
               </div>
               <p className="text-[10px] text-gray-400 mt-1">At least 10 characters with at least one letter and one number.</p>
@@ -115,14 +115,14 @@ export const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ user
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={submitting}
-                  className="w-full text-xs border border-gray-300 rounded pl-8 pr-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
+                  className="w-full text-xs border border-gray-300 rounded-sm pl-8 pr-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="p-2.5 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="p-2.5 bg-red-50 border border-red-200 rounded-sm text-xs text-red-700 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
@@ -130,7 +130,7 @@ export const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ user
             <button
               type="submit"
               disabled={submitting}
-              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs transition-colors disabled:opacity-60"
+              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs transition-colors disabled:opacity-60"
             >
               {submitting ? (
                 <>

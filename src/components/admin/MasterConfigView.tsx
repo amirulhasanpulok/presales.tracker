@@ -86,11 +86,11 @@ export const MasterConfigView: React.FC = () => {
   return (
     <div className="space-y-4 max-w-5xl mx-auto">
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 tracking-tight">Presales Master Data & Taxonomy Configuration</h1>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 font-semibold border border-blue-200">
               CORE METADATA
             </span>
           </div>
@@ -101,28 +101,28 @@ export const MasterConfigView: React.FC = () => {
 
         <button
           onClick={handleSave}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
         >
           <Save className="w-3.5 h-3.5" />
           Save Master Taxonomy
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
         <div><h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Activity Types</h3><p className="text-[11px] text-gray-500 mt-0.5">These options appear in every Opportunity Activity Timeline.</p></div>
-        <div className="flex flex-wrap gap-1.5">{activityTypes.map(type => <span key={type} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-gray-50 border border-gray-200">{type}<button type="button" onClick={() => setActivityTypes(current => current.filter(item => item !== type))} className="text-gray-400 hover:text-red-600" aria-label={`Remove ${type}`}>×</button></span>)}</div>
-        <div className="flex gap-2"><input value={newActivityType} onChange={e => setNewActivityType(e.target.value)} placeholder="Add activity type..." className="enterprise-input flex-1 text-xs" /><button type="button" onClick={() => { const value = newActivityType.trim(); if (value && !activityTypes.includes(value)) { setActivityTypes([...activityTypes, value]); setNewActivityType(''); } }} className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded">Add</button></div>
+        <div className="flex flex-wrap gap-1.5">{activityTypes.map(type => <span key={type} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded-sm bg-gray-50 border border-gray-200">{type}<button type="button" onClick={() => setActivityTypes(current => current.filter(item => item !== type))} className="text-gray-400 hover:text-red-600" aria-label={`Remove ${type}`}>×</button></span>)}</div>
+        <div className="flex gap-2"><input value={newActivityType} onChange={e => setNewActivityType(e.target.value)} placeholder="Add activity type..." className="enterprise-input flex-1 text-xs" /><button type="button" onClick={() => { const value = newActivityType.trim(); if (value && !activityTypes.includes(value)) { setActivityTypes([...activityTypes, value]); setNewActivityType(''); } }} className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-sm">Add</button></div>
       </div>
 
       {savedSuccess && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800 font-medium flex items-center gap-2">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-sm text-xs text-emerald-800 font-medium flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           Master taxonomy synchronized across all Presales workspace instances.
         </div>
       )}
 
       {/* Grid: 3 Taxonomy Panels */}
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Default Currency</h3>
           <p className="text-[11px] text-gray-500 mt-0.5">Applied to pricing, pipeline values, BOQs, reports, and exports. This changes display labels only.</p>
@@ -136,7 +136,7 @@ export const MasterConfigView: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Panel 1: Primary Cloud & Tech Stacks */}
-        <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
             <Cpu className="w-4 h-4 text-blue-600" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Supported Tech Stacks</h3>
@@ -144,7 +144,7 @@ export const MasterConfigView: React.FC = () => {
 
           <div className="space-y-1.5">
             {techStacks.map((t, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 rounded bg-gray-50 border border-gray-200 text-xs">
+              <div key={idx} className="flex items-center justify-between p-2 rounded-sm bg-gray-50 border border-gray-200 text-xs">
                 <span className="font-semibold text-gray-900">{t}</span>
                 <button
                   onClick={() => setTechStacks(techStacks.filter((_, i) => i !== idx))}
@@ -164,14 +164,14 @@ export const MasterConfigView: React.FC = () => {
               placeholder="Add tech stack..."
               className="enterprise-input flex-1 text-xs py-1"
             />
-            <button type="submit" className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded text-xs font-semibold hover:bg-blue-100">
+            <button type="submit" className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-sm text-xs font-semibold hover:bg-blue-100">
               <Plus className="w-3.5 h-3.5" />
             </button>
           </form>
         </div>
 
         {/* Panel 2: Industry Verticals */}
-        <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
             <Layers className="w-4 h-4 text-emerald-600" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Industry Verticals</h3>
@@ -179,7 +179,7 @@ export const MasterConfigView: React.FC = () => {
 
           <div className="space-y-1.5">
             {industries.map((ind, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 rounded bg-gray-50 border border-gray-200 text-xs">
+              <div key={idx} className="flex items-center justify-between p-2 rounded-sm bg-gray-50 border border-gray-200 text-xs">
                 <span className="font-semibold text-gray-900">{ind}</span>
                 <button
                   onClick={() => setIndustries(industries.filter((_, i) => i !== idx))}
@@ -199,14 +199,14 @@ export const MasterConfigView: React.FC = () => {
               placeholder="Add industry..."
               className="enterprise-input flex-1 text-xs py-1"
             />
-            <button type="submit" className="px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-xs font-semibold hover:bg-emerald-100">
+            <button type="submit" className="px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-sm text-xs font-semibold hover:bg-emerald-100">
               <Plus className="w-3.5 h-3.5" />
             </button>
           </form>
         </div>
 
         {/* Panel 3: Sales Territories & Regions */}
-        <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
             <Globe className="w-4 h-4 text-purple-600" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Geographic Regions</h3>
@@ -214,7 +214,7 @@ export const MasterConfigView: React.FC = () => {
 
           <div className="space-y-1.5">
             {regions.map((reg, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 rounded bg-gray-50 border border-gray-200 text-xs">
+              <div key={idx} className="flex items-center justify-between p-2 rounded-sm bg-gray-50 border border-gray-200 text-xs">
                 <span className="font-semibold text-gray-900">{reg}</span>
                 <button
                   onClick={() => setRegions(regions.filter((_, i) => i !== idx))}
@@ -234,7 +234,7 @@ export const MasterConfigView: React.FC = () => {
               placeholder="Add territory..."
               className="enterprise-input flex-1 text-xs py-1"
             />
-            <button type="submit" className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded text-xs font-semibold hover:bg-purple-100">
+            <button type="submit" className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-sm text-xs font-semibold hover:bg-purple-100">
               <Plus className="w-3.5 h-3.5" />
             </button>
           </form>

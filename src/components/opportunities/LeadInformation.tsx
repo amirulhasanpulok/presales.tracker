@@ -231,7 +231,7 @@ export function LeadInformation({
                 className="grid sm:grid-cols-2 gap-1 sm:gap-4 py-3 text-sm"
               >
                 <dt className="text-slate-500">{label}</dt>
-                <dd className="text-slate-900 whitespace-pre-wrap break-words">
+                <dd className="text-slate-900 whitespace-pre-wrap wrap-break-word">
                   {value || "—"}
                 </dd>
               </div>

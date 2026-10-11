@@ -126,7 +126,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
   return (
     <div className="space-y-4">
       {/* Action Header */}
-      <div className="bg-white border border-gray-200 rounded p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
             Technical Documentation & Deliverables
@@ -139,7 +139,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
 
         <button
           onClick={() => setShowUploadModal(!showUploadModal)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
         >
           <Upload className="w-3.5 h-3.5" />
           Upload Document
@@ -150,7 +150,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
       {showUploadModal && (
         <form
           onSubmit={handleUpload}
-          className="bg-white border border-blue-200 rounded p-4 space-y-3"
+          className="bg-white border border-blue-200 rounded-sm p-4 space-y-3"
         >
           <div className="flex items-center justify-between border-b border-gray-100 pb-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">
@@ -184,7 +184,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
             <input
               type="file"
               onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-              className="w-full text-xs file:mr-2 file:rounded file:border-0 file:bg-blue-50 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-blue-700"
+              className="w-full text-xs file:mr-2 file:rounded-sm file:border-0 file:bg-blue-50 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-blue-700"
             />
           </div>
 
@@ -230,7 +230,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
             <button
               disabled={uploading}
               type="submit"
-              className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded"
+              className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm"
             >
               Attach & Sync
             </button>
@@ -239,7 +239,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
       )}
 
       {/* Documents Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-sm overflow-x-auto">
         <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
@@ -256,7 +256,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
               <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
                 <td className="py-2.5 px-3">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-gray-100 border border-gray-200">
+                    <div className="p-1.5 rounded-sm bg-gray-100 border border-gray-200">
                       {getDocTypeIcon(doc.type)}
                     </div>
                     <div>
@@ -270,7 +270,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
                   </div>
                 </td>
                 <td className="py-2.5 px-3">
-                  <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-800 font-mono border border-gray-200">
+                  <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-sm bg-gray-100 text-gray-800 font-mono border border-gray-200">
                     {doc.type}
                   </span>
                 </td>
@@ -296,7 +296,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
                 <td className="py-2.5 px-3 text-right">
                   <button
                     onClick={() => downloadDocument(doc)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded border border-blue-200"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-sm border border-blue-200"
                   >
                     <Download className="w-3 h-3" />
                     Download
@@ -310,14 +310,14 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
           {docs.map((doc) => (
             <article
               key={doc.id}
-              className="border border-gray-200 rounded p-3 bg-white space-y-2"
+              className="border border-gray-200 rounded-sm p-3 bg-white space-y-2"
             >
               <div className="flex items-start gap-2">
-                <div className="p-1.5 rounded bg-gray-100 border border-gray-200">
+                <div className="p-1.5 rounded-sm bg-gray-100 border border-gray-200">
                   {getDocTypeIcon(doc.type)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-semibold text-gray-900 break-words">
+                  <h4 className="text-sm font-semibold text-gray-900 wrap-break-word">
                     {doc.title}
                   </h4>
                   <div className="text-[10px] text-gray-500">
@@ -331,7 +331,7 @@ export const OpportunityDocuments: React.FC<OpportunityDocumentsProps> = ({
                 </span>
                 <button
                   onClick={() => downloadDocument(doc)}
-                  className="inline-flex items-center gap-1 px-2 py-1 text-blue-700 bg-blue-50 border border-blue-200 rounded font-semibold"
+                  className="inline-flex items-center gap-1 px-2 py-1 text-blue-700 bg-blue-50 border border-blue-200 rounded-sm font-semibold"
                 >
                   <Download className="w-3 h-3" /> Download
                 </button>

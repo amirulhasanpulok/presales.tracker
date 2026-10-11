@@ -313,14 +313,14 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
           <div className="flex items-start justify-between gap-4">
             <div>
             <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-sm border border-blue-200">
                   {opportunity.code}
                 </span>
                 <StageBadge stage={opportunity.stage} />
                 <PriorityBadge priority={opportunity.priority} />
                 <ComplexityBadge complexity={opportunity.dealComplexity} />
               </div>
-              <h2 className="text-lg font-bold text-gray-900 tracking-tight break-words">
+              <h2 className="text-lg font-bold text-gray-900 tracking-tight wrap-break-word">
                 {opportunity.name}
               </h2>
               <div className="flex items-center gap-3 text-xs text-gray-500 font-mono mt-1">
@@ -340,7 +340,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
               {onOpenFullDetail && (
                 <button
                   onClick={() => onOpenFullDetail(opportunity)}
-                  className="px-2.5 py-1 text-xs font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded flex items-center gap-1 transition-colors"
+                  className="px-2.5 py-1 text-xs font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-sm flex items-center gap-1 transition-colors"
                   title="Expand to Full Workspace Screen"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -349,7 +349,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
               )}
               <button
                 onClick={onClose}
-                className="p-1.5 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors"
+                className="p-1.5 rounded-sm hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -358,19 +358,19 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
 
           {/* Quick Metrics Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-gray-200 text-xs font-mono">
-            <div className="bg-white p-2 rounded border border-gray-200">
+            <div className="bg-white p-2 rounded-sm border border-gray-200">
               <span className="text-gray-500 text-[11px]">Total Contract (TCV):</span>
                 <div className="text-sm font-bold text-gray-900">{formatCurrency(opportunity.contractValue)}</div>
             </div>
-            <div className="bg-white p-2 rounded border border-gray-200">
+            <div className="bg-white p-2 rounded-sm border border-gray-200">
               <span className="text-gray-500 text-[11px]">Win Probability:</span>
               <div className="text-sm font-bold text-emerald-700">{opportunity.winProbability}%</div>
             </div>
-            <div className="bg-white p-2 rounded border border-gray-200">
+            <div className="bg-white p-2 rounded-sm border border-gray-200">
               <span className="text-gray-500 text-[11px]">Lead Solution Architect:</span>
               <div className="text-xs font-semibold text-gray-900 truncate">{opportunity.leadSolutionArchitect}</div>
             </div>
-            <div className="bg-white p-2 rounded border border-gray-200">
+            <div className="bg-white p-2 rounded-sm border border-gray-200">
               <span className="text-gray-500 text-[11px]">Target Close:</span>
               <div className="text-xs font-semibold text-gray-900">{opportunity.expectedCloseDate}</div>
             </div>
@@ -421,31 +421,31 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                     <Layers className="w-4 h-4 text-blue-600" />
                     Target Technical Solution Architecture
                   </h3>
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 border border-blue-200">
                     Primary: {opportunity.primaryTechStack}
                   </span>
                 </div>
 
-                <p className="text-gray-700 leading-relaxed bg-gray-50 p-3 rounded border border-gray-200">
+                <p className="text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-sm border border-gray-200">
                   {opportunity.proposedArchitecture}
                 </p>
 
                 {/* Legacy vs Target stack */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                  <div className="bg-rose-50/50 p-2.5 rounded border border-rose-200">
+                  <div className="bg-rose-50/50 p-2.5 rounded-sm border border-rose-200">
                     <div className="text-[11px] font-mono text-rose-800 font-semibold mb-1">
                       Current Legacy Stack & Pain Points:
                     </div>
                     <p className="text-gray-700 text-xs">{opportunity.currentLegacyStack}</p>
                   </div>
 
-                  <div className="bg-emerald-50/50 p-2.5 rounded border border-emerald-200">
+                  <div className="bg-emerald-50/50 p-2.5 rounded-sm border border-emerald-200">
                     <div className="text-[11px] font-mono text-emerald-800 font-semibold mb-1">
                       Target Cloud & Tech Components:
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {opportunity.technologies.map((t, idx) => (
-                        <span key={idx} className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white text-gray-800 border border-gray-200 font-medium">
+                        <span key={idx} className="font-mono text-[10px] px-1.5 py-0.5 rounded-sm bg-white text-gray-800 border border-gray-200 font-medium">
                           {t}
                         </span>
                       ))}
@@ -467,8 +467,8 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
 
                 <div className="space-y-1.5">
                   {opportunity.keyTechnicalRequirements.map((req, idx) => (
-                    <div key={idx} className="flex items-start gap-2 bg-gray-50 p-2 rounded border border-gray-200">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <div key={idx} className="flex items-start gap-2 bg-gray-50 p-2 rounded-sm border border-gray-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                       <span className="text-gray-800 font-medium">{req}</span>
                     </div>
                   ))}
@@ -502,7 +502,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                         setNewReqInput('');
                       }
                     }}
-                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-xs font-mono font-semibold transition-colors"
+                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-sm border border-blue-200 text-xs font-mono font-semibold transition-colors"
                   >
                     Add
                   </button>
@@ -527,7 +527,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
 
                 <div className="flex flex-wrap gap-2">
                   {opportunity.complianceRequirements.map((c, i) => (
-                    <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded bg-gray-50 border border-gray-200 text-xs font-mono text-gray-800 font-medium">
+                    <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-gray-50 border border-gray-200 text-xs font-mono text-gray-800 font-medium">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                       <span>{c}</span>
                     </div>
@@ -547,7 +547,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                 </span>
                 <button
                   onClick={() => setShowAddActivity(true)}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-mono text-xs font-semibold shadow-2xs transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Log Activity / Minutes</span>
@@ -556,7 +556,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
 
               {/* Add Activity Form */}
               {showAddActivity && (
-                <form onSubmit={handleAddActivitySubmit} className="bg-white border border-blue-300 rounded-md p-3 space-y-2.5 shadow-xs">
+                <form onSubmit={handleAddActivitySubmit} className="bg-white border border-blue-300 rounded-md p-3 space-y-2.5 shadow-2xs">
                   <div className="font-mono font-bold text-blue-700 text-xs">New Presales Activity Entry</div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -600,13 +600,13 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                     <button
                       type="button"
                       onClick={() => setShowAddActivity(false)}
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-mono text-xs transition-colors"
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-sm font-mono text-xs transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-mono text-xs font-semibold shadow-2xs transition-colors"
                     >
                       Save Activity
                     </button>
@@ -621,7 +621,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-semibold text-blue-700 px-1.5 py-0.2 rounded bg-blue-50 border border-blue-200 text-[11px]">
+                          <span className="font-mono font-semibold text-blue-700 px-1.5 py-0.2 rounded-sm bg-blue-50 border border-blue-200 text-[11px]">
                             {act.type}
                           </span>
                           <span className="font-semibold text-gray-900 text-xs">{act.title}</span>
@@ -632,7 +632,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                       </div>
                     </div>
 
-                    <p className="text-gray-700 text-xs leading-relaxed bg-gray-50 p-2.5 rounded border border-gray-200">
+                    <p className="text-gray-700 text-xs leading-relaxed bg-gray-50 p-2.5 rounded-sm border border-gray-200">
                       {act.summary}
                     </p>
 
@@ -666,15 +666,15 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 font-mono text-[11px]">
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                  <div className="bg-gray-50 p-2 rounded-sm border border-gray-200">
                     <span className="text-gray-500">Environment Sandbox URL:</span>
                     <div className="text-blue-600 truncate mt-0.5 font-medium">{opportunity.poc.environmentUrl || 'Not provisioned'}</div>
                   </div>
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                  <div className="bg-gray-50 p-2 rounded-sm border border-gray-200">
                     <span className="text-gray-500">Allocated Cloud Budget:</span>
                     <div className="text-gray-900 font-bold mt-0.5">{formatCurrency(opportunity.poc.allocatedBudget || 0)}</div>
                   </div>
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                  <div className="bg-gray-50 p-2 rounded-sm border border-gray-200">
                     <span className="text-gray-500">Customer Sign-Off:</span>
                     <div className="text-emerald-700 font-bold mt-0.5">{opportunity.poc.customerSignOffDate || 'Pending Criteria'}</div>
                   </div>
@@ -706,13 +706,13 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                         <div className={`mt-0.5 w-4 h-4 rounded flex items-center justify-center border ${
                           crit.verified ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 bg-white'
                         }`}>
-                          {crit.verified && <Check className="w-3 h-3 stroke-[3]" />}
+                          {crit.verified && <Check className="w-3 h-3 stroke-3" />}
                         </div>
 
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-gray-900">{crit.description}</span>
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-700 border border-gray-200">
                               {crit.category}
                             </span>
                           </div>
@@ -741,7 +741,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                   <div className="text-gray-400 text-xs py-1">No active blockers. POC running smoothly.</div>
                 ) : (
                   (opportunity.poc?.blockers || []).map((blk) => (
-                    <div key={blk.id} className="bg-amber-50/50 p-2.5 rounded border border-amber-200 flex items-center justify-between">
+                    <div key={blk.id} className="bg-amber-50/50 p-2.5 rounded-sm border border-amber-200 flex items-center justify-between">
                       <div>
                         <div className="font-semibold text-gray-900">{blk.description}</div>
                         <div className="text-[11px] font-mono text-gray-500 mt-0.5">
@@ -782,20 +782,20 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                     {opportunity.boq.approvalStatus !== 'approved' ? (
                       <button
                         onClick={handleApproveBOQ}
-                        className="flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+                        className="flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm font-mono text-xs font-semibold shadow-2xs transition-colors"
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>Sign Off & Approve BOQ</span>
                       </button>
                     ) : (
-                      <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 font-semibold">
+                      <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-1 rounded-sm border border-emerald-200 font-semibold">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Approved by {opportunity.boq.approvedBy}
                       </span>
                     )}
 
                     <button
                       onClick={() => setShowAddBOQ(true)}
-                      className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+                      className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-mono text-xs font-semibold shadow-2xs transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Line Item</span>
@@ -805,19 +805,19 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
 
                 {/* Financial Calculus Metric Ribbons */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs font-mono">
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                  <div className="bg-gray-50 p-2 rounded-sm border border-gray-200">
                     <span className="text-gray-500 text-[11px]">List Price (Pre-Discount):</span>
                     <div className="font-bold text-gray-900">{formatCurrency(opportunity.boq.subtotalListPrice)}</div>
                   </div>
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                  <div className="bg-gray-50 p-2 rounded-sm border border-gray-200">
                     <span className="text-gray-500 text-[11px]">Contract TCV:</span>
                     <div className="font-bold text-blue-700">{formatCurrency(opportunity.boq.totalContractValue)}</div>
                   </div>
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                  <div className="bg-gray-50 p-2 rounded-sm border border-gray-200">
                     <span className="text-gray-500 text-[11px]">Total Cost of Delivery:</span>
                     <div className="font-bold text-gray-600">{formatCurrency(opportunity.boq.subtotalCost)}</div>
                   </div>
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                  <div className="bg-gray-50 p-2 rounded-sm border border-gray-200">
                     <span className="text-gray-500 text-[11px]">Realized Gross Margin:</span>
                     <div className="font-bold text-emerald-700">{opportunity.boq.overallMarginPercent}%</div>
                   </div>
@@ -826,7 +826,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
 
               {/* Add BOQ Item Modal / Inline Form */}
               {showAddBOQ && (
-                <form onSubmit={handleAddBOQSubmit} className="bg-white border border-purple-300 rounded-md p-3 space-y-2.5 shadow-xs">
+                <form onSubmit={handleAddBOQSubmit} className="bg-white border border-purple-300 rounded-md p-3 space-y-2.5 shadow-2xs">
                   <div className="font-mono font-bold text-purple-700 text-xs">Add BOQ Line Item</div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -928,13 +928,13 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                     <button
                       type="button"
                       onClick={() => setShowAddBOQ(false)}
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-mono text-xs transition-colors"
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-sm font-mono text-xs transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+                      className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-sm font-mono text-xs font-semibold shadow-2xs transition-colors"
                     >
                       Add to BOQ
                     </button>
@@ -1017,7 +1017,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                 </span>
                 <button
                   onClick={() => setShowAddStakeholder(true)}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-mono text-xs font-semibold shadow-2xs transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add Stakeholder</span>
@@ -1026,7 +1026,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
 
               {/* Add Stakeholder Form */}
               {showAddStakeholder && (
-                <form onSubmit={handleAddStakeholderSubmit} className="bg-white border border-blue-300 rounded-md p-3 space-y-2.5 shadow-xs">
+                <form onSubmit={handleAddStakeholderSubmit} className="bg-white border border-blue-300 rounded-md p-3 space-y-2.5 shadow-2xs">
                   <div className="font-mono font-bold text-blue-700 text-xs">Map New Stakeholder</div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1112,13 +1112,13 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                     <button
                       type="button"
                       onClick={() => setShowAddStakeholder(false)}
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-mono text-xs transition-colors"
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-sm font-mono text-xs transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-mono text-xs font-semibold shadow-2xs transition-colors"
                     >
                       Save Stakeholder
                     </button>
@@ -1147,20 +1147,20 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                           <div className="text-[10px] text-blue-600 font-mono">{stk.email}</div>
                         </div>
 
-                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-medium ${s.bg} ${s.color}`}>
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-sm border font-medium ${s.bg} ${s.color}`}>
                           {s.label}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2 pt-1 border-t border-gray-100 text-[11px] font-mono text-gray-500">
-                        <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
+                        <span className="px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-700 border border-gray-200">
                           {stk.buyingRole}
                         </span>
                         <span>Influence: <strong className="text-gray-800 capitalize">{stk.influence}</strong></span>
                       </div>
 
                       {stk.notes && (
-                        <p className="text-[11px] text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
+                        <p className="text-[11px] text-gray-600 bg-gray-50 p-2 rounded-sm border border-gray-200">
                           "{stk.notes}"
                         </p>
                       )}
@@ -1181,7 +1181,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                 </span>
                 <button
                   onClick={() => setShowAddAction(true)}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-mono text-xs font-semibold shadow-2xs transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>New SLA Task</span>
@@ -1190,7 +1190,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
 
               {/* Add Action Item Form */}
               {showAddAction && (
-                <form onSubmit={handleAddActionSubmit} className="bg-white border border-blue-300 rounded-md p-3 space-y-2.5 shadow-xs">
+                <form onSubmit={handleAddActionSubmit} className="bg-white border border-blue-300 rounded-md p-3 space-y-2.5 shadow-2xs">
                   <div className="font-mono font-bold text-blue-700 text-xs">New Action Item</div>
                   
                   <div>
@@ -1243,13 +1243,13 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                     <button
                       type="button"
                       onClick={() => setShowAddAction(false)}
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-mono text-xs transition-colors"
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-sm font-mono text-xs transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-xs font-semibold shadow-xs transition-colors"
+                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-mono text-xs font-semibold shadow-2xs transition-colors"
                     >
                       Create Task
                     </button>
@@ -1277,7 +1277,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                       <div className={`mt-0.5 w-4 h-4 rounded flex items-center justify-center border ${
                         act.isCompleted ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'
                       }`}>
-                        {act.isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
+                        {act.isCompleted && <Check className="w-3 h-3 stroke-3" />}
                       </div>
 
                       <div className="flex-1">
@@ -1295,7 +1295,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                             Due: {act.dueDate} {isOverdue && '(OVERDUE)'}
                           </span>
                           <span>•</span>
-                          <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">{act.category}</span>
+                          <span className="px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-700 border border-gray-200">{act.category}</span>
                         </div>
                       </div>
                     </div>
@@ -1326,13 +1326,13 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-mono text-[11px]">
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                  <div className="bg-gray-50 p-2 rounded-sm border border-gray-200">
                     <span className="text-gray-500">Assigned Delivery Lead:</span>
                     <div className="text-gray-900 font-semibold mt-0.5">
                       {opportunity.handover?.assignedDeliveryLead || 'Unassigned (Pending Closed-Won)'}
                     </div>
                   </div>
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                  <div className="bg-gray-50 p-2 rounded-sm border border-gray-200">
                     <span className="text-gray-500">Assigned Customer Success (CSM):</span>
                     <div className="text-gray-900 font-semibold mt-0.5">
                       {opportunity.handover.assignedCustomerSuccessManager || 'Unassigned'}
@@ -1366,7 +1366,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                         <div className={`w-4 h-4 rounded flex items-center justify-center border ${
                           isChecked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 bg-white'
                         }`}>
-                          {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                          {isChecked && <Check className="w-3 h-3 stroke-3" />}
                         </div>
                         <span className={`text-xs ${isChecked ? 'text-emerald-900 font-semibold' : 'text-gray-700'}`}>
                           {item.label}
@@ -1388,7 +1388,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
                   <div className="text-gray-400 text-xs italic">No known architectural delivery risks noted.</div>
                 ) : (
                   opportunity.handover.knownTechnicalDebtOrRisks.map((risk, i) => (
-                    <div key={i} className="bg-amber-50/50 p-2 rounded border border-amber-200 text-gray-800 text-xs">
+                    <div key={i} className="bg-amber-50/50 p-2 rounded-sm border border-amber-200 text-gray-800 text-xs">
                       • {risk}
                     </div>
                   ))
@@ -1409,7 +1409,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded font-mono text-xs transition-colors shadow-2xs"
+              className="px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-sm font-mono text-xs transition-colors shadow-2xs"
             >
               Close Inspector
             </button>

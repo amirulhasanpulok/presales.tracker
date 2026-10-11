@@ -76,7 +76,7 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
   return (
     <div className="space-y-4">
       {/* Action Bar */}
-      <div className="bg-white border border-gray-200 rounded p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="bg-white border border-gray-200 rounded-sm p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-gray-700">Filter Activity:</span>
           <select
@@ -91,7 +91,7 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
 
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
         >
           <Plus className="w-3.5 h-3.5" />
           Log Presales Session
@@ -100,7 +100,7 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
 
       {/* Add Form */}
       {showAddForm && (
-        <form onSubmit={handleSaveActivity} className="bg-white border border-blue-200 rounded p-4 space-y-3">
+        <form onSubmit={handleSaveActivity} className="bg-white border border-blue-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-gray-100 pb-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Log New Technical Engagement</h4>
             <button type="button" onClick={() => setShowAddForm(false)} className="text-xs text-gray-500 hover:text-gray-800">&times; Cancel</button>
@@ -153,7 +153,7 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
           </div>
 
           <div className="flex justify-end gap-2">
-            <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded">
+            <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm">
               Save Activity Log
             </button>
           </div>
@@ -161,19 +161,19 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
       )}
 
       {/* Timeline Stream */}
-      <div className="bg-white border border-gray-200 rounded p-4">
+      <div className="bg-white border border-gray-200 rounded-sm p-4">
         <div className="relative border-l border-gray-200 ml-4 pl-6 space-y-6">
           {filteredActivities.map((act, index) => (
             <div key={act.id} className="relative">
               {/* Timeline marker */}
-              <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-white border-2 border-blue-600 flex items-center justify-center">
+              <div className="absolute left-[-31px] top-1 w-4 h-4 rounded-full bg-white border-2 border-blue-600 flex items-center justify-center">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded p-3 hover:border-gray-300 transition-colors">
+              <div className="bg-gray-50 border border-gray-200 rounded-sm p-3 hover:border-gray-300 transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
                       {act.type}
                     </span>
                     <h4 className="text-xs font-bold text-gray-900">{act.title}</h4>
@@ -190,9 +190,9 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
 
                 {(act.currentStage || act.nextAction || act.nextFollowUpDate) && (
                   <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
-                    {act.currentStage && <div className="rounded bg-blue-50 border border-blue-100 p-2"><div className="text-[10px] uppercase font-semibold text-blue-700">Current Stage</div><div className="mt-0.5 font-mono text-gray-800">{act.currentStage}</div></div>}
-                    {act.nextAction && <div className="rounded bg-amber-50 border border-amber-100 p-2"><div className="text-[10px] uppercase font-semibold text-amber-700">Next Action</div><div className="mt-0.5 text-gray-800">{act.nextAction}</div></div>}
-                    {act.nextFollowUpDate && <div className="rounded bg-purple-50 border border-purple-100 p-2"><div className="text-[10px] uppercase font-semibold text-purple-700">Next Follow-up</div><div className="mt-0.5 font-mono text-gray-800">{act.nextFollowUpDate}</div></div>}
+                    {act.currentStage && <div className="rounded-sm bg-blue-50 border border-blue-100 p-2"><div className="text-[10px] uppercase font-semibold text-blue-700">Current Stage</div><div className="mt-0.5 font-mono text-gray-800">{act.currentStage}</div></div>}
+                    {act.nextAction && <div className="rounded-sm bg-amber-50 border border-amber-100 p-2"><div className="text-[10px] uppercase font-semibold text-amber-700">Next Action</div><div className="mt-0.5 text-gray-800">{act.nextAction}</div></div>}
+                    {act.nextFollowUpDate && <div className="rounded-sm bg-purple-50 border border-purple-100 p-2"><div className="text-[10px] uppercase font-semibold text-purple-700">Next Follow-up</div><div className="mt-0.5 font-mono text-gray-800">{act.nextFollowUpDate}</div></div>}
                   </div>
                 )}
 
@@ -200,7 +200,7 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
                   <div className="mt-2.5 pt-2 border-t border-gray-200 flex flex-wrap items-center gap-1.5 text-[11px]">
                     <span className="text-gray-500 font-semibold">Attendees:</span>
                     {act.attendees.map((att, i) => (
-                      <span key={i} className="px-1.5 py-0.2 rounded bg-gray-200/80 text-gray-800 font-mono">
+                      <span key={i} className="px-1.5 py-0.2 rounded-sm bg-gray-200/80 text-gray-800 font-mono">
                         {att}
                       </span>
                     ))}
@@ -215,7 +215,7 @@ export const OpportunityTimeline: React.FC<OpportunityTimelineProps> = ({
                 )}
 
                 {act.attachments && act.attachments.length > 0 && <div className="mt-2 text-[11px] text-blue-700"><strong>Attachments:</strong> {act.attachments.join(', ')}</div>}
-                {act.metadata && <details className="mt-2 text-[10px] text-gray-500"><summary className="cursor-pointer font-semibold">Additional activity details</summary><pre className="mt-1 whitespace-pre-wrap break-words font-mono bg-white border border-gray-200 rounded p-2">{JSON.stringify(act.metadata, null, 2)}</pre></details>}
+                {act.metadata && <details className="mt-2 text-[10px] text-gray-500"><summary className="cursor-pointer font-semibold">Additional activity details</summary><pre className="mt-1 whitespace-pre-wrap wrap-break-word font-mono bg-white border border-gray-200 rounded-sm p-2">{JSON.stringify(act.metadata, null, 2)}</pre></details>}
               </div>
             </div>
           ))}

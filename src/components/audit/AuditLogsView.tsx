@@ -59,11 +59,11 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 tracking-tight">Presales Governance & Compliance Audit Trail</h1>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200">
               IMMUTABLE LEDGER
             </span>
           </div>
@@ -74,7 +74,7 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
 
         <button
           onClick={handleExportCSV}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 shadow-2xs cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 shadow-2xs cursor-pointer"
         >
           <Download className="w-3.5 h-3.5" />
           Export Audit Trail (CSV)
@@ -82,7 +82,7 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
       </div>
 
       {/* Filter Bar */}
-       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded p-3 flex flex-row sm:items-center justify-between gap-3">
+       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded-sm p-3 flex flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 max-w-sm">
           <div className="relative w-full">
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
@@ -111,7 +111,7 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
       </div>
 
       {/* Audit Log Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-sm overflow-x-auto">
          <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
@@ -134,7 +134,7 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
                   <div className="text-[10px] text-gray-500 font-mono">{log.actorRole}</div>
                 </td>
                 <td className="py-2 px-3">
-                  <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-800 font-mono border border-gray-200 font-semibold">
+                  <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-sm bg-gray-100 text-gray-800 font-mono border border-gray-200 font-semibold">
                     {log.action}
                   </span>
                 </td>
@@ -153,10 +153,10 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
           </tbody>
          </table>
          <div className="md:hidden p-2 space-y-2">
-           {filteredLogs.map(log => <article key={log.id} className="border border-gray-200 rounded p-3 space-y-2 bg-white">
-             <div className="flex items-start justify-between gap-2"><div><div className="font-bold text-xs text-gray-900">{log.actorName || log.actor || 'Unknown'}</div><div className="text-[10px] text-gray-500">{log.actorRole || '—'}</div></div><span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 font-mono">{log.action}</span></div>
+           {filteredLogs.map(log => <article key={log.id} className="border border-gray-200 rounded-sm p-3 space-y-2 bg-white">
+             <div className="flex items-start justify-between gap-2"><div><div className="font-bold text-xs text-gray-900">{log.actorName || log.actor || 'Unknown'}</div><div className="text-[10px] text-gray-500">{log.actorRole || '—'}</div></div><span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-gray-100 border border-gray-200 font-mono">{log.action}</span></div>
              <div className="text-[11px] text-blue-700 font-mono">{log.entityCode || log.targetName || log.targetId || log.targetType || 'System'}</div>
-             <p className="text-xs text-gray-700 break-words">{log.details || 'No additional details'}</p>
+             <p className="text-xs text-gray-700 wrap-break-word">{log.details || 'No additional details'}</p>
              <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono"><span>{log.timestamp}</span><span>{log.requestId ? `req:${log.requestId.slice(0, 8)}` : log.ipAddress}</span></div>
            </article>)}
            {filteredLogs.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No audit records match your filters.</div>}

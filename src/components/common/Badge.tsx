@@ -30,7 +30,7 @@ export const StageBadge: React.FC<StageBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-mono font-medium rounded border ${config.bg} ${config.color} ${config.borderColor} ${sizeClasses} whitespace-nowrap`}
+      className={`inline-flex items-center gap-1.5 font-mono font-medium rounded-sm border ${config.bg} ${config.color} ${config.borderColor} ${sizeClasses} whitespace-nowrap`}
     >
       <span
         className={`w-1.5 h-1.5 rounded-full ${config.color.replace("text-", "bg-")}`}
@@ -48,27 +48,27 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
   switch (priority) {
     case "p0_urgent":
       return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">
+        <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-sm bg-red-50 text-red-700 border border-red-200">
           <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
           P0 URGENT
         </span>
       );
     case "p1_high":
       return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+        <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded-sm bg-amber-50 text-amber-800 border border-amber-200">
           P1 HIGH
         </span>
       );
     case "p2_medium":
       return (
-        <span className="inline-flex items-center text-[11px] font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
+        <span className="inline-flex items-center text-[11px] font-mono px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-700 border border-gray-200">
           P2 MED
         </span>
       );
     case "p3_low":
     default:
       return (
-        <span className="inline-flex items-center text-[11px] font-mono px-1.5 py-0.5 rounded bg-gray-50 text-gray-500 border border-gray-200">
+        <span className="inline-flex items-center text-[11px] font-mono px-1.5 py-0.5 rounded-sm bg-gray-50 text-gray-500 border border-gray-200">
           P3 LOW
         </span>
       );
@@ -110,7 +110,7 @@ export const ComplexityBadge: React.FC<ComplexityBadgeProps> = ({
   const config = styles[complexity];
   return (
     <span
-      className={`inline-flex items-center text-[11px] font-mono px-1.5 py-0.5 rounded border ${config.bg} ${config.color}`}
+      className={`inline-flex items-center text-[11px] font-mono px-1.5 py-0.5 rounded-sm border ${config.bg} ${config.color}`}
     >
       {config.label}
     </span>
@@ -167,7 +167,7 @@ export const POCBadge: React.FC<POCBadgeProps> = ({ status }) => {
   const c = map[status] || map.not_started;
   return (
     <span
-      className={`inline-flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded border ${c.bg} ${c.color}`}
+      className={`inline-flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded-sm border ${c.bg} ${c.color}`}
     >
       <span
         className={`w-1 h-1 rounded-full ${c.color.replace("text-", "bg-")}`}
@@ -204,7 +204,7 @@ export const TechFitBadge: React.FC<{ score: TechnicalFitScore }> = ({
   };
   return (
     <span
-      className={`inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded border ${c.color}`}
+      className={`inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded-sm border ${c.color}`}
     >
       {c.label}
     </span>

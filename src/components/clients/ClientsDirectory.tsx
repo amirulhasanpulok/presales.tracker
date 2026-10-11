@@ -208,13 +208,13 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 tracking-tight">
               Enterprise Client Accounts & Accounts Registry
             </h1>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 font-semibold border border-blue-200">
               {clientsList.length} Enterprise Accounts
             </span>
           </div>
@@ -230,7 +230,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
             resetClientForm();
             setShowAddModal(true);
           }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
         >
           <Plus className="w-3.5 h-3.5" />
           Add Client Account
@@ -238,7 +238,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white border border-gray-200 rounded p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 max-w-sm">
           <div className="relative w-full">
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
@@ -256,7 +256,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
           <select
             value={filterIndustry}
             onChange={(e) => setFilterIndustry(e.target.value)}
-            className="enterprise-select text-xs py-1.5 flex-shrink-0"
+            className="enterprise-select text-xs py-1.5 shrink-0"
           >
             <option value="all">All Industries</option>
             {industryOptions.map((value) => (
@@ -269,7 +269,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
           <select
             value={filterTier}
             onChange={(e) => setFilterTier(e.target.value)}
-            className="enterprise-select text-xs py-1.5 flex-shrink-0"
+            className="enterprise-select text-xs py-1.5 shrink-0"
           >
             <option value="all">All Account Tiers</option>
             {tierOptions.map((value) => (
@@ -282,7 +282,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
       </div>
 
       {/* Clients Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-sm overflow-x-auto">
         <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
@@ -305,7 +305,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
               >
                 <td className="py-2.5 px-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-gray-700">
+                    <div className="w-8 h-8 rounded-sm bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-gray-700">
                       {client.name.substring(0, 2).toUpperCase()}
                     </div>
                     <div>
@@ -332,7 +332,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                   </span>
                 </td>
                 <td className="py-2.5 px-3">
-                  <span className="inline-flex items-center text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-800 font-mono border border-gray-200">
+                  <span className="inline-flex items-center text-[11px] px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-800 font-mono border border-gray-200">
                     {client.primaryTechStack}
                   </span>
                 </td>
@@ -358,7 +358,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                       e.stopPropagation();
                       onSelectClient(client);
                     }}
-                    className="p-1 rounded text-gray-400 hover:text-blue-700 hover:bg-gray-100"
+                    className="p-1 rounded-sm text-gray-400 hover:text-blue-700 hover:bg-gray-100"
                     title="View Client Details"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -368,7 +368,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                       e.stopPropagation();
                       editClient(client);
                     }}
-                    className="px-2 py-1 text-[10px] font-semibold text-blue-700 bg-blue-50 rounded border border-blue-200"
+                    className="px-2 py-1 text-[10px] font-semibold text-blue-700 bg-blue-50 rounded-sm border border-blue-200"
                   >
                     Edit
                   </button>
@@ -382,20 +382,20 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
             <article
               key={client.id}
               onClick={() => onSelectClient(client)}
-              className="border border-gray-200 rounded p-3 bg-white space-y-2"
+              className="border border-gray-200 rounded-sm p-3 bg-white space-y-2"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h3 className="font-bold text-sm text-gray-900 break-words">
+                  <h3 className="font-bold text-sm text-gray-900 wrap-break-word">
                     {client.name}
                   </h3>
-                  <div className="text-xs text-gray-500 break-words">
+                  <div className="text-xs text-gray-500 wrap-break-word">
                     {client.domain ||
                       client.headquarters ||
                       "No domain recorded"}
                   </div>
                 </div>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">
                   {client.tier}
                 </span>
               </div>
@@ -428,7 +428,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                       e.stopPropagation();
                       editClient(client);
                     }}
-                    className="px-2 py-1 text-[10px] font-semibold text-blue-700 bg-blue-50 rounded"
+                    className="px-2 py-1 text-[10px] font-semibold text-blue-700 bg-blue-50 rounded-sm"
                   >
                     Edit
                   </button>
@@ -463,7 +463,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                   setEditingClient(null);
                   resetClientForm();
                 }}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-sm hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -480,7 +480,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                   placeholder="e.g., Nexus Global Payments Inc."
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -513,7 +513,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                         onChange={(e) =>
                           updateBankRecord(field, e.target.value)
                         }
-                        className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                        className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                         placeholder={field}
                       />
                     </label>
@@ -528,7 +528,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                         updateBankRecord("Address", e.target.value)
                       }
                       rows={2}
-                      className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 resize-none"
+                      className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5 resize-none"
                       placeholder="Head office address"
                     />
                   </label>
@@ -545,7 +545,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                     placeholder="nexuspayments.com"
                     value={domain}
                     onChange={(e) => setDomain(e.target.value)}
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 font-mono"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5 font-mono"
                   />
                 </div>
 
@@ -558,7 +558,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                     onChange={(e) =>
                       setIndustry(e.target.value as ClientAccount["industry"])
                     }
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                   >
                     {getConfiguredTaxonomy(
                       "industries",
@@ -582,7 +582,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                     onChange={(e) =>
                       setTier(e.target.value as ClientAccount["tier"])
                     }
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                   >
                     <option value="Strategic Tier 1">Strategic Tier 1</option>
                     <option value="Enterprise Tier 2">Enterprise Tier 2</option>
@@ -598,7 +598,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                     type="text"
                     value={headquarters}
                     onChange={(e) => setHeadquarters(e.target.value)}
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                   />
                 </div>
               </div>
@@ -612,7 +612,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                     type="text"
                     value={primaryTechStack}
                     onChange={(e) => setPrimaryTechStack(e.target.value)}
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 font-mono"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5 font-mono"
                   />
                 </div>
 
@@ -625,7 +625,7 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                     value={assignedLeadSA}
                     onChange={(e) => setAssignedLeadSA(e.target.value)}
                     placeholder="Presales engineer"
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                   />
                 </div>
               </div>
@@ -638,14 +638,14 @@ export const ClientsDirectory: React.FC<ClientsDirectoryProps> = ({
                     setEditingClient(null);
                     resetClientForm();
                   }}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded border border-gray-300"
+                  className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-sm border border-gray-300"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={savingClient}
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
                 >
                   {editingClient
                     ? "Save Client Changes"

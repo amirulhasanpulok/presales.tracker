@@ -47,7 +47,7 @@ export function CentralDocumentsRepo({ documents }: { documents: Document[] }) {
       <label className="flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3">
         <Search className="h-4 w-4 text-slate-400" />
         <input
-          className="w-full text-sm outline-none"
+          className="w-full text-sm outline-hidden"
           aria-label="Search documents"
           placeholder="Search file, customer or lead…"
           value={search}
@@ -70,10 +70,10 @@ export function CentralDocumentsRepo({ documents }: { documents: Document[] }) {
             className="rounded-xl bg-white border border-slate-200 p-4 space-y-3"
           >
             <FileText className="h-5 w-5 text-blue-600" />
-            <h2 className="font-medium text-slate-900 break-words">
+            <h2 className="font-medium text-slate-900 wrap-break-word">
               {doc.title}
             </h2>
-            <p className="text-xs text-slate-500 break-words">
+            <p className="text-xs text-slate-500 wrap-break-word">
               {doc.clientName} · {doc.version || "No version"}
               <br />
               {doc.author} · {doc.lastUpdated}

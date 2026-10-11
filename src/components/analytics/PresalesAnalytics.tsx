@@ -107,7 +107,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
     <div className="space-y-4">
       
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-blue-600" />
@@ -122,7 +122,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
 
         {/* Global Metric Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100 text-xs font-mono">
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Total Supported TCV:</span>
             <div className="text-base font-bold text-gray-900">{formatCurrency(totalPipeline)}</div>
                <div className="text-[10px] text-emerald-700 flex items-center gap-0.5 mt-0.5 font-sans font-semibold">
@@ -130,19 +130,19 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
             </div>
           </div>
 
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Technical Win Rate:</span>
              <div className="text-base font-bold text-emerald-700">{liveWinRate}%</div>
              <div className="text-[10px] text-gray-500 font-sans">Closed deals</div>
           </div>
 
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Avg Tech Discovery Cycle:</span>
              <div className="text-base font-bold text-gray-900">{liveDiscoveryCycle} Days</div>
              <div className="text-[10px] text-gray-500 font-sans">Current stage average</div>
           </div>
 
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Average BOQ Margin:</span>
              <div className="text-base font-bold text-purple-700">{liveBOQMargin}%</div>
              <div className="text-[10px] text-gray-500 font-sans">Live BOQ average</div>
@@ -154,7 +154,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         {/* Breakdown by Primary Cloud / Stack */}
-        <div className="bg-white border border-gray-200 rounded p-4 space-y-3 shadow-2xs">
+        <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3 shadow-2xs">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-xs text-gray-900 flex items-center gap-2">
               <Cpu className="w-4 h-4 text-blue-600" />
@@ -186,7 +186,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
         </div>
 
         {/* Breakdown by Client Industry */}
-        <div className="bg-white border border-gray-200 rounded p-4 space-y-3 shadow-2xs">
+        <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3 shadow-2xs">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-xs text-gray-900 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
@@ -220,7 +220,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
       </div>
 
       {/* Recent Client Activity Report */}
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-2.5">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-blue-600" />
@@ -229,7 +229,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
               <p className="text-[11px] text-gray-500 mt-0.5">Latest client-facing update and next action across opportunities.</p>
             </div>
           </div>
-          <button onClick={exportActivityReport} className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100">
+          <button onClick={exportActivityReport} className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-sm hover:bg-blue-100">
              <Download className="w-3.5 h-3.5" /> Download Excel ({activityRows.length})
           </button>
         </div>
@@ -253,7 +253,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
           </div>
         </div>
 
-        <div className="overflow-x-auto border border-gray-200 rounded">
+        <div className="overflow-x-auto border border-gray-200 rounded-sm">
           <table className="w-full text-left text-xs min-w-[1050px]">
             <thead className="bg-gray-50 text-[10px] uppercase tracking-wider text-gray-500 border-b border-gray-200">
               <tr><th className="px-3 py-2">Client / Opportunity</th><th className="px-3 py-2">Scope</th><th className="px-3 py-2">Team</th><th className="px-3 py-2">Stage</th><th className="px-3 py-2">Last Update</th><th className="px-3 py-2">Next Action</th></tr>
@@ -261,7 +261,7 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
             <tbody className="divide-y divide-gray-200">
               {activityRows.slice(0, 20).map(({ opportunity, latest, nextAction }) => <tr key={opportunity.id} className="hover:bg-blue-50/40">
                 <td className="px-3 py-2"><div className="font-semibold text-gray-900">{opportunity.clientName}</div><div className="text-[11px] text-blue-700">{opportunity.name} <span className="font-mono text-gray-400">({opportunity.code})</span></div></td>
-                <td className="px-3 py-2"><div className="flex flex-wrap gap-1">{(opportunity.scopes || []).slice(0, 3).map(item => <span key={item} className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[10px]">{item}</span>)}</div></td>
+                <td className="px-3 py-2"><div className="flex flex-wrap gap-1">{(opportunity.scopes || []).slice(0, 3).map(item => <span key={item} className="px-1.5 py-0.5 rounded-sm bg-purple-50 text-purple-700 border border-purple-200 text-[10px]">{item}</span>)}</div></td>
                 <td className="px-3 py-2"><div className="text-gray-900">{opportunity.accountExecutive}</div><div className="text-[10px] text-gray-500">{opportunity.leadSolutionArchitect}</div></td>
                 <td className="px-3 py-2 font-mono text-[11px]">{opportunity.stage}</td>
                 <td className="px-3 py-2 max-w-[280px]"><div className="text-gray-800 truncate" title={latest?.summary}>{latest?.summary || 'No activity recorded'}</div><div className="text-[10px] text-gray-500">{latest?.author || 'System'} · {new Date(latest?.timestamp || opportunity.updatedAt).toLocaleString()}</div></td>

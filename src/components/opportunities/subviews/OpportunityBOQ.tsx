@@ -136,7 +136,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
     <div className="space-y-4">
       {/* Top Commercial Summary Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white border border-gray-200 rounded p-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Total Extended Price (TCV)</div>
           <div className="text-xl font-bold font-mono text-gray-900 mt-1">
              {formatCurrency(totalExtended)}
@@ -146,7 +146,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Total Discount Given</div>
           <div className="text-xl font-bold font-mono text-amber-800 mt-1">
              {formatCurrency(totalDiscount)}
@@ -156,7 +156,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Blended Gross Margin</div>
           <div className="text-xl font-bold font-mono text-emerald-700 mt-1">
             {overallMargin}%
@@ -166,7 +166,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-3 flex flex-col justify-between">
+        <div className="bg-white border border-gray-200 rounded-sm p-3 flex flex-col justify-between">
           <div>
             <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Margin Governance Status</div>
             <div className="mt-1">
@@ -184,19 +184,19 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
               <>
                 <button
                   onClick={requestApproval}
-                  className="text-[11px] px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded font-semibold hover:bg-blue-100"
+                  className="text-[11px] px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-sm font-semibold hover:bg-blue-100"
                 >
                   Request Signoff
                 </button>
                 <button
                   onClick={approveBOQ}
-                  className="text-[11px] px-2 py-1 bg-emerald-600 text-white rounded font-semibold hover:bg-emerald-700"
+                  className="text-[11px] px-2 py-1 bg-emerald-600 text-white rounded-sm font-semibold hover:bg-emerald-700"
                 >
                   Approve BOQ
                 </button>
               </>
              ) : approvalStatus === 'approved' ? (
-               <div className="flex items-center gap-2"><span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Approved</span><button onClick={finalizeBOQ} className="text-[11px] px-2 py-1 bg-blue-600 text-white rounded font-semibold">Finalize</button></div>
+               <div className="flex items-center gap-2"><span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Approved</span><button onClick={finalizeBOQ} className="text-[11px] px-2 py-1 bg-blue-600 text-white rounded-sm font-semibold">Finalize</button></div>
              ) : (
                <span className="text-[11px] text-blue-700 font-bold flex items-center gap-1"><Lock className="w-3.5 h-3.5" /> Final BOQ locked</span>
              )}
@@ -205,7 +205,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
       </div>
 
       {/* Action Header */}
-      <div className="bg-white border border-gray-200 rounded p-3 flex items-center justify-between">
+      <div className="bg-white border border-gray-200 rounded-sm p-3 flex items-center justify-between">
         <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
           Bill of Quantities Line Items ({items.length})
         </h3>
@@ -213,7 +213,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => exportBOQCSV(opportunity)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-sm shadow-2xs"
             title="Download CSV Pricing Sheet"
           >
             <Download className="w-3.5 h-3.5 text-emerald-600" />
@@ -221,7 +221,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
           </button>
           <button
             onClick={() => setShowAddRow(!showAddRow)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
           >
             <Plus className="w-3.5 h-3.5" />
             Add Line Item
@@ -231,7 +231,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
 
       {/* Add Row Form */}
       {showAddRow && (
-        <form onSubmit={handleAddItem} className="bg-white border border-blue-200 rounded p-4 space-y-3">
+        <form onSubmit={handleAddItem} className="bg-white border border-blue-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-gray-100 pb-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Add BOQ Sizing Line</h4>
              <button type="button" onClick={() => { setShowAddRow(false); resetLineForm(); }} className="text-xs text-gray-500 hover:text-gray-800">&times; Cancel</button>
@@ -339,7 +339,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded">
+            <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm">
               Add Line Item
             </button>
           </div>
@@ -347,7 +347,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
       )}
 
       {/* BOQ Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-sm overflow-x-auto">
          <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
@@ -369,7 +369,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
                   <div className="text-[11px] font-mono text-gray-500">{it.itemCode}</div>
                 </td>
                 <td className="py-2.5 px-3">
-                  <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-800 font-mono border border-gray-200">
+                  <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-sm bg-gray-100 text-gray-800 font-mono border border-gray-200">
                     {it.category}
                   </span>
                 </td>
@@ -395,7 +395,7 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
                 <td className="py-2.5 px-3 text-center">
                   <button
                     onClick={() => handleRemoveItem(it.id)}
-                    className="p-1 text-gray-400 hover:text-red-600 rounded hover:bg-gray-100"
+                    className="p-1 text-gray-400 hover:text-red-600 rounded-sm hover:bg-gray-100"
                     title="Remove line"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -406,9 +406,9 @@ export const OpportunityBOQ: React.FC<OpportunityBOQProps> = ({
           </tbody>
          </table>
          <div className="md:hidden p-2 space-y-2">
-           {items.map(it => <article key={it.id} className="border border-gray-200 rounded p-3 bg-white space-y-2">
-             <div className="flex items-start justify-between gap-2"><div className="min-w-0"><h4 className="text-sm font-semibold text-gray-900 break-words">{it.description}</h4><div className="text-[10px] text-gray-500 font-mono">{it.itemCode}</div></div><button onClick={() => handleRemoveItem(it.id)} className="p-1.5 text-red-600 bg-red-50 rounded" title="Remove line"><Trash2 className="w-3.5 h-3.5" /></button></div>
-             <div className="flex flex-wrap gap-1.5"><span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200">{it.category}</span>{it.oem && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">{it.oem}</span>}</div>
+           {items.map(it => <article key={it.id} className="border border-gray-200 rounded-sm p-3 bg-white space-y-2">
+             <div className="flex items-start justify-between gap-2"><div className="min-w-0"><h4 className="text-sm font-semibold text-gray-900 wrap-break-word">{it.description}</h4><div className="text-[10px] text-gray-500 font-mono">{it.itemCode}</div></div><button onClick={() => handleRemoveItem(it.id)} className="p-1.5 text-red-600 bg-red-50 rounded-sm" title="Remove line"><Trash2 className="w-3.5 h-3.5" /></button></div>
+             <div className="flex flex-wrap gap-1.5"><span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-gray-100 border border-gray-200">{it.category}</span>{it.oem && <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-purple-50 text-purple-700 border border-purple-200">{it.oem}</span>}</div>
              <div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="block text-gray-500">Quantity</span><strong>{it.quantity} {it.unit}</strong></div><div><span className="block text-gray-500">List Price</span><strong className="font-mono">{formatCurrency(it.unitListPrice)}</strong></div><div><span className="block text-gray-500">Extended</span><strong className="font-mono">{formatCurrency(it.extendedPrice)}</strong></div><div><span className="block text-gray-500">Margin</span><strong className="font-mono text-emerald-700">{it.marginPercent}%</strong></div></div>
            </article>)}
            {items.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No BOQ line items configured.</div>}

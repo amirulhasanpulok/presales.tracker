@@ -75,14 +75,14 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 tracking-tight">
               Presales Notification Center
             </h1>
             {unreadCount > 0 && (
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-red-50 text-red-700 font-semibold border border-red-200">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-red-50 text-red-700 font-semibold border border-red-200">
                 {unreadCount} Unread Alerts
               </span>
             )}
@@ -96,13 +96,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={markAllAsRead}
-            className="px-2.5 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+            className="px-2.5 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-50"
           >
             Mark all read
           </button>
           <button
             onClick={clearAll}
-            className="px-2.5 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded hover:bg-red-100"
+            className="px-2.5 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-sm hover:bg-red-100"
           >
             Clear all
           </button>
@@ -110,7 +110,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       </div>
 
       {/* Filter Bar */}
-      <div className="mobile-filter-scroll bg-white border border-gray-200 rounded p-2.5 flex items-center justify-between gap-2">
+      <div className="mobile-filter-scroll bg-white border border-gray-200 rounded-sm p-2.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-gray-700">
             Filter Alerts:
@@ -143,7 +143,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             }`}
           >
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded bg-white border border-gray-200 shadow-2xs mt-0.5">
+              <div className="p-2 rounded-sm bg-white border border-gray-200 shadow-2xs mt-0.5">
                 {getNotificationIcon(notif.type)}
               </div>
 
@@ -186,7 +186,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                   );
                   if (matched) onSelectOpportunity(matched);
                 }}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-white hover:bg-gray-50 border border-gray-300 px-2.5 py-1 rounded flex-shrink-0"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-white hover:bg-gray-50 border border-gray-300 px-2.5 py-1 rounded-sm shrink-0"
               >
                 Inspect Deal <ChevronRight className="w-3 h-3" />
               </button>
@@ -195,7 +195,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         ))}
 
         {filtered.length === 0 && (
-          <div className="p-8 text-center text-xs text-gray-500 bg-white border border-gray-200 rounded">
+          <div className="p-8 text-center text-xs text-gray-500 bg-white border border-gray-200 rounded-sm">
             No notifications in this view.
           </div>
         )}

@@ -136,11 +136,11 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 tracking-tight">Presales Solutions Engineering User Management</h1>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 font-semibold border border-blue-200">
               {users.length} Active System Users
             </span>
           </div>
@@ -151,7 +151,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
 
         <button
            onClick={() => { resetInviteForm(); setShowInviteModal(true); }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
         >
           <Plus className="w-3.5 h-3.5" />
           Invite Presales Member
@@ -159,14 +159,14 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       </div>
 
       {notice && (
-        <div className="p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded text-xs flex items-center gap-2">
+        <div className="p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-sm text-xs flex items-center gap-2">
           <span>{notice}</span>
           <button onClick={() => setNotice(null)} className="ml-auto text-blue-400 hover:text-blue-700">✕</button>
         </div>
       )}
 
       {/* Filter Bar */}
-       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded p-3 flex flex-row sm:items-center justify-between gap-3">
+       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded-sm p-3 flex flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 max-w-sm">
           <div className="relative w-full">
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
@@ -191,7 +191,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       </div>
 
       {/* Users Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-sm overflow-x-auto">
          <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
@@ -219,7 +219,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   </div>
                 </td>
                 <td className="py-2.5 px-3">
-                  <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-800 font-mono border border-gray-200 font-semibold">
+                  <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-sm bg-gray-100 text-gray-800 font-mono border border-gray-200 font-semibold">
                     {user.role.replace(/_/g, ' ')}
                   </span>
                 </td>
@@ -250,7 +250,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 <td className="py-2.5 px-3 text-right">
                   <button 
                     onClick={() => setEditingUser(user)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 px-2 py-1 rounded border border-blue-200"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 px-2 py-1 rounded-sm border border-blue-200"
                   >
                     <Edit2 className="w-3 h-3" />
                     Edit Access
@@ -261,10 +261,10 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
           </tbody>
          </table>
          <div className="md:hidden p-2 space-y-2">
-           {filteredUsers.map(user => <article key={user.id} className="border border-gray-200 rounded p-3 bg-white space-y-2">
-             <div className="flex items-start justify-between gap-2"><div className="min-w-0"><div className="font-bold text-sm text-gray-900 break-words">{user.name}</div><div className="text-[11px] text-gray-500 font-mono break-all">{user.email}</div></div><span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${user.status?.toLowerCase() === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>{user.status}</span></div>
+           {filteredUsers.map(user => <article key={user.id} className="border border-gray-200 rounded-sm p-3 bg-white space-y-2">
+             <div className="flex items-start justify-between gap-2"><div className="min-w-0"><div className="font-bold text-sm text-gray-900 wrap-break-word">{user.name}</div><div className="text-[11px] text-gray-500 font-mono break-all">{user.email}</div></div><span className={`text-[10px] px-1.5 py-0.5 rounded-sm font-mono ${user.status?.toLowerCase() === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>{user.status}</span></div>
              <div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="block text-gray-500">Role</span><strong>{user.role.replace(/_/g, ' ')}</strong></div><div><span className="block text-gray-500">MFA</span><strong className={user.mfaEnabled ? 'text-emerald-700' : 'text-red-600'}>{user.mfaEnabled ? 'Enabled' : 'Disabled'}</strong></div><div><span className="block text-gray-500">Department</span><strong>{user.department || '—'}</strong></div><div><span className="block text-gray-500">Last Active</span><strong className="font-mono">{user.lastLoginAt || '—'}</strong></div></div>
-             <button onClick={() => setEditingUser(user)} className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded"><Edit2 className="w-3 h-3" /> Edit Access</button>
+             <button onClick={() => setEditingUser(user)} className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-sm"><Edit2 className="w-3 h-3" /> Edit Access</button>
            </article>)}
            {filteredUsers.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No users match your filters.</div>}
          </div>
@@ -281,7 +281,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
               </div>
               <button
                  onClick={() => { setShowInviteModal(false); resetInviteForm(); }}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-sm hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -296,7 +296,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   placeholder="e.g., Alexander Wright"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -308,7 +308,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   placeholder="alexander.wright@enterprise.com"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
-                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 font-mono"
+                  className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5 font-mono"
                 />
               </div>
 
@@ -318,7 +318,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   <select
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value as UserAccount['role'])}
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                   >
                    {roleOptions.map(role => <option key={role.value} value={role.value}>{role.label}</option>)}
                   </select>
@@ -330,7 +330,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                     type="text"
                     value={newRegion}
                     onChange={(e) => setNewRegion(e.target.value)}
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                   />
                 </div>
               </div>
@@ -341,33 +341,33 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   type="text"
                   value={newDepartment}
                   onChange={(e) => setNewDepartment(e.target.value)}
-                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                  className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Initial Password *</label>
-                <input type="password" required minLength={10} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 10 characters with a number" className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" />
+                <input type="password" required minLength={10} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 10 characters with a number" className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Phone</span><input value={newPhone} onChange={e => setNewPhone(e.target.value)} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
-                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Team</span><input value={newSalesTeam} onChange={e => setNewSalesTeam(e.target.value)} placeholder="Enterprise / STI / Postsales" className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
-                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Skills</span><input value={newSkills} onChange={e => setNewSkills(e.target.value)} placeholder="Comma separated" className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
-                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Certifications</span><input value={newCertifications} onChange={e => setNewCertifications(e.target.value)} placeholder="Comma separated" className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Phone</span><input value={newPhone} onChange={e => setNewPhone(e.target.value)} className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Team</span><input value={newSalesTeam} onChange={e => setNewSalesTeam(e.target.value)} placeholder="Enterprise / STI / Postsales" className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Skills</span><input value={newSkills} onChange={e => setNewSkills(e.target.value)} placeholder="Comma separated" className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Certifications</span><input value={newCertifications} onChange={e => setNewCertifications(e.target.value)} placeholder="Comma separated" className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
               </div>
 
               <div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2">
                 <button
                   type="button"
                    onClick={() => { setShowInviteModal(false); resetInviteForm(); }}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded border border-gray-300"
+                  className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-sm border border-gray-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
                 >
                   Send Invitation & Provision
                 </button>
@@ -388,7 +388,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
               </div>
               <button
                 onClick={() => setEditingUser(null)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-sm hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -401,22 +401,22 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   type="text"
                   value={editingUser.name}
                   onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
-                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                  className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Email</span><input type="email" value={editingUser.email} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
-                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Department</span><input value={editingUser.department || ''} onChange={e => setEditingUser({ ...editingUser, department: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
-                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Region</span><input value={editingUser.region || ''} onChange={e => setEditingUser({ ...editingUser, region: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
-                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Manager</span><input value={editingUser.manager || ''} onChange={e => setEditingUser({ ...editingUser, manager: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Email</span><input type="email" value={editingUser.email} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Department</span><input value={editingUser.department || ''} onChange={e => setEditingUser({ ...editingUser, department: e.target.value })} className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Region</span><input value={editingUser.region || ''} onChange={e => setEditingUser({ ...editingUser, region: e.target.value })} className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
+                <label><span className="block text-xs font-semibold text-gray-700 mb-1">Manager</span><input value={editingUser.manager || ''} onChange={e => setEditingUser({ ...editingUser, manager: e.target.value })} className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
               </div>
 
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Phone</span><input value={editingUser.phone || ''} onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
-                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Team</span><input value={editingUser.salesTeam || ''} onChange={e => setEditingUser({ ...editingUser, salesTeam: e.target.value })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
-                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Skills</span><input value={(editingUser.skills || []).join(', ')} onChange={e => setEditingUser({ ...editingUser, skills: e.target.value.split(',').map(value => value.trim()).filter(Boolean) })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
-                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Certifications</span><input value={(editingUser.certifications || []).join(', ')} onChange={e => setEditingUser({ ...editingUser, certifications: e.target.value.split(',').map(value => value.trim()).filter(Boolean) })} className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5" /></label>
+                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Phone</span><input value={editingUser.phone || ''} onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })} className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
+                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Team</span><input value={editingUser.salesTeam || ''} onChange={e => setEditingUser({ ...editingUser, salesTeam: e.target.value })} className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
+                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Skills</span><input value={(editingUser.skills || []).join(', ')} onChange={e => setEditingUser({ ...editingUser, skills: e.target.value.split(',').map(value => value.trim()).filter(Boolean) })} className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
+                 <label><span className="block text-xs font-semibold text-gray-700 mb-1">Certifications</span><input value={(editingUser.certifications || []).join(', ')} onChange={e => setEditingUser({ ...editingUser, certifications: e.target.value.split(',').map(value => value.trim()).filter(Boolean) })} className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5" /></label>
                </div>
 
                <div>
@@ -424,7 +424,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 <select
                   value={editingUser.role}
                   onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
-                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                  className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                 >
                    {roleOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
@@ -436,7 +436,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                   <select
                     value={editingUser.status}
                     onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value as any })}
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                   >
                      <option value="Active">Active</option>
                      <option value="Inactive">Inactive / Suspended</option>
@@ -449,7 +449,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                     disabled
                     value={editingUser.mfaEnabled ? 'true' : 'false'}
                     onChange={(e) => setEditingUser({ ...editingUser, mfaEnabled: e.target.value === 'true' })}
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                    className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                   >
                     <option value="true">Unavailable — MFA is not implemented</option>
                     <option value="false">Unavailable — MFA is not implemented</option>
@@ -461,13 +461,13 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded border border-gray-300"
+                  className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-sm border border-gray-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
                 >
                   Save Access Changes
                 </button>

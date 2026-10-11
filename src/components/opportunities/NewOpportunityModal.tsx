@@ -162,7 +162,7 @@ export function NewOpportunityModal({
   };
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-900/40 flex items-center justify-center p-3">
+    <div className="fixed inset-0 z-100 bg-slate-900/40 flex items-center justify-center p-3">
       <section
         role="dialog"
         aria-modal="true"

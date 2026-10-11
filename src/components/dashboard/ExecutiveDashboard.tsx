@@ -93,11 +93,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Banner / Executive Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-gray-200 rounded p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-gray-200 rounded-sm p-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 tracking-tight">Presales Solutions Engineering Executive Hub</h1>
-            <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+            <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
               LIVE TELEMETRY
             </span>
@@ -110,21 +110,21 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onNavigateTab('calendar')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors shadow-2xs"
           >
             <Calendar className="w-3.5 h-3.5 text-gray-500" />
             Calendar
           </button>
           <button
             onClick={() => onNavigateTab('action_center')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors shadow-2xs"
           >
             <Clock className="w-3.5 h-3.5 text-amber-600" />
             SLAs ({needsAttentionDeals.length})
           </button>
           <button
             onClick={() => onNavigateTab('opportunities')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors shadow-2xs font-semibold"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-sm hover:bg-blue-100 transition-colors shadow-2xs font-semibold"
           >
             <Layers className="w-3.5 h-3.5" />
             Pipeline Tracker
@@ -135,10 +135,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       {/* KPI Row (5 high-density cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Card 1: Pipeline TCV */}
-        <div className="bg-white border border-gray-200 rounded p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
+        <div className="bg-white border border-gray-200 rounded-sm p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Active Pipeline TCV</span>
-            <div className="w-6 h-6 rounded bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-sm bg-blue-50 text-blue-600 flex items-center justify-center">
               <DollarSign className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -156,10 +156,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         </div>
 
         {/* Card 2: Active POCs */}
-        <div className="bg-white border border-gray-200 rounded p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
+        <div className="bg-white border border-gray-200 rounded-sm p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Lab POCs Active</span>
-            <div className="w-6 h-6 rounded bg-amber-50 text-amber-700 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-sm bg-amber-50 text-amber-700 flex items-center justify-center">
               <FlaskConical className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -175,10 +175,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         </div>
 
         {/* Card 3: Technical Win Rate */}
-        <div className="bg-white border border-gray-200 rounded p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
+        <div className="bg-white border border-gray-200 rounded-sm p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Tech Win Rate</span>
-            <div className="w-6 h-6 rounded bg-emerald-50 text-emerald-700 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-sm bg-emerald-50 text-emerald-700 flex items-center justify-center">
               <TrendingUp className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -194,10 +194,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         </div>
 
         {/* Card 4: PS Handover Backlog */}
-        <div className="bg-white border border-gray-200 rounded p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
+        <div className="bg-white border border-gray-200 rounded-sm p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Delivery Handover</span>
-            <div className="w-6 h-6 rounded bg-purple-50 text-purple-700 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-sm bg-purple-50 text-purple-700 flex items-center justify-center">
               <Layers className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -218,10 +218,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         </div>
 
         {/* Card 5: Critical SLA Alerts */}
-        <div className="bg-white border border-gray-200 rounded p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
+        <div className="bg-white border border-gray-200 rounded-sm p-3.5 flex flex-col justify-between hover:border-gray-300 transition-colors">
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Needs Attention</span>
-            <div className="w-6 h-6 rounded bg-red-50 text-red-700 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-sm bg-red-50 text-red-700 flex items-center justify-center">
               <AlertTriangle className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -243,7 +243,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       </div>
 
       {/* Portfolio KPI Snapshot */}
-      <div className="bg-white border border-gray-200 rounded p-4">
+      <div className="bg-white border border-gray-200 rounded-sm p-4">
         <div className="flex items-center justify-between border-b border-gray-200 pb-2.5">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800">Presales Portfolio Snapshot</h2>
           <span className="text-[10px] uppercase tracking-wider font-mono text-gray-500">Live from opportunity records</span>
@@ -262,7 +262,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             { label: 'Proposals Submitted', value: proposalsSubmitted, tone: 'text-blue-700' },
             { label: 'Tender Deadlines', value: upcomingTenderDeadlines, tone: 'text-red-700' },
           ].map(metric => (
-            <div key={metric.label} className="bg-gray-50 border border-gray-200 rounded p-2.5">
+            <div key={metric.label} className="bg-gray-50 border border-gray-200 rounded-sm p-2.5">
               <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">{metric.label}</div>
               <div className={`text-xl font-bold font-mono mt-1 ${metric.tone}`}>{metric.value}</div>
               {'detail' in metric && <div className="text-[10px] text-gray-500 mt-0.5">{metric.detail}</div>}
@@ -274,11 +274,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       {/* Main Split Layout: Critical Action Deals + Tech Domains & Quick Sizing */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left 2 Cols: Critical Deals Requiring Presales Intervention */}
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded flex flex-col">
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-sm flex flex-col">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800">Critical Opportunities & SLA Gates</h2>
-              <span className="text-[11px] font-mono px-1.5 py-0.2 rounded bg-red-50 text-red-700 font-semibold border border-red-200">
+              <span className="text-[11px] font-mono px-1.5 py-0.2 rounded-sm bg-red-50 text-red-700 font-semibold border border-red-200">
                 {needsAttentionDeals.length} Action Items
               </span>
             </div>
@@ -329,7 +329,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                       </div>
                     </td>
                     <td className="py-2 px-3">
-                      <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-mono border border-gray-200">
+                      <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-700 font-mono border border-gray-200">
                         {opp.primaryTechStack}
                       </span>
                     </td>
@@ -347,7 +347,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                           e.stopPropagation();
                           onSelectOpportunity(opp);
                         }}
-                        className="p-1 rounded text-gray-400 hover:text-blue-700 hover:bg-gray-100"
+                        className="p-1 rounded-sm text-gray-400 hover:text-blue-700 hover:bg-gray-100"
                         title="Open Full Detail"
                       >
                         <ArrowUpRight className="w-4 h-4" />
@@ -373,7 +373,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         {/* Right 1 Col: Tech Stack Sizing Distribution & Presales Shortcuts */}
         <div className="space-y-4">
           {/* Tech Stack Distribution */}
-          <div className="bg-white border border-gray-200 rounded p-4">
+          <div className="bg-white border border-gray-200 rounded-sm p-4">
             <div className="flex items-center justify-between border-b border-gray-200 pb-2.5">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
                 <Cpu className="w-3.5 h-3.5 text-blue-600" />
@@ -404,7 +404,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           </div>
 
           {/* Presales Hub Quick Modules */}
-          <div className="bg-white border border-gray-200 rounded p-4">
+          <div className="bg-white border border-gray-200 rounded-sm p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 border-b border-gray-200 pb-2.5">
               Core Presales Workspaces
             </h3>
@@ -412,28 +412,28 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button 
                 onClick={() => onNavigateTab('boq_workbench')}
-                className="p-2.5 text-left rounded border border-gray-200 hover:border-blue-300 hover:bg-blue-50/40 transition-colors"
+                className="p-2.5 text-left rounded-sm border border-gray-200 hover:border-blue-300 hover:bg-blue-50/40 transition-colors"
               >
                 <div className="text-xs font-semibold text-gray-900">BOQ Workbench</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">Margin & Sizing</div>
               </button>
               <button 
                 onClick={() => onNavigateTab('poc_center')}
-                className="p-2.5 text-left rounded border border-gray-200 hover:border-amber-300 hover:bg-amber-50/40 transition-colors"
+                className="p-2.5 text-left rounded-sm border border-gray-200 hover:border-amber-300 hover:bg-amber-50/40 transition-colors"
               >
                 <div className="text-xs font-semibold text-gray-900">POC Sandbox</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">KPIs & Benchmarks</div>
               </button>
               <button 
                 onClick={() => onNavigateTab('team_capacity')}
-                className="p-2.5 text-left rounded border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/40 transition-colors"
+                className="p-2.5 text-left rounded-sm border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/40 transition-colors"
               >
                 <div className="text-xs font-semibold text-gray-900">Presales Capacity</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">SA Skills Matrix</div>
               </button>
               <button 
                 onClick={() => onNavigateTab('documents')}
-                className="p-2.5 text-left rounded border border-gray-200 hover:border-purple-300 hover:bg-purple-50/40 transition-colors"
+                className="p-2.5 text-left rounded-sm border border-gray-200 hover:border-purple-300 hover:bg-purple-50/40 transition-colors"
               >
                 <div className="text-xs font-semibold text-gray-900">Knowledge Base</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">RFPs & Blueprints</div>

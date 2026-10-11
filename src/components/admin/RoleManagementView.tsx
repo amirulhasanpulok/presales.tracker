@@ -71,11 +71,11 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 tracking-tight">Role-Based Access Control (RBAC) & Permissions Matrix</h1>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-semibold border border-purple-200">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-purple-50 text-purple-700 font-semibold border border-purple-200">
               {roles.length} System Security Roles
             </span>
           </div>
@@ -86,7 +86,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
         >
           <Plus className="w-3.5 h-3.5" />
           Create Custom Role
@@ -94,7 +94,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
       </div>
 
       {saveSuccessMsg && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded text-xs flex items-center gap-2">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-sm text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{saveSuccessMsg}</span>
         </div>
@@ -103,7 +103,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
       {/* Main Split: Role Selector & Permissions Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Left 1 Col: Roles List */}
-        <div className="bg-white border border-gray-200 rounded p-3 space-y-2">
+        <div className="bg-white border border-gray-200 rounded-sm p-3 space-y-2">
           <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">Available Roles</div>
           {roles.map(r => {
             const isSelected = selectedRole.id === r.id;
@@ -118,7 +118,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold">{roleName(r)}</span>
                   {r.isSystemRole && (
-                    <span className="text-[10px] font-mono uppercase px-1.5 py-0.2 rounded bg-gray-200 text-gray-700">
+                    <span className="text-[10px] font-mono uppercase px-1.5 py-0.2 rounded-sm bg-gray-200 text-gray-700">
                       System
                     </span>
                   )}
@@ -134,7 +134,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
         </div>
 
         {/* Right 3 Cols: Permissions Matrix */}
-        <div className="lg:col-span-3 bg-white border border-gray-200 rounded p-4 space-y-4">
+        <div className="lg:col-span-3 bg-white border border-gray-200 rounded-sm p-4 space-y-4">
           <div className="flex items-center justify-between border-b border-gray-200 pb-3">
             <div>
               <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
 
             <button
               onClick={handleSavePermissions}
-              className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+              className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
             >
               Save Permission Changes
             </button>
@@ -154,7 +154,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
 
           <div className="space-y-4">
             {permissionModules.map(mod => (
-              <div key={mod.module} className="border border-gray-200 rounded overflow-hidden">
+              <div key={mod.module} className="border border-gray-200 rounded-sm overflow-hidden">
                 <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-gray-800">{mod.module}</h4>
                 </div>
@@ -187,7 +187,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
                               setSelectedRole(updatedRole);
                               onRolesChange?.(roles.map(r => r.id === selectedRole.id ? updatedRole : r));
                             }}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
                           <span className={`text-[11px] font-mono font-bold ${isGranted ? 'text-emerald-700' : 'text-gray-400'}`}>
                             {isGranted ? 'GRANTED' : 'DENIED'}
@@ -214,7 +214,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-sm hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -229,7 +229,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
                   placeholder="e.g., Regional Cloud Security Lead"
                   value={newRoleName}
                   onChange={(e) => setNewRoleName(e.target.value)}
-                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -240,7 +240,7 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
                   placeholder="Defines specific governance authority..."
                   value={newRoleDesc}
                   onChange={(e) => setNewRoleDesc(e.target.value)}
-                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
+                  className="w-full text-xs border border-gray-300 rounded-sm px-2.5 py-1.5"
                 />
               </div>
 
@@ -248,13 +248,13 @@ export const RoleManagementView: React.FC<RoleManagementViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded border border-gray-300"
+                  className="px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-sm border border-gray-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
                 >
                   Create & Configure Permissions
                 </button>

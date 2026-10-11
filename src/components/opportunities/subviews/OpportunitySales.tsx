@@ -41,7 +41,7 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
     <div className="space-y-4">
       {/* Top Commercial Highlights */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <div className="bg-white border border-gray-200 rounded p-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Total Contract Value (TCV)</div>
           <div className="text-xl font-bold font-mono text-gray-900 mt-1">
             {formatCurrency(opportunity.contractValue)}
@@ -49,7 +49,7 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
           <div className="text-[11px] text-gray-500 mt-0.5">Multi-year enterprise scope</div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Annual Recurring Revenue (ARR)</div>
           <div className="text-xl font-bold font-mono text-blue-700 mt-1">
             {formatCurrency(opportunity.arr)}/yr
@@ -57,7 +57,7 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
           <div className="text-[11px] text-gray-500 mt-0.5">Platform software & support</div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Win Probability</div>
           <div className="text-xl font-bold font-mono text-emerald-700 mt-1">
             {opportunity.winProbability}%
@@ -65,7 +65,7 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
           <div className="text-[11px] text-gray-500 mt-0.5">Weighted: {formatCurrency(opportunity.contractValue * opportunity.winProbability / 100)}</div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-3">
           <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Target Close Date</div>
           <div className="text-base font-bold font-mono text-gray-900 mt-1">
             {opportunity.expectedCloseDate}
@@ -76,7 +76,7 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
 
       {/* Sales Account Team & Commercial Stage */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white border border-gray-200 rounded p-4">
+        <div className="bg-white border border-gray-200 rounded-sm p-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-2.5 flex items-center gap-1.5">
             <Briefcase className="w-3.5 h-3.5 text-blue-600" />
             Commercial Account Ownership
@@ -106,7 +106,7 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-4">
+        <div className="bg-white border border-gray-200 rounded-sm p-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-2.5 flex items-center gap-1.5">
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
             Pipeline Stage & Forecast Status
@@ -133,10 +133,10 @@ export const OpportunitySales: React.FC<OpportunitySalesProps> = ({
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
         <div className="flex items-center justify-between border-b border-gray-200 pb-2"><h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">OEM Engagement</h3><span className="text-[10px] text-gray-500">Optional presales collaboration</span></div>
-        <div className="flex gap-2"><input value={oemInput} onChange={e => setOemInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOEMEngagement(); } }} placeholder="OEM or partner name" className="enterprise-input flex-1 text-xs" /><button type="button" onClick={addOEMEngagement} className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded">Add OEM</button></div>
-        {oemEngagements.length ? <div className="flex flex-wrap gap-1.5">{oemEngagements.map(value => <span key={value} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-purple-50 text-purple-700 border border-purple-200">{value}<button type="button" onClick={() => removeOEMEngagement(value)} className="font-bold text-purple-400 hover:text-red-600">×</button></span>)}</div> : <p className="text-xs text-gray-500">No OEM engagement recorded. Use the OEM Catalog for full partner profiles and products.</p>}
+        <div className="flex gap-2"><input value={oemInput} onChange={e => setOemInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOEMEngagement(); } }} placeholder="OEM or partner name" className="enterprise-input flex-1 text-xs" /><button type="button" onClick={addOEMEngagement} className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-sm">Add OEM</button></div>
+        {oemEngagements.length ? <div className="flex flex-wrap gap-1.5">{oemEngagements.map(value => <span key={value} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded-sm bg-purple-50 text-purple-700 border border-purple-200">{value}<button type="button" onClick={() => removeOEMEngagement(value)} className="font-bold text-purple-400 hover:text-red-600">×</button></span>)}</div> : <p className="text-xs text-gray-500">No OEM engagement recorded. Use the OEM Catalog for full partner profiles and products.</p>}
       </div>
     </div>
   );

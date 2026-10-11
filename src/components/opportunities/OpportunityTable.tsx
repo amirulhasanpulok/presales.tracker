@@ -172,7 +172,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
   const cellPadding = density === 'compact' ? 'py-1.5 px-2.5 text-xs' : density === 'spacious' ? 'py-3 px-4 text-sm' : 'py-2 px-3 text-xs';
 
   return (
-    <div className="flex flex-col h-full bg-white border border-gray-200 rounded overflow-hidden shadow-2xs">
+    <div className="flex flex-col h-full bg-white border border-gray-200 rounded-sm overflow-hidden shadow-2xs">
       
       {/* Control & Filter Bar */}
       <div className="p-3 border-b border-gray-200 bg-white space-y-2.5">
@@ -186,7 +186,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search code, customer, technology, or SA..."
-              className="w-full pl-8 pr-8 py-1.5 bg-white border border-gray-300 text-gray-900 text-xs rounded focus:outline-none focus:border-blue-500 placeholder-gray-400 font-sans"
+              className="w-full pl-8 pr-8 py-1.5 bg-white border border-gray-300 text-gray-900 text-xs rounded-sm focus:outline-hidden focus:border-blue-500 placeholder-gray-400 font-sans"
             />
             {searchQuery && (
               <button
@@ -201,7 +201,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
           {/* Quick Stats & Action buttons */}
           <div className="flex items-center gap-2">
             {selectedIds.length > 0 && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 text-xs rounded font-mono font-medium">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 text-xs rounded-sm font-mono font-medium">
                 <span>{selectedIds.length} Selected</span>
                 <button
                   onClick={() => setSelectedIds([])}
@@ -214,7 +214,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
 
             <button
               onClick={() => exportPipelineCSV(filteredOpportunities)}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded text-xs transition-colors font-medium shadow-2xs"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-sm text-xs transition-colors font-medium shadow-2xs"
               title="Export Current Table as CSV"
             >
               <Download className="w-3.5 h-3.5 text-emerald-600" />
@@ -223,7 +223,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
 
             <button
               onClick={onOpenNewModal}
-              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold transition-colors shadow-xs"
+              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-sm text-xs font-semibold transition-colors shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Lead</span>
@@ -239,7 +239,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
             aria-label="Filter by presales stage"
-            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
+            className="enterprise-select font-mono text-xs py-1 shrink-0"
           >
             <option value="all">Stage: All Stages</option>
             {Object.entries(STAGE_CONFIG).map(([key, val]) => (
@@ -252,7 +252,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             value={techStackFilter}
             onChange={(e) => setTechStackFilter(e.target.value)}
             aria-label="Filter by technology stack"
-            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
+            className="enterprise-select font-mono text-xs py-1 shrink-0"
           >
             <option value="all">Stack: All Cloud / Tech</option>
             {techStacks.map(t => (
@@ -265,7 +265,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             value={architectFilter}
             onChange={(e) => setArchitectFilter(e.target.value)}
             aria-label="Filter by lead architect"
-            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
+            className="enterprise-select font-mono text-xs py-1 shrink-0"
           >
             <option value="all">Lead SA: All Architects</option>
             {architects.map(a => (
@@ -278,7 +278,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             value={complexityFilter}
             onChange={(e) => setComplexityFilter(e.target.value)}
             aria-label="Filter by deal complexity"
-            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
+            className="enterprise-select font-mono text-xs py-1 shrink-0"
           >
             <option value="all">Complexity: All</option>
             <option value="critical">Critical / Multi-Tier</option>
@@ -292,7 +292,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
             aria-label="Filter by deal priority"
-            className="enterprise-select font-mono text-xs py-1 flex-shrink-0"
+            className="enterprise-select font-mono text-xs py-1 shrink-0"
           >
             <option value="all">Priority: All</option>
             <option value="p0_urgent">P0 - Urgent</option>
@@ -301,7 +301,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
             <option value="p3_low">P3 - Low</option>
           </select>
 
-          <select value={sourceStatusFilter} onChange={e => setSourceStatusFilter(e.target.value)} aria-label="Filter by source status" className="enterprise-select font-mono text-xs py-1 flex-shrink-0">
+          <select value={sourceStatusFilter} onChange={e => setSourceStatusFilter(e.target.value)} aria-label="Filter by source status" className="enterprise-select font-mono text-xs py-1 shrink-0">
             <option value="all">Source Status: All</option>
             {sourceStatuses.map(status => <option key={status} value={status}>{status}</option>)}
           </select>
@@ -309,7 +309,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
           {/* Overdue SLA Toggle */}
           <button
             onClick={() => setOnlyOverdue(!onlyOverdue)}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-mono transition-colors flex-shrink-0 ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-mono transition-colors shrink-0 ${
               onlyOverdue 
                 ? 'bg-rose-50 text-rose-800 border-rose-300 font-semibold' 
                 : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
@@ -322,7 +322,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="text-blue-700 hover:underline text-xs font-mono font-medium ml-auto flex-shrink-0"
+              className="text-blue-700 hover:underline text-xs font-mono font-medium ml-auto shrink-0"
             >
               Reset Filters
             </button>
@@ -342,7 +342,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                   checked={selectedIds.length > 0 && selectedIds.length === filteredOpportunities.length}
                   onChange={toggleSelectAll}
                   aria-label="Select all opportunities"
-                  className="rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  className="rounded-sm border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
                 />
               </th>
               
@@ -408,7 +408,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                     <p className="text-xs text-gray-500">Try adjusting your filters or search keywords.</p>
                     <button
                       onClick={resetFilters}
-                      className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded text-xs font-medium"
+                      className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-sm text-xs font-medium"
                     >
                       Clear All Filters
                     </button>
@@ -438,7 +438,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                         checked={isSelected}
                         onChange={() => {}}
                         aria-label={`Select opportunity ${opp.code}`}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
+                        className="rounded-sm border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
                       />
                     </td>
 
@@ -453,7 +453,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                         <span>•</span>
                         <span>{opp.clientIndustry}</span>
                         {hasOverdueActions && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-rose-700 font-mono bg-rose-50 border border-rose-200 px-1 rounded font-semibold">
+                          <span className="inline-flex items-center gap-1 text-[10px] text-rose-700 font-mono bg-rose-50 border border-rose-200 px-1 rounded-sm font-semibold">
                             <AlertTriangle className="w-2.5 h-2.5" /> SLA Risk
                           </span>
                         )}
@@ -466,7 +466,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                         value={opp.stage}
                         onChange={(e) => onUpdateStage(opp.id, e.target.value as OpportunityStage)}
                         aria-label={`Update stage for ${opp.code}`}
-                        className="bg-white border border-gray-300 hover:border-blue-500 text-gray-800 text-[11px] font-mono py-1 px-1.5 rounded focus:outline-none cursor-pointer"
+                        className="bg-white border border-gray-300 hover:border-blue-500 text-gray-800 text-[11px] font-mono py-1 px-1.5 rounded-sm focus:outline-hidden cursor-pointer"
                       >
                         {Object.entries(STAGE_CONFIG).map(([sKey, sVal]) => (
                           <option key={sKey} value={sKey}>{sVal.shortLabel}</option>
@@ -480,7 +480,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                     {/* Tech Stack & Badges */}
                     <td className={cellPadding}>
                       <div className="flex items-center gap-1.5">
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono bg-gray-100 text-gray-800 border border-gray-200">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[11px] font-mono bg-gray-100 text-gray-800 border border-gray-200">
                           {opp.primaryTechStack}
                         </span>
                         <ComplexityBadge complexity={opp.dealComplexity} />
@@ -501,7 +501,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
 
                     {/* Win % */}
                     <td className={`text-center font-mono ${cellPadding}`}>
-                      <div className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <div className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-sm text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                         {opp.winProbability}%
                       </div>
                       <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mt-1 overflow-hidden">
@@ -546,7 +546,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
 
                     {/* Inspect Arrow */}
                     <td className={`text-right ${cellPadding}`}>
-                      <div className="p-1 rounded text-gray-400 group-hover:text-blue-600 group-hover:bg-blue-50 inline-flex items-center transition-colors">
+                      <div className="p-1 rounded-sm text-gray-400 group-hover:text-blue-600 group-hover:bg-blue-50 inline-flex items-center transition-colors">
                         <ChevronRight className="w-4 h-4" />
                       </div>
                     </td>
@@ -563,11 +563,11 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
           ) : filteredOpportunities.map(opp => {
             const isSelected = selectedIds.includes(opp.id);
             const overdue = (opp.actionItems || []).some(a => !a.isCompleted && new Date(a.dueDate) < new Date());
-            return <article key={opp.id} onClick={() => onSelectOpportunity(opp)} className={`border rounded p-3 space-y-2 ${isSelected ? 'border-blue-300 bg-blue-50/50' : 'border-gray-200 bg-white'}`}>
+            return <article key={opp.id} onClick={() => onSelectOpportunity(opp)} className={`border rounded-sm p-3 space-y-2 ${isSelected ? 'border-blue-300 bg-blue-50/50' : 'border-gray-200 bg-white'}`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2 min-w-0">
-                  <input type="checkbox" checked={isSelected} onChange={() => {}} onClick={e => toggleSelectOne(opp.id, e)} className="mt-1 rounded border-gray-300 text-blue-600" aria-label={`Select opportunity ${opp.code}`} />
-                  <div className="min-w-0"><div className="text-[10px] font-mono font-bold text-blue-700">{opp.code}</div><h3 className="font-bold text-sm text-gray-900 break-words">{opp.name}</h3><div className="text-xs text-gray-500 break-words">{opp.clientName}</div></div>
+                  <input type="checkbox" checked={isSelected} onChange={() => {}} onClick={e => toggleSelectOne(opp.id, e)} className="mt-1 rounded-sm border-gray-300 text-blue-600" aria-label={`Select opportunity ${opp.code}`} />
+                  <div className="min-w-0"><div className="text-[10px] font-mono font-bold text-blue-700">{opp.code}</div><h3 className="font-bold text-sm text-gray-900 wrap-break-word">{opp.name}</h3><div className="text-xs text-gray-500 wrap-break-word">{opp.clientName}</div></div>
                 </div>
                 <PriorityBadge priority={opp.priority} />
               </div>
@@ -575,7 +575,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                 <div><div className="text-gray-500 uppercase text-[9px] font-semibold">Stage</div><select value={opp.stage} onChange={e => { e.stopPropagation(); onUpdateStage(opp.id, e.target.value as OpportunityStage); }} onClick={e => e.stopPropagation()} className="enterprise-select w-full text-[11px] py-1">{Object.entries(STAGE_CONFIG).map(([key, value]) => <option key={key} value={key}>{value.shortLabel}</option>)}</select></div>
                 <div><div className="text-gray-500 uppercase text-[9px] font-semibold">TCV / Win</div><div className="font-mono font-bold text-gray-900">{formatCurrency(opp.contractValue)}</div><div className="text-emerald-700 font-mono">{opp.winProbability}% win</div></div>
               </div>
-              <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-gray-500"><span className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 font-mono">{opp.primaryTechStack}</span><span>SA: {opp.leadSolutionArchitect}</span>{overdue && <span className="text-rose-700 font-semibold">SLA Risk</span>}</div>
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-gray-500"><span className="px-1.5 py-0.5 rounded-sm bg-gray-100 border border-gray-200 font-mono">{opp.primaryTechStack}</span><span>SA: {opp.leadSolutionArchitect}</span>{overdue && <span className="text-rose-700 font-semibold">SLA Risk</span>}</div>
             </article>;
           })}
         </div>

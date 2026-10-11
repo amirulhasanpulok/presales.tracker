@@ -33,7 +33,7 @@ Incremental audit of the existing React/TypeScript/Vite frontend, Express/Postgr
 
 ## Remaining work and limits
 
-1. Five npm audit findings remain in the build-only Tailwind 3 dependency chain (braces, chokidar, micromatch, fast-glob and Tailwind). npm offers a breaking Tailwind 4 migration; braces currently has no patched release in the existing chain. These packages are not the deployed browser bundle or API runtime. A separate Tailwind migration needs full visual regression checks; it was not forced into this patch.
+1. Resolved on 2026-10-11: migrated Tailwind 3 to Tailwind 4.3.3 and its dedicated PostCSS plugin using the official upgrade tool; migrated utility names and preserved default border styling. Removed the vulnerable build dependency chain. Root and server npm audits report zero vulnerabilities. TypeScript/build, 21 workflow/intake tests, 70 API checks, 6 CSV checks and 100 RBAC checks pass. Desktop dashboard, solution details and mobile BOQ/navigation were checked with no page-wide horizontal overflow. Tailwind 4 requires modern browsers (Safari 16.4+, Chrome 111+, Firefox 128+); see https://tailwindcss.com/docs/upgrade-guide.
 2. MFA/TOTP/FIDO2, actual idle-session invalidation and Slack delivery require implementation; disabled controls make that explicit. Notification read/dismiss state is local to the mounted view, not a cross-device persisted inbox.
 3. Legacy ownership uses display names and client links use client names. Renaming assigned users is guarded; migration to permanent IDs is future structural work.
 4. UI pagination limits rendered rows; bootstrap still loads the scoped dataset. API pagination is a future scalability improvement.

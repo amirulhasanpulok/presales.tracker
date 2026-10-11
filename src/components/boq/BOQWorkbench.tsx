@@ -76,11 +76,11 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
   if (!activeOpp) {
     return (
-      <div className="bg-white border border-gray-200 rounded p-6 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-6 space-y-3">
         <h2 className="text-sm font-bold text-gray-900">Select an opportunity for BOQ modeling</h2>
         <p className="text-xs text-gray-500">Search by opportunity code, client, or name. No opportunity is selected by default.</p>
         <input value={opportunityQuery} onChange={event => setOpportunityQuery(event.target.value)} placeholder="Search opportunity..." className="enterprise-input w-full text-xs" autoFocus />
-        <div className="max-h-72 overflow-y-auto border border-gray-200 rounded divide-y divide-gray-100">
+        <div className="max-h-72 overflow-y-auto border border-gray-200 rounded-sm divide-y divide-gray-100">
           {filteredOpportunities.map(opportunity => <button key={opportunity.id} type="button" onClick={() => setSelectedOppId(opportunity.id)} className="w-full text-left p-2.5 hover:bg-blue-50 text-xs"><strong className="font-mono text-blue-700">{opportunity.code}</strong><span className="ml-2 text-gray-800">{opportunity.clientName}</span><span className="block text-[11px] text-gray-500">{opportunity.name}</span></button>)}
           {!filteredOpportunities.length && <div className="p-4 text-center text-xs text-gray-500">No matching opportunities.</div>}
         </div>
@@ -215,7 +215,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
     <div className="space-y-4">
       
       {/* Top Banner & Selector */}
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -246,19 +246,19 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
         {/* Global Financial KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100 text-xs font-mono">
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Active Opportunity TCV:</span>
             <div className="text-base font-bold text-gray-900">{formatCurrency(activeOpp.boq.totalContractValue)}</div>
             <div className="text-[10px] text-gray-500">List: {formatCurrency(activeOpp.boq.subtotalListPrice)}</div>
           </div>
 
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Realized Gross Margin:</span>
             <div className="text-base font-bold text-emerald-700">{activeOpp.boq.overallMarginPercent}%</div>
             <div className="text-[10px] text-gray-500">Target: &gt;30% margin</div>
           </div>
 
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Discount Concession:</span>
             <div className="text-base font-bold text-amber-800">{formatCurrency(activeOpp.boq.totalDiscountAmount)}</div>
             <div className="text-[10px] text-gray-500">
@@ -266,7 +266,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
             </div>
           </div>
 
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Governance Status:</span>
             <div className="text-xs font-bold text-purple-700 uppercase mt-0.5">{activeOpp.boq.approvalStatus.replace(/_/g, ' ')}</div>
             <div className="text-[10px] text-gray-500">v{activeOpp.boq.version} revision</div>
@@ -275,11 +275,11 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
       </div>
 
       {/* Action Controls */}
-      <div className="bg-white border border-gray-200 rounded p-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
              onClick={() => { resetNewItem(); setShowAddForm(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-xs shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-medium text-xs shadow-2xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add BOQ Line Item</span>
@@ -287,7 +287,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
           <button
             onClick={() => setShowRevisions(value => !value)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded font-medium text-xs shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-sm font-medium text-xs shadow-2xs"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-purple-600" />
             <span>Revision History ({activeOpp.boq.revisions?.length || 0})</span>
@@ -295,7 +295,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
           <button
             onClick={() => exportBOQCSV(activeOpp)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded font-medium text-xs shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-sm font-medium text-xs shadow-2xs"
           >
             <Download className="w-3.5 h-3.5 text-emerald-600" />
             <span>Export BOQ CSV</span>
@@ -304,13 +304,13 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
            {activeOpp.boq.approvalStatus !== 'approved' && activeOpp.boq.approvalStatus !== 'finalized' && (
             <button
               onClick={handleApprove}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium text-xs shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm font-medium text-xs shadow-2xs"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Simulate Leadership Approval</span>
             </button>
            )}
-           {activeOpp.boq.approvalStatus === 'approved' && <button onClick={handleFinalize} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-xs shadow-xs"><Check className="w-3.5 h-3.5" /> Finalize BOQ</button>}
+           {activeOpp.boq.approvalStatus === 'approved' && <button onClick={handleFinalize} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-medium text-xs shadow-2xs"><Check className="w-3.5 h-3.5" /> Finalize BOQ</button>}
         </div>
 
         <button
@@ -323,7 +323,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
       </div>
 
       {showRevisions && (
-        <div className="bg-white border border-purple-200 rounded p-4 space-y-3">
+        <div className="bg-white border border-purple-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-gray-200 pb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">BOQ Revision History</h3>
             <span className="text-[11px] text-gray-500">Current: v{activeOpp.boq.version}</span>
@@ -333,7 +333,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
           ) : (
             <div className="space-y-2">
               {[...(activeOpp.boq.revisions || [])].reverse().map(revision => (
-                <div key={revision.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-gray-50 border border-gray-200 rounded text-xs">
+                <div key={revision.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-gray-50 border border-gray-200 rounded-sm text-xs">
                   <div><span className="font-mono font-bold text-purple-700">v{revision.version}</span><span className="ml-2 text-gray-700">{revision.snapshot.items.length} line items</span><span className="ml-2 text-gray-500">{new Date(revision.savedAt).toLocaleString()}</span></div>
                   <div className="flex items-center gap-3"><span className="uppercase font-mono text-[10px] text-gray-500">{revision.status.replace(/_/g, ' ')}</span><span className="font-mono font-semibold text-gray-800">{formatCurrency(revision.snapshot.totalContractValue)}</span></div>
                 </div>
@@ -345,7 +345,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
 
       {/* Add Form */}
       {showAddForm && (
-        <form onSubmit={handleAddItem} className="bg-white border border-blue-200 rounded p-4 space-y-3 shadow-sm">
+        <form onSubmit={handleAddItem} className="bg-white border border-blue-200 rounded-sm p-4 space-y-3 shadow-xs">
           <div className="font-bold text-gray-900 text-xs">Add New BOQ Item to {activeOpp.code} ({activeOpp.clientName})</div>
 
           {/* Catalog-driven product search (Section 11) */}
@@ -356,7 +356,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
                 className="w-full enterprise-input cursor-pointer flex items-center gap-2 text-xs"
                 onClick={() => setProductDropdownOpen(v => !v)}
               >
-                <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                 <span className="flex-1 truncate text-gray-700">
                   {newItem.productName
                     ? `${newItem.oem || ''} ${newItem.productName}${newItem.model ? ` (${newItem.model})` : ''}`
@@ -365,12 +365,12 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
                 <span className="text-gray-400">{productDropdownOpen ? '▲' : '▼'}</span>
               </div>
               {productDropdownOpen && (
-                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-y-auto">
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-gray-200 rounded-sm shadow-lg max-h-60 overflow-y-auto">
                   <input
                     value={productQuery}
                     onChange={(e) => setProductQuery(e.target.value)}
                     placeholder="Search by product, model, part #, OEM..."
-                    className="w-full px-3 py-2 border-b border-gray-200 text-xs font-mono focus:outline-none"
+                    className="w-full px-3 py-2 border-b border-gray-200 text-xs font-mono focus:outline-hidden"
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
                   />
@@ -517,13 +517,13 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
             <button
               type="button"
                onClick={() => { resetNewItem(); setShowAddForm(false); }}
-              className="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded font-medium text-xs"
+              className="px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-sm font-medium text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-xs"
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-medium text-xs"
             >
               Insert Item
             </button>
@@ -532,7 +532,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
       )}
 
       {/* BOQ Line Items Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-sm overflow-x-auto">
         <div className="bg-gray-50 px-3.5 py-2.5 border-b border-gray-200 flex items-center justify-between">
           <div className="text-xs font-bold text-gray-900 font-mono">
             {activeOpp.code} Line Item Sizing ({(activeOpp.boq?.items || []).length} items)
@@ -564,13 +564,13 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
                     <div className="text-[11px] font-mono text-gray-500">{it.itemCode}</div>
                     {it.oem && (
                       <div className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
-                        <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100 font-semibold">{it.oem}</span>
+                        <span className="px-1.5 py-0.5 rounded-sm bg-purple-50 text-purple-700 border border-purple-100 font-semibold">{it.oem}</span>
                         {it.model && <span className="font-mono">{it.model}</span>}
                       </div>
                     )}
                   </td>
                   <td className="py-2.5 px-3">
-                    <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-800 font-mono border border-gray-200">
+                    <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-sm bg-gray-100 text-gray-800 font-mono border border-gray-200">
                       {it.category}
                     </span>
                   </td>
@@ -596,7 +596,7 @@ export const BOQWorkbench: React.FC<BOQWorkbenchProps> = ({
                   <td className="py-2.5 px-3 text-center">
                     <button
                       onClick={() => handleDeleteItem(it.id)}
-                      className="p-1 text-gray-400 hover:text-red-600 rounded hover:bg-gray-100"
+                      className="p-1 text-gray-400 hover:text-red-600 rounded-sm hover:bg-gray-100"
                       title="Remove line"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

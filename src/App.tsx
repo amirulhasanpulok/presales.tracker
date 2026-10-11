@@ -1507,7 +1507,7 @@ export default function App() {
                   setSelectedClient(null);
                 }
               }}
-              className={`flex flex-col items-center gap-0.5 rounded py-1 text-[10px] font-semibold ${activeTab === item.id ? "text-blue-700 bg-blue-50" : "text-gray-500"}`}
+              className={`flex flex-col items-center gap-0.5 rounded-sm py-1 text-[10px] font-semibold ${activeTab === item.id ? "text-blue-700 bg-blue-50" : "text-gray-500"}`}
             >
               <item.Icon className="w-4 h-4" />
               {item.label}
@@ -1515,7 +1515,7 @@ export default function App() {
           ))}
           <button
             onClick={() => setIsMobileSidebarOpen(true)}
-            className="flex flex-col items-center gap-0.5 rounded py-1 text-[10px] font-semibold text-gray-500"
+            className="flex flex-col items-center gap-0.5 rounded-sm py-1 text-[10px] font-semibold text-gray-500"
           >
             <MoreHorizontal className="w-4 h-4" />
             More

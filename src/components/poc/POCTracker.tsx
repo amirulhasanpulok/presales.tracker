@@ -44,7 +44,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
     <div className="space-y-4">
       
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <FlaskConical className="w-5 h-5 text-amber-600" />
@@ -57,10 +57,10 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
           </div>
 
           <div className="flex items-center gap-2 text-xs font-mono">
-            <span className="px-2.5 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold">
+            <span className="px-2.5 py-1 rounded-sm bg-amber-50 text-amber-800 border border-amber-200 font-semibold">
               {activeCount} Active Sandbox Labs
             </span>
-            <span className="px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+            <span className="px-2.5 py-1 rounded-sm bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
               {passedCount} Verified Passed
             </span>
           </div>
@@ -68,15 +68,15 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
 
         {/* Aggregate Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-gray-100 text-xs font-mono">
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Total Lab Budget Allocated:</span>
             <div className="text-sm font-bold text-gray-900">{formatCurrency(totalBudget)}</div>
           </div>
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Average Validation Duration:</span>
             <div className="text-sm font-bold text-gray-900">{averageDuration} Days</div>
           </div>
-          <div className="bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <span className="text-gray-500 text-[11px] font-sans font-medium">Overall POC-to-Win Conversion:</span>
             <div className="text-sm font-bold text-emerald-700">{conversionRate}%</div>
           </div>
@@ -86,7 +86,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
       {/* POC Deal Cards */}
       <div className="space-y-3">
         {pocOpps.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 font-mono text-xs bg-white border border-gray-200 rounded">
+          <div className="p-8 text-center text-gray-500 font-mono text-xs bg-white border border-gray-200 rounded-sm">
             No active POCs in the pipeline currently.
           </div>
         ) : (
@@ -98,7 +98,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
             return (
               <div
                 key={opp.id}
-                className="bg-white border border-gray-200 rounded p-4 space-y-3 hover:border-gray-300 transition-colors shadow-2xs"
+                className="bg-white border border-gray-200 rounded-sm p-4 space-y-3 hover:border-gray-300 transition-colors shadow-2xs"
               >
                 {/* Header */}
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -106,7 +106,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-blue-700">{opp.code}</span>
                       <POCBadge status={opp.poc.status} />
-                      <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-gray-100 text-gray-700 border border-gray-200">
                         {opp.primaryTechStack}
                       </span>
                     </div>
@@ -125,7 +125,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => onSelectOpportunity(opp)}
-                      className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded text-xs font-semibold flex items-center gap-1"
+                      className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-sm text-xs font-semibold flex items-center gap-1"
                     >
                       <span>Inspect Lab</span>
                       <ExternalLink className="w-3 h-3" />
@@ -134,7 +134,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
                 </div>
 
                 {/* Sandbox Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px] bg-gray-50 p-2.5 rounded border border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px] bg-gray-50 p-2.5 rounded-sm border border-gray-200">
                   <div>
                     <span className="text-gray-500 font-sans font-medium">Benchmark Window:</span>
                     <div className="text-gray-900 font-semibold mt-0.5">{opp.poc.startDate || 'TBD'} → {opp.poc.targetEndDate || 'TBD'}</div>
@@ -177,7 +177,7 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
                         <div className={`mt-0.5 w-4 h-4 rounded flex items-center justify-center border ${
                           crit.verified ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-400 bg-white'
                         }`}>
-                          {crit.verified && <Check className="w-3 h-3 stroke-[3]" />}
+                          {crit.verified && <Check className="w-3 h-3 stroke-3" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className={`font-medium ${crit.verified ? 'text-gray-900 font-semibold' : 'text-gray-800'}`}>{crit.description}</div>
@@ -190,8 +190,8 @@ export const POCTracker: React.FC<POCTrackerProps> = ({
 
                 {/* Blocker Alert if present */}
                 {hasBlocker && (
-                  <div className="flex items-center gap-2 p-2.5 bg-rose-50 border border-rose-200 rounded text-rose-800 text-xs">
-                    <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                  <div className="flex items-center gap-2 p-2.5 bg-rose-50 border border-rose-200 rounded-sm text-rose-800 text-xs">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                     <span>Active technical blocker detected: {opp.poc.blockers.find(b=>!b.resolved)?.description}</span>
                   </div>
                 )}

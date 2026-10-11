@@ -64,15 +64,15 @@ export const OpportunityStakeholders: React.FC<OpportunityStakeholdersProps> = (
   const getSentimentBadge = (s: Stakeholder['sentiment']) => {
     switch (s) {
       case 'champion':
-        return <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-mono font-bold">Champion</span>;
+        return <span className="px-2 py-0.5 rounded-sm bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-mono font-bold">Champion</span>;
       case 'supporter':
-        return <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 text-xs font-mono">Supporter</span>;
+        return <span className="px-2 py-0.5 rounded-sm bg-blue-50 text-blue-800 border border-blue-200 text-xs font-mono">Supporter</span>;
       case 'neutral':
-        return <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200 text-xs font-mono">Neutral</span>;
+        return <span className="px-2 py-0.5 rounded-sm bg-gray-100 text-gray-700 border border-gray-200 text-xs font-mono">Neutral</span>;
       case 'skeptic':
-        return <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-xs font-mono">Skeptic</span>;
+        return <span className="px-2 py-0.5 rounded-sm bg-amber-50 text-amber-800 border border-amber-200 text-xs font-mono">Skeptic</span>;
       case 'blocker':
-        return <span className="px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 text-xs font-mono font-bold">Blocker</span>;
+        return <span className="px-2 py-0.5 rounded-sm bg-red-50 text-red-700 border border-red-200 text-xs font-mono font-bold">Blocker</span>;
     }
   };
 
@@ -90,7 +90,7 @@ export const OpportunityStakeholders: React.FC<OpportunityStakeholdersProps> = (
   return (
     <div className="space-y-4">
       {/* Action Bar */}
-      <div className="bg-white border border-gray-200 rounded p-3 flex items-center justify-between">
+      <div className="bg-white border border-gray-200 rounded-sm p-3 flex items-center justify-between">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Buying Center & Influence Matrix</h3>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -100,7 +100,7 @@ export const OpportunityStakeholders: React.FC<OpportunityStakeholdersProps> = (
 
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
         >
           <Plus className="w-3.5 h-3.5" />
           Add Stakeholder
@@ -109,7 +109,7 @@ export const OpportunityStakeholders: React.FC<OpportunityStakeholdersProps> = (
 
       {/* Add Form */}
       {showAddForm && (
-        <form onSubmit={handleAdd} className="bg-white border border-blue-200 rounded p-4 space-y-3">
+        <form onSubmit={handleAdd} className="bg-white border border-blue-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-gray-100 pb-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Add Key Customer Stakeholder</h4>
             <button type="button" onClick={() => setShowAddForm(false)} className="text-xs text-gray-500 hover:text-gray-800">&times; Cancel</button>
@@ -216,7 +216,7 @@ export const OpportunityStakeholders: React.FC<OpportunityStakeholdersProps> = (
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded">
+            <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm">
               Save Stakeholder
             </button>
           </div>
@@ -226,7 +226,7 @@ export const OpportunityStakeholders: React.FC<OpportunityStakeholdersProps> = (
       {/* Stakeholders Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {stakeholders.map(sh => (
-          <div key={sh.id} className="bg-white border border-gray-200 rounded p-3.5 space-y-2 hover:border-gray-300 transition-colors">
+          <div key={sh.id} className="bg-white border border-gray-200 rounded-sm p-3.5 space-y-2 hover:border-gray-300 transition-colors">
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-bold text-gray-900 text-xs flex items-center gap-1.5">
@@ -239,14 +239,14 @@ export const OpportunityStakeholders: React.FC<OpportunityStakeholdersProps> = (
             </div>
 
             <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-100">
-              <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded bg-gray-100 text-gray-800 border border-gray-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-sm bg-gray-100 text-gray-800 border border-gray-200">
                 {sh.buyingRole}
               </span>
               <div>{getInfluenceBadge(sh.influence)}</div>
             </div>
 
             {sh.notes && (
-              <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-200 leading-relaxed">
+              <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded-sm border border-gray-200 leading-relaxed">
                 "{sh.notes}"
               </p>
             )}

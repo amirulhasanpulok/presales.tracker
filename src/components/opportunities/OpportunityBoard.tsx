@@ -35,7 +35,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
           return (
             <div
               key={stageKey}
-              className="flex-1 flex flex-col min-w-[245px] max-w-[270px] bg-gray-50 border border-gray-200 rounded-md overflow-hidden shadow-xs"
+              className="flex-1 flex flex-col min-w-[245px] max-w-[270px] bg-gray-50 border border-gray-200 rounded-md overflow-hidden shadow-2xs"
             >
               {/* Stage Header */}
               <div className="p-2.5 bg-white border-b border-gray-200">
@@ -46,7 +46,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
                       {config.shortLabel}
                     </h3>
                   </div>
-                  <span className="text-[11px] font-mono px-1.5 py-0.2 rounded bg-gray-100 text-gray-700 border border-gray-200 font-semibold">
+                  <span className="text-[11px] font-mono px-1.5 py-0.2 rounded-sm bg-gray-100 text-gray-700 border border-gray-200 font-semibold">
                     {stageOpps.length}
                   </span>
                 </div>
@@ -60,7 +60,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
               {/* Opportunity Cards List */}
               <div className="flex-1 p-2 overflow-y-auto space-y-2">
                 {stageOpps.length === 0 ? (
-                  <div className="h-32 border border-dashed border-gray-300 rounded flex flex-col items-center justify-center text-gray-400 text-xs font-mono">
+                  <div className="h-32 border border-dashed border-gray-300 rounded-sm flex flex-col items-center justify-center text-gray-400 text-xs font-mono">
                     <span>No opportunities</span>
                   </div>
                 ) : (
@@ -71,7 +71,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
                       <div
                         key={opp.id}
                         onClick={() => onSelectOpportunity(opp)}
-                        className="bg-white hover:bg-blue-50/40 border border-gray-200 hover:border-blue-300 rounded p-2.5 text-xs transition-all cursor-pointer shadow-2xs group"
+                        className="bg-white hover:bg-blue-50/40 border border-gray-200 hover:border-blue-300 rounded-sm p-2.5 text-xs transition-all cursor-pointer shadow-2xs group"
                       >
                         {/* Top Code & Priority */}
                         <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -91,7 +91,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
 
                         {/* Tech Stack pills */}
                         <div className="flex flex-wrap items-center gap-1 mt-2">
-                          <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
+                          <span className="text-[10px] font-mono px-1 py-0.5 rounded-sm bg-gray-100 text-gray-700 border border-gray-200">
                             {opp.primaryTechStack}
                           </span>
                           <ComplexityBadge complexity={opp.dealComplexity} />
@@ -137,7 +137,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
 
                         {/* SLA Warning */}
                         {hasOverdueActions && (
-                          <div className="mt-1.5 flex items-center gap-1 text-[10px] font-mono text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                          <div className="mt-1.5 flex items-center gap-1 text-[10px] font-mono text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded-sm border border-rose-200">
                             <AlertTriangle className="w-3 h-3" />
                             <span>Overdue Action SLA</span>
                           </div>
@@ -151,7 +151,7 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
                             value={opp.stage}
                             onChange={(e) => onUpdateStage(opp.id, e.target.value as OpportunityStage)}
                             aria-label={`Advance stage for ${opp.code}`}
-                            className="bg-gray-50 border border-gray-200 text-gray-600 hover:text-gray-900 text-[10px] font-mono px-1.5 py-0.5 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="bg-gray-50 border border-gray-200 text-gray-600 hover:text-gray-900 text-[10px] font-mono px-1.5 py-0.5 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                           >
                             <option value="" disabled>Advance stage...</option>
                             {Object.entries(STAGE_CONFIG).map(([k, v]) => (

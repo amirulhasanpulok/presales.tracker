@@ -124,13 +124,13 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Header Card */}
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
         {/* Navigation Breadcrumb & Back */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={onBack}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-blue-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-blue-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-sm"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Tracker
@@ -151,7 +151,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowExportMenu(!showExportMenu)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 shadow-2xs"
               >
                 <Download className="w-3 h-3 text-blue-600" />
                 Export Deliverables
@@ -161,7 +161,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
               </button>
 
               {showExportMenu && (
-                <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded shadow-lg z-50 py-1 text-xs divide-y divide-gray-100">
+                <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-sm shadow-lg z-50 py-1 text-xs divide-y divide-gray-100">
                   <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-gray-400 font-mono">
                     Deliverable Formats
                   </div>
@@ -228,11 +228,11 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2 border-t border-gray-100">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-gray-900 tracking-tight break-words">
+              <h1 className="text-lg font-bold text-gray-900 tracking-tight wrap-break-word">
                 {opportunity.name}
               </h1>
               <span
-                className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-semibold border border-blue-200 ${opportunity.collaboration ? "hidden" : ""}`}
+                className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 font-mono font-semibold border border-blue-200 ${opportunity.collaboration ? "hidden" : ""}`}
               >
                 {opportunity.primaryTechStack}
               </span>
@@ -267,7 +267,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
           </div>
 
           <div
-            className={`flex flex-wrap items-center gap-3 sm:gap-4 bg-gray-50 p-2.5 rounded border border-gray-200 flex-shrink-0 ${opportunity.collaboration ? "hidden" : ""}`}
+            className={`flex flex-wrap items-center gap-3 sm:gap-4 bg-gray-50 p-2.5 rounded-sm border border-gray-200 shrink-0 ${opportunity.collaboration ? "hidden" : ""}`}
           >
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">
@@ -277,7 +277,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
                 {formatCurrency(opportunity.contractValue)}
               </div>
             </div>
-            <div className="h-7 w-[1px] bg-gray-300" />
+            <div className="h-7 w-px bg-gray-300" />
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">
                 ARR Value
@@ -286,7 +286,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
                 {formatCurrency(opportunity.arr)}/yr
               </div>
             </div>
-            <div className="h-7 w-[1px] bg-gray-300" />
+            <div className="h-7 w-px bg-gray-300" />
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">
                 Win Rate
@@ -321,7 +321,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
                   onClick={() => handleStageChange(st)}
                   className={`p-1.5 rounded text-left text-xs transition-all border ${
                     isActive
-                      ? "bg-blue-600 text-white border-blue-700 font-bold shadow-xs"
+                      ? "bg-blue-600 text-white border-blue-700 font-bold shadow-2xs"
                       : isPassed
                         ? "bg-emerald-50 text-emerald-800 border-emerald-200 font-medium"
                         : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
@@ -341,7 +341,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       </div>
 
       {/* Sub-view Tabs Navigation Bar */}
-      <div className="bg-white border border-gray-200 rounded p-1.5 flex items-center overflow-x-auto gap-1">
+      <div className="bg-white border border-gray-200 rounded-sm p-1.5 flex items-center overflow-x-auto gap-1">
         {subTabs
           .filter(
             (tab) =>

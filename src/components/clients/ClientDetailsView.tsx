@@ -60,11 +60,11 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Header Card */}
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
         <div className="flex items-center gap-2">
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-blue-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-blue-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-sm"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Clients Directory
@@ -75,13 +75,13 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded bg-blue-50 border border-blue-200 text-blue-700 font-bold text-lg flex items-center justify-center">
+            <div className="w-12 h-12 rounded-sm bg-blue-50 border border-blue-200 text-blue-700 font-bold text-lg flex items-center justify-center">
               {client.name.substring(0, 2).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base font-bold text-gray-900 tracking-tight">{client.name}</h1>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 font-bold">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-purple-50 text-purple-700 border border-purple-200 font-bold">
                   {client.tier}
                 </span>
               </div>
@@ -98,14 +98,14 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-4 bg-gray-50 p-2.5 rounded border border-gray-200">
+          <div className="flex items-center gap-4 bg-gray-50 p-2.5 rounded-sm border border-gray-200">
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">Contracted TCV</div>
               <div className="text-xs font-bold font-mono text-gray-900">
                 {formatCurrency((client as any).totalContractedTCV ?? (client as any).totalActiveTCV ?? 0)}
               </div>
             </div>
-            <div className="h-7 w-[1px] bg-gray-300" />
+            <div className="h-7 w-px bg-gray-300" />
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">Active Deals</div>
               <div className="text-base font-bold font-mono text-blue-700">
@@ -126,24 +126,24 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
           { label: 'BOQs', value: boqCount, tone: 'text-purple-700' },
           { label: 'Documents', value: documentCount, tone: 'text-amber-700' },
         ].map(metric => (
-          <div key={metric.label} className="bg-white border border-gray-200 rounded p-3">
+          <div key={metric.label} className="bg-white border border-gray-200 rounded-sm p-3">
             <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">{metric.label}</div>
             <div className={`text-xl font-bold font-mono mt-1 ${metric.tone}`}>{metric.value}</div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
-        <div className="flex items-center justify-between border-b border-gray-200 pb-2"><h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Client Contacts ({contacts.length})</h3><button onClick={() => setShowContactForm(value => !value)} className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded">{showContactForm ? 'Cancel' : 'Add Contact'}</button></div>
-        {showContactForm && <form onSubmit={saveContact} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-gray-50 border border-gray-200 rounded p-3"><input required value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })} placeholder="Contact name" className="enterprise-input text-xs" /><input value={contact.designation} onChange={e => setContact({ ...contact, designation: e.target.value })} placeholder="Designation" className="enterprise-input text-xs" /><input value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} placeholder="Phone" className="enterprise-input text-xs" /><input type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} placeholder="Email" className="enterprise-input text-xs" /><textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} placeholder="Notes" rows={2} className="enterprise-input text-xs resize-none sm:col-span-2" /><label className="inline-flex items-center gap-2 text-xs"><input type="checkbox" checked={!!contact.isPrimary} onChange={e => setContact({ ...contact, isPrimary: e.target.checked })} /> Primary contact</label><button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded">Save Contact</button></form>}
-        {contacts.length === 0 ? <div className="text-xs text-gray-500">No contacts recorded for this client.</div> : <div className="grid grid-cols-1 md:grid-cols-2 gap-2">{contacts.map(item => <div key={item.id} className="border border-gray-200 rounded p-3"><div className="flex items-start justify-between gap-2"><div><div className="text-xs font-bold text-gray-900">{item.name} {item.isPrimary && <span className="text-[10px] text-emerald-700">Primary</span>}</div><div className="text-[11px] text-gray-500">{item.designation || 'Designation not set'}</div></div><button onClick={() => removeContact(item.id)} className="text-[10px] text-red-600 hover:underline">Remove</button></div><div className="mt-2 text-[11px] text-gray-600 space-y-0.5"><div>{item.phone || 'Phone not set'}</div><div>{item.email || 'Email not set'}</div></div></div>)}</div>}
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-2"><h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Client Contacts ({contacts.length})</h3><button onClick={() => setShowContactForm(value => !value)} className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-sm">{showContactForm ? 'Cancel' : 'Add Contact'}</button></div>
+        {showContactForm && <form onSubmit={saveContact} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-gray-50 border border-gray-200 rounded-sm p-3"><input required value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })} placeholder="Contact name" className="enterprise-input text-xs" /><input value={contact.designation} onChange={e => setContact({ ...contact, designation: e.target.value })} placeholder="Designation" className="enterprise-input text-xs" /><input value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} placeholder="Phone" className="enterprise-input text-xs" /><input type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} placeholder="Email" className="enterprise-input text-xs" /><textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} placeholder="Notes" rows={2} className="enterprise-input text-xs resize-none sm:col-span-2" /><label className="inline-flex items-center gap-2 text-xs"><input type="checkbox" checked={!!contact.isPrimary} onChange={e => setContact({ ...contact, isPrimary: e.target.checked })} /> Primary contact</label><button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-sm">Save Contact</button></form>}
+        {contacts.length === 0 ? <div className="text-xs text-gray-500">No contacts recorded for this client.</div> : <div className="grid grid-cols-1 md:grid-cols-2 gap-2">{contacts.map(item => <div key={item.id} className="border border-gray-200 rounded-sm p-3"><div className="flex items-start justify-between gap-2"><div><div className="text-xs font-bold text-gray-900">{item.name} {item.isPrimary && <span className="text-[10px] text-emerald-700">Primary</span>}</div><div className="text-[11px] text-gray-500">{item.designation || 'Designation not set'}</div></div><button onClick={() => removeContact(item.id)} className="text-[10px] text-red-600 hover:underline">Remove</button></div><div className="mt-2 text-[11px] text-gray-600 space-y-0.5"><div>{item.phone || 'Phone not set'}</div><div>{item.email || 'Email not set'}</div></div></div>)}</div>}
       </div>
 
       {/* Account Info Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left 2 Cols: Active Opportunities Pipeline for Client */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white border border-gray-200 rounded">
+          <div className="bg-white border border-gray-200 rounded-sm">
             <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
                  Client Opportunities ({clientDeals.length})
@@ -191,7 +191,7 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
 
         {/* Right 1 Col: Account Team & Compliance Profile */}
         <div className="space-y-4">
-          <div className="bg-white border border-gray-200 rounded p-4">
+          <div className="bg-white border border-gray-200 rounded-sm p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-2.5">
               Assigned Account Team
             </h3>
@@ -216,14 +216,14 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded p-4">
+          <div className="bg-white border border-gray-200 rounded-sm p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-2.5">
               Compliance & Security Profile
             </h3>
 
             <div className="mt-3 flex flex-wrap gap-1.5">
               {((client as any).complianceCertifications || []).map((cert: string, idx: number) => (
-                <span key={idx} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono font-medium">
+                <span key={idx} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-sm bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono font-medium">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
                   {cert}
                 </span>
@@ -234,7 +234,7 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
       </div>
 
       {/* Work & Update History: step-by-step, who + when */}
-      <div className="bg-white border border-gray-200 rounded">
+      <div className="bg-white border border-gray-200 rounded-sm">
         <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
             Work & Update History
@@ -250,7 +250,7 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
               <span className="absolute left-4 top-5 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white" />
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-mono font-semibold uppercase">{activity.type || 'Update'}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-blue-50 text-blue-700 border border-blue-200 font-mono font-semibold uppercase">{activity.type || 'Update'}</span>
                   <button onClick={() => onSelectOpportunity(opportunity)} className="text-[11px] font-semibold text-gray-800 hover:text-blue-700">{opportunity.name} ({opportunity.code})</button>
                 </div>
                 <span className="text-[10px] font-mono text-gray-400">{new Date(activity.timestamp).toLocaleString()}</span>

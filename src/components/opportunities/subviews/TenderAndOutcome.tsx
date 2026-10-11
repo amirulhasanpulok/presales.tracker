@@ -153,7 +153,7 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
           {derivedOutcome !== 'won' && (
             <button
               onClick={() => handleDeclareOutcome('won')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-sm shadow-2xs"
             >
               <Trophy className="w-3.5 h-3.5" />
               Mark Won
@@ -162,19 +162,19 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
           {derivedOutcome !== 'lost' && (
             <button
               onClick={() => handleDeclareOutcome('lost')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-sm shadow-2xs"
             >
               <XCircle className="w-3.5 h-3.5" />
               Mark Lost
             </button>
           )}
           {derivedOutcome !== 'on_hold' && (
-            <button onClick={() => handleDeclareOutcome('on_hold')} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded">
+            <button onClick={() => handleDeclareOutcome('on_hold')} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-sm">
               <PauseCircle className="w-3.5 h-3.5" /> On Hold
             </button>
           )}
           {derivedOutcome !== 'cancelled' && (
-            <button onClick={() => handleDeclareOutcome('cancelled')} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded">
+            <button onClick={() => handleDeclareOutcome('cancelled')} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-sm">
               <AlertCircle className="w-3.5 h-3.5" /> Cancel
             </button>
           )}
@@ -183,7 +183,7 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Tender section */}
-        <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
             <Landmark className="w-4 h-4 text-blue-600" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Tender Information</h3>
@@ -259,7 +259,7 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
             {(tender.complianceRequirements || []).length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {(tender.complianceRequirements || []).map((c, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
+                  <span key={i} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-sm bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
                     <ShieldCheck className="w-3 h-3" /> {c}
                   </span>
                 ))}
@@ -304,14 +304,14 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
         </div>
 
         {/* Deal Outcome section */}
-        <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
             <Activity icon={outcome.outcome} />
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">Deal Outcome Details</h3>
           </div>
 
           {outcome.outcome === 'won' && (
-            <div className="space-y-2.5 text-xs bg-emerald-50/50 p-3 rounded border border-emerald-100">
+            <div className="space-y-2.5 text-xs bg-emerald-50/50 p-3 rounded-sm border border-emerald-100">
               <div>
                 <label className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Won Date</label>
                 <input type="date" value={outcome.wonDate || ''} onChange={(e) => setOutcome({ ...outcome, wonDate: e.target.value })} className="w-full enterprise-input text-xs" />
@@ -334,7 +334,7 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
           )}
 
           {outcome.outcome === 'lost' && (
-            <div className="space-y-2.5 text-xs bg-red-50/50 p-3 rounded border border-red-100">
+            <div className="space-y-2.5 text-xs bg-red-50/50 p-3 rounded-sm border border-red-100">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="block text-[10px] uppercase font-semibold text-gray-500 mb-1">Lost Date</label>
@@ -371,7 +371,7 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
           )}
 
           {outcome.outcome === 'open' && (
-            <div className="p-3 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded">
+            <div className="p-3 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-sm">
               <p>This deal is still <strong>Active / Open</strong>. Use the buttons above to mark it <strong>Won</strong> or <strong>Lost</strong> — additional fields will appear to capture the complete outcome and lessons learned.</p>
             </div>
           )}
@@ -392,7 +392,7 @@ export const TenderAndOutcome: React.FC<TenderAndOutcomeProps> = ({
         )}
         <button
           onClick={(e) => { e.preventDefault(); handleSave(e); }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
         >
           <Save className="w-3.5 h-3.5" />
           Save Tender & Outcome

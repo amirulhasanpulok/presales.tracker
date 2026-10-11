@@ -80,7 +80,7 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Filter Bar */}
-      <div className="bg-white border border-gray-200 rounded p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5 text-xs">
             <span className="font-bold uppercase tracking-wider text-gray-700">Category:</span>
@@ -103,7 +103,7 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
               type="checkbox"
               checked={showCompleted}
               onChange={(e) => setShowCompleted(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             Show Completed ({completedCount})
           </label>
@@ -111,7 +111,7 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
         >
           <Plus className="w-3.5 h-3.5" />
           Add SLA Action Item
@@ -120,7 +120,7 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
 
       {/* New Task Inline Form */}
       {showAddModal && (
-        <form onSubmit={handleCreateTask} className="bg-white border border-blue-200 rounded p-4 space-y-3">
+        <form onSubmit={handleCreateTask} className="bg-white border border-blue-200 rounded-sm p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-gray-100 pb-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Create Deal Action Item</h4>
             <button type="button" onClick={() => setShowAddModal(false)} className="text-xs text-gray-500 hover:text-gray-800">&times; Cancel</button>
@@ -192,7 +192,7 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded">
+            <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm">
               Save Action Item
             </button>
           </div>
@@ -200,7 +200,7 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
       )}
 
       {/* Task List Table */}
-      <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-sm overflow-x-auto">
          <table className="hidden md:table w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
@@ -234,7 +234,7 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
                     </span>
                   </td>
                   <td className="py-2.5 px-3">
-                    <span className="inline-flex items-center text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-mono border border-gray-200">
+                    <span className="inline-flex items-center text-[11px] px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-700 font-mono border border-gray-200">
                       {task.category}
                     </span>
                   </td>
@@ -260,9 +260,9 @@ export const OpportunityTasks: React.FC<OpportunityTasksProps> = ({
          <div className="md:hidden p-2 space-y-2">
            {filteredTasks.map(task => {
              const isOverdue = !task.isCompleted && new Date(task.dueDate) < new Date();
-             return <article key={task.id} onClick={() => toggleTask(task.id)} className={`border rounded p-3 space-y-2 ${task.isCompleted ? 'bg-gray-50 opacity-60 border-gray-200' : 'bg-white border-gray-200'}`}>
-               <div className="flex items-start gap-2"><button onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }} className="mt-0.5">{task.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Circle className="w-4 h-4 text-gray-400" />}</button><div className="min-w-0 flex-1"><div className={`font-semibold text-sm break-words ${task.isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}>{task.title}</div><div className="text-[11px] text-gray-500 mt-1">{task.assignedTo}</div></div><PriorityBadge priority={task.priority} /></div>
-               <div className="flex items-center justify-between gap-2 text-[10px]"><span className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 font-mono">{task.category}</span><span className={isOverdue ? 'text-red-700 font-bold' : 'text-gray-600'}>{task.dueDate}{isOverdue ? ' · OVERDUE' : ''}</span></div>
+             return <article key={task.id} onClick={() => toggleTask(task.id)} className={`border rounded-sm p-3 space-y-2 ${task.isCompleted ? 'bg-gray-50 opacity-60 border-gray-200' : 'bg-white border-gray-200'}`}>
+               <div className="flex items-start gap-2"><button onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }} className="mt-0.5">{task.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Circle className="w-4 h-4 text-gray-400" />}</button><div className="min-w-0 flex-1"><div className={`font-semibold text-sm wrap-break-word ${task.isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}>{task.title}</div><div className="text-[11px] text-gray-500 mt-1">{task.assignedTo}</div></div><PriorityBadge priority={task.priority} /></div>
+               <div className="flex items-center justify-between gap-2 text-[10px]"><span className="px-1.5 py-0.5 rounded-sm bg-gray-100 border border-gray-200 font-mono">{task.category}</span><span className={isOverdue ? 'text-red-700 font-bold' : 'text-gray-600'}>{task.dueDate}{isOverdue ? ' · OVERDUE' : ''}</span></div>
              </article>;
            })}
          </div>

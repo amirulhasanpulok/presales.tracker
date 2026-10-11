@@ -42,11 +42,11 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 tracking-tight">Sales Key Account Managers (KAM) Directory</h1>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 font-semibold border border-blue-200">
               {salesKAMs.length} Account Executives
             </span>
           </div>
@@ -55,7 +55,7 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-200">
+        <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-sm border border-gray-200">
           <div className="text-right">
              <div className="text-[10px] uppercase font-semibold text-gray-500">{totalQuota > 0 ? 'Total Quota Attainment' : 'Live Pipeline Coverage'}</div>
             <div className="text-sm font-bold font-mono text-emerald-700">
@@ -66,7 +66,7 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
       </div>
 
       {/* Filter Bar */}
-       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded p-3 flex flex-row sm:items-center justify-between gap-3">
+       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded-sm p-3 flex flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 max-w-sm">
           <div className="relative w-full">
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
@@ -92,17 +92,17 @@ export const SalesKAMDirectory: React.FC<SalesKAMDirectoryProps> = ({
 
       {/* KAM Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredKAMs.length === 0 && <div className="md:col-span-2 lg:col-span-3 bg-white border border-dashed border-gray-300 rounded p-10 text-center"><Users className="w-8 h-8 mx-auto text-gray-300" /><h3 className="mt-2 text-sm font-semibold text-gray-800">No Sales KAMs found</h3><p className="mt-1 text-xs text-gray-500">Add Sales KAM users from User Management to populate this directory.</p></div>}
+        {filteredKAMs.length === 0 && <div className="md:col-span-2 lg:col-span-3 bg-white border border-dashed border-gray-300 rounded-sm p-10 text-center"><Users className="w-8 h-8 mx-auto text-gray-300" /><h3 className="mt-2 text-sm font-semibold text-gray-800">No Sales KAMs found</h3><p className="mt-1 text-xs text-gray-500">Add Sales KAM users from User Management to populate this directory.</p></div>}
         {filteredKAMs.map(kam => {
            const attainmentPercent = kam.quotaTarget > 0 ? Math.round((kam.achievedPipeline / kam.quotaTarget) * 100) : null;
           return (
-            <div key={kam.id} className="bg-white border border-gray-200 rounded p-4 space-y-3 hover:border-gray-300 transition-colors">
+            <div key={kam.id} className="bg-white border border-gray-200 rounded-sm p-4 space-y-3 hover:border-gray-300 transition-colors">
               <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-xs font-bold text-gray-900">{kam.name}</h3>
                     <div className="text-[11px] text-gray-500 font-mono">{kam.region} · {kam.salesTeam || 'Unassigned team'}</div>
                 </div>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 font-bold border border-blue-200">
                   {kam.accountsCount} Accounts
                 </span>
               </div>

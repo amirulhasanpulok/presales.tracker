@@ -163,11 +163,11 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
   return (
     <div className="space-y-4 max-w-5xl mx-auto">
       {/* Top Header Card */}
-      <div className="bg-white border border-gray-200 rounded p-4 flex items-center justify-between">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={onCancel}
-            className="p-1.5 rounded text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+            className="p-1.5 rounded-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -181,7 +181,7 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
       </div>
 
       {/* Main Creation Form */}
-      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded p-5 space-y-5">
+      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-sm p-5 space-y-5">
         {/* Section 1: Client & Deal Identity */}
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2">
@@ -400,13 +400,13 @@ export const NewOpportunityView: React.FC<NewOpportunityViewProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100 rounded border border-gray-300"
+            className="px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100 rounded-sm border border-gray-300"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
           >
             <Sparkles className="w-3.5 h-3.5" />
             Create & Ingest Opportunity

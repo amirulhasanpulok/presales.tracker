@@ -35,7 +35,7 @@ export const HandoverQueue: React.FC<HandoverQueueProps> = ({
     <div className="space-y-4">
       
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <ArrowRightLeft className="w-5 h-5 text-emerald-600" />
@@ -48,18 +48,18 @@ export const HandoverQueue: React.FC<HandoverQueueProps> = ({
           </div>
 
           <div className="flex items-center gap-2 text-xs font-mono">
-            <span className="px-2.5 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold">
+            <span className="px-2.5 py-1 rounded-sm bg-amber-50 text-amber-800 border border-amber-200 font-semibold">
               {pendingHandoverCount} Gates Pending
             </span>
-            <span className="px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+            <span className="px-2.5 py-1 rounded-sm bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
               {completedCount} Fully Handed Over
             </span>
           </div>
         </div>
 
         {/* Informational Guidance Box */}
-        <div className="bg-gray-50 p-2.5 rounded border border-gray-200 text-xs text-gray-700 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+        <div className="bg-gray-50 p-2.5 rounded-sm border border-gray-200 text-xs text-gray-700 flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>
             <strong>Strict Handover Criteria:</strong> Architectural Runbooks must be uploaded, AWS/GCP IAM credentials securely transferred to Delivery Leads, and Customer Technical Kickoff booked before deals transition out of Presales accountability.
           </span>
@@ -69,7 +69,7 @@ export const HandoverQueue: React.FC<HandoverQueueProps> = ({
       {/* Handover Cards */}
       <div className="space-y-3">
         {candidateOpps.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 font-mono text-xs bg-white border border-gray-200 rounded">
+          <div className="p-8 text-center text-gray-500 font-mono text-xs bg-white border border-gray-200 rounded-sm">
             No closed-won or late-stage opportunities pending delivery handover.
           </div>
         ) : (
@@ -93,7 +93,7 @@ export const HandoverQueue: React.FC<HandoverQueueProps> = ({
                       }`}>
                         {isHandedOver ? 'HANDOVER COMPLETED' : 'HANDOVER IN PROGRESS'}
                       </span>
-                      <span className="text-[11px] font-mono px-1.5 py-0.2 rounded bg-gray-100 text-gray-700 border border-gray-200">
+                      <span className="text-[11px] font-mono px-1.5 py-0.2 rounded-sm bg-gray-100 text-gray-700 border border-gray-200">
                          {formatCurrency(opp.contractValue)} TCV
                       </span>
                     </div>
@@ -111,7 +111,7 @@ export const HandoverQueue: React.FC<HandoverQueueProps> = ({
 
                   <button
                     onClick={() => onSelectOpportunity(opp)}
-                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded text-xs font-semibold flex items-center gap-1"
+                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-sm text-xs font-semibold flex items-center gap-1"
                   >
                     <span>Inspect Handover</span>
                     <ExternalLink className="w-3 h-3" />
@@ -119,7 +119,7 @@ export const HandoverQueue: React.FC<HandoverQueueProps> = ({
                 </div>
 
                 {/* Assigned Delivery Leads */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px] bg-gray-50 p-2.5 rounded border border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px] bg-gray-50 p-2.5 rounded-sm border border-gray-200">
                   <div>
                     <span className="text-gray-500 font-sans font-medium">Assigned PS Delivery Lead:</span>
                     <div className="text-gray-900 font-semibold mt-0.5">{opp.handover.assignedDeliveryLead || 'Unassigned'}</div>
@@ -157,7 +157,7 @@ export const HandoverQueue: React.FC<HandoverQueueProps> = ({
                           <div className={`w-4 h-4 rounded flex items-center justify-center border ${
                             checked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-400 bg-white'
                           }`}>
-                            {checked && <Check className="w-3 h-3 stroke-[3]" />}
+                            {checked && <Check className="w-3 h-3 stroke-3" />}
                           </div>
                           <span className="font-medium text-gray-800">{item.label}</span>
                         </div>

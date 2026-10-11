@@ -218,7 +218,7 @@ export function WorkQueue({
               )}
             </div>
             <div className="md:col-span-2">
-              <span className="inline-flex px-2 py-1 rounded bg-slate-100 text-xs text-slate-700">
+              <span className="inline-flex px-2 py-1 rounded-sm bg-slate-100 text-xs text-slate-700">
                 {WORK_LABELS[o.collaboration?.status || ""] || "Existing lead"}
               </span>
             </div>

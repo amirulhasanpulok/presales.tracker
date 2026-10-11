@@ -141,7 +141,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
         <>
           {/* Top Architecture Status Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white border border-gray-200 rounded p-3">
+            <div className="bg-white border border-gray-200 rounded-sm p-3">
               <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                 Primary Platform & Cloud
               </div>
@@ -154,7 +154,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
               </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded p-3">
+            <div className="bg-white border border-gray-200 rounded-sm p-3">
               <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                 Technical Fit & Feasibility
               </div>
@@ -169,7 +169,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
               </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded p-3">
+            <div className="bg-white border border-gray-200 rounded-sm p-3">
               <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                 InfoSec Clearance
               </div>
@@ -183,7 +183,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
+          <div className="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-gray-200 pb-2">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
@@ -196,7 +196,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
               <button
                 type="button"
                 onClick={saveScopeAnalysis}
-                className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded"
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-sm"
               >
                 Save Analysis
               </button>
@@ -301,7 +301,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
           </div>
 
           {/* Target Architecture Specification */}
-          <div className="bg-white border border-gray-200 rounded p-4">
+          <div className="bg-white border border-gray-200 rounded-sm p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-2.5 flex items-center justify-between">
               <span>Target Architecture Blueprint</span>
               <span className="text-[11px] font-mono text-blue-700 font-medium">
@@ -314,7 +314,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
                 <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
                   Proposed Solution Details
                 </div>
-                <p className="text-xs text-gray-700 mt-1 leading-relaxed bg-gray-50 p-3 rounded border border-gray-200">
+                <p className="text-xs text-gray-700 mt-1 leading-relaxed bg-gray-50 p-3 rounded-sm border border-gray-200">
                   {opportunity.proposedArchitecture}
                 </p>
               </div>
@@ -323,7 +323,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
                 <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
                   Current Legacy Stack & Migration Bottlenecks
                 </div>
-                <p className="text-xs text-gray-700 mt-1 leading-relaxed bg-gray-50 p-3 rounded border border-gray-200">
+                <p className="text-xs text-gray-700 mt-1 leading-relaxed bg-gray-50 p-3 rounded-sm border border-gray-200">
                   {opportunity.currentLegacyStack}
                 </p>
               </div>
@@ -337,7 +337,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
                 {opportunity.technologies.map((t, idx) => (
                   <span
                     key={idx}
-                    className="px-2.5 py-1 rounded bg-blue-50 text-blue-700 font-mono text-xs font-semibold border border-blue-200"
+                    className="px-2.5 py-1 rounded-sm bg-blue-50 text-blue-700 font-mono text-xs font-semibold border border-blue-200"
                   >
                     {t}
                   </span>
@@ -347,7 +347,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
           </div>
 
           {/* POC / Sandbox Validation Test Matrix */}
-          <div className="bg-white border border-gray-200 rounded p-4">
+          <div className="bg-white border border-gray-200 rounded-sm p-4">
             <div className="flex items-center justify-between border-b border-gray-200 pb-2.5">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 flex items-center gap-1.5">
@@ -359,7 +359,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
             </div>
 
             {/* Success Criteria Items */}
-            <div className="mt-3 overflow-x-auto border border-gray-200 rounded">
+            <div className="mt-3 overflow-x-auto border border-gray-200 rounded-sm">
               <table className="hidden md:table w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider">
@@ -388,11 +388,11 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
                           type="checkbox"
                           checked={kpi.verified}
                           onChange={() => toggleKPI(kpi.id)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                       </td>
                       <td className="py-2 px-3">
-                        <span className="inline-flex items-center text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-800 font-mono border border-gray-200">
+                        <span className="inline-flex items-center text-[11px] px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-800 font-mono border border-gray-200">
                           {kpi.category}
                         </span>
                       </td>
@@ -415,7 +415,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
                   <article
                     key={kpi.id}
                     onClick={() => toggleKPI(kpi.id)}
-                    className={`border rounded p-3 space-y-2 ${kpi.verified ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-gray-200"}`}
+                    className={`border rounded-sm p-3 space-y-2 ${kpi.verified ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-gray-200"}`}
                   >
                     <div className="flex items-start gap-2">
                       <input
@@ -423,13 +423,13 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
                         checked={kpi.verified}
                         onChange={() => toggleKPI(kpi.id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="mt-0.5 rounded border-gray-300 text-blue-600"
+                        className="mt-0.5 rounded-sm border-gray-300 text-blue-600"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="text-[10px] uppercase text-gray-500 font-mono">
                           {kpi.category}
                         </div>
-                        <div className="text-xs font-semibold text-gray-900 break-words">
+                        <div className="text-xs font-semibold text-gray-900 wrap-break-word">
                           {kpi.description}
                         </div>
                       </div>
@@ -479,7 +479,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
                           type="checkbox"
                           checked={blocker.resolved}
                           onChange={() => resolveBlocker(blocker.id)}
-                          className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                          className="rounded-sm border-gray-300 text-emerald-600 focus:ring-emerald-500"
                         />
                         <span
                           className={

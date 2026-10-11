@@ -163,11 +163,11 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
 
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
-      <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 tracking-tight">Product Catalog</h1>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-blue-50 text-blue-700 font-semibold border border-blue-200">
               CATALOG
             </span>
           </div>
@@ -182,20 +182,20 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
       </div>
 
       {savedMsg && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800 font-medium flex items-center gap-2">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-sm text-xs text-emerald-800 font-medium flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           {savedMsg}
         </div>
       )}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded text-xs text-red-700 font-medium flex items-center gap-2">
+        <div className="p-3 bg-red-50 border border-red-200 rounded-sm text-xs text-red-700 font-medium flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-red-500" />
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded overflow-hidden">
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 space-y-2.5">
              <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
                <div className="relative flex-1 min-w-0 sm:min-w-[160px]">
@@ -261,10 +261,10 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
              </table>
              <div className="md:hidden p-2 space-y-2">
                {filtered.map(p => (
-                 <article key={p.id} className={`border border-gray-200 rounded p-3 space-y-2 ${p.status === 'Inactive' ? 'opacity-60' : ''}`}>
-                   <div className="flex items-start justify-between gap-2"><div className="min-w-0"><div className="text-[10px] uppercase text-gray-500 font-semibold">{p.oem_name || 'No OEM'}</div><h3 className="text-sm font-bold text-gray-900 break-words">{p.name}</h3></div><span className="text-[10px] font-mono text-gray-600">{p.status}</span></div>
+                 <article key={p.id} className={`border border-gray-200 rounded-sm p-3 space-y-2 ${p.status === 'Inactive' ? 'opacity-60' : ''}`}>
+                   <div className="flex items-start justify-between gap-2"><div className="min-w-0"><div className="text-[10px] uppercase text-gray-500 font-semibold">{p.oem_name || 'No OEM'}</div><h3 className="text-sm font-bold text-gray-900 wrap-break-word">{p.name}</h3></div><span className="text-[10px] font-mono text-gray-600">{p.status}</span></div>
                    <div className="grid grid-cols-2 gap-2 text-[11px]"><div><span className="block text-gray-500">Category</span><strong>{p.category}</strong></div><div><span className="block text-gray-500">Unit</span><strong>{p.unit || '—'}</strong></div><div><span className="block text-gray-500">Model</span><strong className="font-mono">{p.model || '—'}</strong></div><div><span className="block text-gray-500">Part #</span><strong className="font-mono">{p.part_number || '—'}</strong></div></div>
-                   {canManage && <div className="flex justify-end gap-2 border-t border-gray-100 pt-2"><button onClick={() => startEdit(p)} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] text-blue-700 bg-blue-50 rounded"><Pencil className="w-3 h-3" /> Edit</button><button onClick={() => handleDelete(p)} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] text-red-700 bg-red-50 rounded"><Trash2 className="w-3 h-3" /> Delete</button></div>}
+                   {canManage && <div className="flex justify-end gap-2 border-t border-gray-100 pt-2"><button onClick={() => startEdit(p)} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] text-blue-700 bg-blue-50 rounded-sm"><Pencil className="w-3 h-3" /> Edit</button><button onClick={() => handleDelete(p)} className="inline-flex items-center gap-1 px-2 py-1 text-[11px] text-red-700 bg-red-50 rounded-sm"><Trash2 className="w-3 h-3" /> Delete</button></div>}
                  </article>
                ))}
                {filtered.length === 0 && <div className="py-8 text-center text-xs text-gray-500">No products match your filters.</div>}
@@ -272,7 +272,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
            </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-4 h-fit">
+        <div className="bg-white border border-gray-200 rounded-sm p-4 h-fit">
           <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
             {editing ? <Pencil className="w-4 h-4 text-blue-600" /> : <Plus className="w-4 h-4 text-emerald-600" />}
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
@@ -379,7 +379,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
               <div className="flex items-center gap-2 pt-1">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-sm shadow-2xs"
                 >
                   <Save className="w-3.5 h-3.5" />
                   {editing ? 'Save Changes' : 'Add Product'}
@@ -389,7 +389,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                     <button
                       type="button"
                       onClick={resetForm}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-sm"
                     >
                       <X className="w-3.5 h-3.5" />
                       Cancel
@@ -397,7 +397,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                     <button
                       type="button"
                       onClick={() => { const p = products.find(x => x.id === editing); if (p) handleDelete(p); }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-sm"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       Delete
@@ -409,7 +409,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
           </form>
 
           {!canManage && (
-            <div className="mt-3 p-2.5 bg-gray-50 border border-gray-200 rounded text-[11px] text-gray-500">
+            <div className="mt-3 p-2.5 bg-gray-50 border border-gray-200 rounded-sm text-[11px] text-gray-500">
               Your role can view the catalog but not modify it.
             </div>
           )}

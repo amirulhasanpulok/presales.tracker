@@ -87,16 +87,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       >
         {/* Search Input Box */}
         <div className="p-3 border-b border-gray-200 flex items-center gap-2.5 bg-gray-50">
-          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <Search className="w-4 h-4 text-gray-400 shrink-0" />
           <input
             type="text"
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a command, customer name, code, or jump to module..."
-            className="flex-1 bg-transparent text-gray-900 text-xs focus:outline-none placeholder-gray-400 font-sans"
+            className="flex-1 bg-transparent text-gray-900 text-xs focus:outline-hidden placeholder-gray-400 font-sans"
           />
-          <kbd className="text-[10px] font-mono bg-white text-gray-500 px-1.5 py-0.5 rounded border border-gray-300 shadow-2xs">
+          <kbd className="text-[10px] font-mono bg-white text-gray-500 px-1.5 py-0.5 rounded-sm border border-gray-300 shadow-2xs">
             ESC
           </kbd>
         </div>
@@ -114,7 +114,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 onOpenNewOpportunity();
                 onClose();
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-gray-100 text-gray-800 text-left transition-colors"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-gray-100 text-gray-800 text-left transition-colors"
             >
               <Plus className="w-4 h-4 text-blue-600" />
               <span className="font-medium">Create New Presales Opportunity Intake</span>
@@ -136,7 +136,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       onNavigateTab(item.tab);
                       onClose();
                     }}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-gray-100 text-gray-700 hover:text-gray-900 text-left transition-colors"
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-gray-100 text-gray-700 hover:text-gray-900 text-left transition-colors"
                   >
                     <Icon className="w-3.5 h-3.5 text-blue-600" />
                     <span className="truncate font-medium">{item.label}</span>
@@ -150,7 +150,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {filteredClients.length > 0 && (
             <div>
               <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500 font-semibold px-2 mb-1">Clients ({filteredClients.length})</div>
-              <div className="space-y-1">{filteredClients.slice(0, 8).map(client => <button key={client.id} onClick={() => { onSelectClient?.(client); onClose(); }} className="w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-gray-50 text-left border border-transparent hover:border-gray-200"><div className="min-w-0"><div className="font-semibold text-gray-900 truncate">{client.name}</div><div className="text-[10px] text-gray-500">{client.code || client.industry || 'Client profile'}</div></div><span className="text-[10px] text-blue-700">Client 360</span></button>)}</div>
+              <div className="space-y-1">{filteredClients.slice(0, 8).map(client => <button key={client.id} onClick={() => { onSelectClient?.(client); onClose(); }} className="w-full flex items-center justify-between px-2.5 py-2 rounded-sm hover:bg-gray-50 text-left border border-transparent hover:border-gray-200"><div className="min-w-0"><div className="font-semibold text-gray-900 truncate">{client.name}</div><div className="text-[10px] text-gray-500">{client.code || client.industry || 'Client profile'}</div></div><span className="text-[10px] text-blue-700">Client 360</span></button>)}</div>
             </div>
           )}
 
@@ -170,7 +170,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       onSelectOpportunity(opp);
                       onClose();
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-gray-50 text-left transition-colors group border border-transparent hover:border-gray-200"
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-sm hover:bg-gray-50 text-left transition-colors group border border-transparent hover:border-gray-200"
                   >
                     <div className="min-w-0 pr-2">
                       <div className="flex items-center gap-2">
@@ -182,7 +182,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       </div>
                     </div>
 
-                    <div className="text-right font-mono text-xs flex-shrink-0">
+                    <div className="text-right font-mono text-xs shrink-0">
                       <div className="text-gray-900 font-bold">{formatCurrency(opp.contractValue)}</div>
                       <div className="text-emerald-700 text-[10px] font-semibold">{opp.winProbability}% Win</div>
                     </div>

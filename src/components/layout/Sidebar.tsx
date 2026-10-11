@@ -138,7 +138,7 @@ interface NavSection {
           onClick={onOpenNewOpportunity}
           disabled={!canCreateOpportunity}
           title={canCreateOpportunity ? 'Create a new opportunity' : 'Your role does not allow creating opportunities'}
-          className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-semibold text-white rounded shadow-xs transition-colors ${
+          className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-semibold text-white rounded shadow-2xs transition-colors ${
             canCreateOpportunity
               ? 'bg-blue-600 hover:bg-blue-700'
               : 'bg-gray-300 cursor-not-allowed'
@@ -178,7 +178,7 @@ interface NavSection {
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Icon
-                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                      className={`w-3.5 h-3.5 shrink-0 ${
                         isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
                       }`}
                     />
@@ -187,7 +187,7 @@ interface NavSection {
 
                   {item.count !== undefined && (
                     <span
-                      className={`text-[10px] font-mono px-1.5 py-0.2 rounded border ml-1 flex-shrink-0 font-medium ${
+                      className={`text-[10px] font-mono px-1.5 py-0.2 rounded border ml-1 shrink-0 font-medium ${
                         item.highlight === 'red'
                           ? 'bg-red-50 text-red-700 border-red-200'
                           : item.highlight === 'amber'
@@ -215,7 +215,7 @@ interface NavSection {
       {/* Footer: Current User + Demo Role Switcher */}
       <div className="p-2.5 bg-gray-50 border-t border-gray-200 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0">
+          <div className="w-6 h-6 rounded-sm bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
             {currentUser.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -227,7 +227,7 @@ interface NavSection {
         <div className="mt-2 pt-2 border-t border-gray-200">
           <button
             onClick={onLogout}
-            className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold text-gray-700 hover:text-red-700 hover:bg-red-50 border border-gray-200 rounded transition-colors"
+            className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold text-gray-700 hover:text-red-700 hover:bg-red-50 border border-gray-200 rounded-sm transition-colors"
             title="End your session"
           >
             <LogOut className="w-3.5 h-3.5" />
