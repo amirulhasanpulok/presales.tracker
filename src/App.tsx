@@ -1,61 +1,200 @@
-import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
-import { ActiveTab, Opportunity, OpportunityStage, ClientAccount, UserAccount, RolePermission, AuditLogEntry, ScopeCatalogEntry, OEMEntry, ProductCatalogEntry, PresalesEngineer, SalesKAM, CalendarEvent, NotificationItem } from './types';
+import React, {
+  lazy,
+  Suspense,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import {
+  ActiveTab,
+  Opportunity,
+  OpportunityStage,
+  ClientAccount,
+  UserAccount,
+  RolePermission,
+  AuditLogEntry,
+  ScopeCatalogEntry,
+  OEMEntry,
+  ProductCatalogEntry,
+  PresalesEngineer,
+  SalesKAM,
+  CalendarEvent,
+  NotificationItem,
+} from "./types";
 import {
   can,
   resolveRole,
   TAB_PERMISSIONS,
   PERMISSION_CATALOG,
   DEFAULT_ROLES,
-} from './rbac';
-import { applyWorkflowConfig } from './config/workflow';
-import { isTerminalOpportunity } from './utils/opportunityStatus';
-import { api, getToken, SystemPolicies } from './api';
-import { LayoutDashboard, TableProperties, CheckSquare, Building2, MoreHorizontal } from 'lucide-react';
-import { Header } from './components/layout/Header';
-import { Sidebar } from './components/layout/Sidebar';
-import { WorkQueue } from './components/dashboard/WorkQueue';
-import { overdue as solutionOverdue } from './utils/collaboration';
-import { AccessDenied } from './components/common/AccessDenied';
-import { LoginScreen } from './components/auth/LoginScreen';
-import { ChangePasswordScreen } from './components/auth/ChangePasswordScreen';
+} from "./rbac";
+import { applyWorkflowConfig } from "./config/workflow";
+import { isTerminalOpportunity } from "./utils/opportunityStatus";
+import { api, getToken, SystemPolicies } from "./api";
+import {
+  LayoutDashboard,
+  TableProperties,
+  CheckSquare,
+  Building2,
+  MoreHorizontal,
+} from "lucide-react";
+import { Header } from "./components/layout/Header";
+import { Sidebar } from "./components/layout/Sidebar";
+import { WorkQueue } from "./components/dashboard/WorkQueue";
+import {
+  overdue as solutionOverdue,
+  reviewOverdue,
+  reviewDeadline,
+} from "./utils/collaboration";
+import { AccessDenied } from "./components/common/AccessDenied";
+import { LoginScreen } from "./components/auth/LoginScreen";
+import { ChangePasswordScreen } from "./components/auth/ChangePasswordScreen";
 
-const lazyNamed = (loader: () => Promise<Record<string, any>>, name: string): React.LazyExoticComponent<React.ComponentType<any>> =>
-  lazy(async () => ({ default: (await loader())[name] })) as React.LazyExoticComponent<React.ComponentType<any>>;
+const lazyNamed = (
+  loader: () => Promise<Record<string, any>>,
+  name: string,
+): React.LazyExoticComponent<React.ComponentType<any>> =>
+  lazy(async () => ({
+    default: (await loader())[name],
+  })) as React.LazyExoticComponent<React.ComponentType<any>>;
 
-const ExecutiveDashboard = lazyNamed(() => import('./components/dashboard/ExecutiveDashboard'), 'ExecutiveDashboard');
-const MobileHomeScreen = lazyNamed(() => import('./components/dashboard/MobileHomeScreen'), 'MobileHomeScreen');
-const OpportunityTable = lazyNamed(() => import('./components/opportunities/OpportunityTable'), 'OpportunityTable');
-const MobileOpportunityScreen = lazyNamed(() => import('./components/opportunities/MobileOpportunityScreen'), 'MobileOpportunityScreen');
-const OpportunityBoard = lazyNamed(() => import('./components/opportunities/OpportunityBoard'), 'OpportunityBoard');
-const OpportunityDetailView = lazyNamed(() => import('./components/opportunities/OpportunityDetailView'), 'OpportunityDetailView');
-const OpportunityDetailDrawer = lazyNamed(() => import('./components/opportunities/OpportunityDetailDrawer'), 'OpportunityDetailDrawer');
-const NewOpportunityModal = lazyNamed(() => import('./components/opportunities/NewOpportunityModal'), 'NewOpportunityModal');
-const BOQWorkbench = lazyNamed(() => import('./components/boq/BOQWorkbench'), 'BOQWorkbench');
-const POCTracker = lazyNamed(() => import('./components/poc/POCTracker'), 'POCTracker');
-const ActionCenter = lazyNamed(() => import('./components/actions/ActionCenter'), 'ActionCenter');
-const MobileActionCenter = lazyNamed(() => import('./components/actions/MobileActionCenter'), 'MobileActionCenter');
-const HandoverQueue = lazyNamed(() => import('./components/handover/HandoverQueue'), 'HandoverQueue');
-const CapacityMatrix = lazyNamed(() => import('./components/capacity/CapacityMatrix'), 'CapacityMatrix');
-const PresalesAnalytics = lazyNamed(() => import('./components/analytics/PresalesAnalytics'), 'PresalesAnalytics');
-const MobileReportsScreen = lazyNamed(() => import('./components/analytics/MobileReportsScreen'), 'MobileReportsScreen');
-const PresalesCalendar = lazyNamed(() => import('./components/calendar/PresalesCalendar'), 'PresalesCalendar');
-const ClientsDirectory = lazyNamed(() => import('./components/clients/ClientsDirectory'), 'ClientsDirectory');
-const ClientDetailsView = lazyNamed(() => import('./components/clients/ClientDetailsView'), 'ClientDetailsView');
-const MobileClientsScreen = lazyNamed(() => import('./components/clients/MobileClientsScreen'), 'MobileClientsScreen');
-const MobileWorkCapture = lazyNamed(() => import('./components/mobile/MobileWorkCapture'), 'MobileWorkCapture');
-const SalesKAMDirectory = lazyNamed(() => import('./components/sales/SalesKAMDirectory'), 'SalesKAMDirectory');
-const CentralDocumentsRepo = lazyNamed(() => import('./components/documents/CentralDocumentsRepo'), 'CentralDocumentsRepo');
-const NotificationCenter = lazyNamed(() => import('./components/notifications/NotificationCenter'), 'NotificationCenter');
-const AuditLogsView = lazyNamed(() => import('./components/audit/AuditLogsView'), 'AuditLogsView');
-const UserManagementView = lazyNamed(() => import('./components/admin/UserManagementView'), 'UserManagementView');
-const RoleManagementView = lazyNamed(() => import('./components/admin/RoleManagementView'), 'RoleManagementView');
-const MasterConfigView = lazyNamed(() => import('./components/admin/MasterConfigView'), 'MasterConfigView');
-const SystemSettingsView = lazyNamed(() => import('./components/admin/SystemSettingsView'), 'SystemSettingsView');
-const BulkUploadView = lazyNamed(() => import('./components/admin/BulkUploadView'), 'BulkUploadView');
-const ScopeCatalogView = lazyNamed(() => import('./components/admin/ScopeCatalogView'), 'ScopeCatalogView');
-const OEMCatalogView = lazyNamed(() => import('./components/admin/OEMCatalogView'), 'OEMCatalogView');
-const ProductCatalogView = lazyNamed(() => import('./components/admin/ProductCatalogView'), 'ProductCatalogView');
-const CommandPalette = lazyNamed(() => import('./components/common/CommandPalette'), 'CommandPalette');
+const ExecutiveDashboard = lazyNamed(
+  () => import("./components/dashboard/ExecutiveDashboard"),
+  "ExecutiveDashboard",
+);
+const MobileHomeScreen = lazyNamed(
+  () => import("./components/dashboard/MobileHomeScreen"),
+  "MobileHomeScreen",
+);
+const OpportunityTable = lazyNamed(
+  () => import("./components/opportunities/OpportunityTable"),
+  "OpportunityTable",
+);
+const MobileOpportunityScreen = lazyNamed(
+  () => import("./components/opportunities/MobileOpportunityScreen"),
+  "MobileOpportunityScreen",
+);
+const OpportunityBoard = lazyNamed(
+  () => import("./components/opportunities/OpportunityBoard"),
+  "OpportunityBoard",
+);
+const OpportunityDetailView = lazyNamed(
+  () => import("./components/opportunities/OpportunityDetailView"),
+  "OpportunityDetailView",
+);
+const OpportunityDetailDrawer = lazyNamed(
+  () => import("./components/opportunities/OpportunityDetailDrawer"),
+  "OpportunityDetailDrawer",
+);
+const NewOpportunityModal = lazyNamed(
+  () => import("./components/opportunities/NewOpportunityModal"),
+  "NewOpportunityModal",
+);
+const BOQWorkbench = lazyNamed(
+  () => import("./components/boq/BOQWorkbench"),
+  "BOQWorkbench",
+);
+const POCTracker = lazyNamed(
+  () => import("./components/poc/POCTracker"),
+  "POCTracker",
+);
+const ActionCenter = lazyNamed(
+  () => import("./components/actions/ActionCenter"),
+  "ActionCenter",
+);
+const MobileActionCenter = lazyNamed(
+  () => import("./components/actions/MobileActionCenter"),
+  "MobileActionCenter",
+);
+const HandoverQueue = lazyNamed(
+  () => import("./components/handover/HandoverQueue"),
+  "HandoverQueue",
+);
+const CapacityMatrix = lazyNamed(
+  () => import("./components/capacity/CapacityMatrix"),
+  "CapacityMatrix",
+);
+const PresalesAnalytics = lazyNamed(
+  () => import("./components/analytics/PresalesAnalytics"),
+  "PresalesAnalytics",
+);
+const MobileReportsScreen = lazyNamed(
+  () => import("./components/analytics/MobileReportsScreen"),
+  "MobileReportsScreen",
+);
+const PresalesCalendar = lazyNamed(
+  () => import("./components/calendar/PresalesCalendar"),
+  "PresalesCalendar",
+);
+const ClientsDirectory = lazyNamed(
+  () => import("./components/clients/ClientsDirectory"),
+  "ClientsDirectory",
+);
+const ClientDetailsView = lazyNamed(
+  () => import("./components/clients/ClientDetailsView"),
+  "ClientDetailsView",
+);
+const MobileClientsScreen = lazyNamed(
+  () => import("./components/clients/MobileClientsScreen"),
+  "MobileClientsScreen",
+);
+const MobileWorkCapture = lazyNamed(
+  () => import("./components/mobile/MobileWorkCapture"),
+  "MobileWorkCapture",
+);
+const SalesKAMDirectory = lazyNamed(
+  () => import("./components/sales/SalesKAMDirectory"),
+  "SalesKAMDirectory",
+);
+const CentralDocumentsRepo = lazyNamed(
+  () => import("./components/documents/CentralDocumentsRepo"),
+  "CentralDocumentsRepo",
+);
+const NotificationCenter = lazyNamed(
+  () => import("./components/notifications/NotificationCenter"),
+  "NotificationCenter",
+);
+const AuditLogsView = lazyNamed(
+  () => import("./components/audit/AuditLogsView"),
+  "AuditLogsView",
+);
+const UserManagementView = lazyNamed(
+  () => import("./components/admin/UserManagementView"),
+  "UserManagementView",
+);
+const RoleManagementView = lazyNamed(
+  () => import("./components/admin/RoleManagementView"),
+  "RoleManagementView",
+);
+const MasterConfigView = lazyNamed(
+  () => import("./components/admin/MasterConfigView"),
+  "MasterConfigView",
+);
+const SystemSettingsView = lazyNamed(
+  () => import("./components/admin/SystemSettingsView"),
+  "SystemSettingsView",
+);
+const BulkUploadView = lazyNamed(
+  () => import("./components/admin/BulkUploadView"),
+  "BulkUploadView",
+);
+const ScopeCatalogView = lazyNamed(
+  () => import("./components/admin/ScopeCatalogView"),
+  "ScopeCatalogView",
+);
+const OEMCatalogView = lazyNamed(
+  () => import("./components/admin/OEMCatalogView"),
+  "OEMCatalogView",
+);
+const ProductCatalogView = lazyNamed(
+  () => import("./components/admin/ProductCatalogView"),
+  "ProductCatalogView",
+);
+const CommandPalette = lazyNamed(
+  () => import("./components/common/CommandPalette"),
+  "CommandPalette",
+);
 
 // ---------------------------------------------------------------------------
 // Server → UI shape mappers
@@ -64,7 +203,7 @@ const toRoleState = (r: any): any => ({
   id: r.id,
   roleName: r.role_name ?? r.name ?? r.roleName,
   name: r.name ?? r.role_name,
-  description: r.description ?? '',
+  description: r.description ?? "",
   usersCount: r.users_count ?? 0,
   isSystemRole: r.is_system_role ?? true,
   matchingRoles: Array.isArray(r.matching_roles) ? r.matching_roles : [],
@@ -77,14 +216,16 @@ const toUserState = (u: any): UserAccount => ({
   email: u.email,
   role: u.role,
   roleId: u.role_id ?? u.roleId,
-  department: u.department ?? '',
+  department: u.department ?? "",
   salesTeam: u.sales_team ?? u.salesTeam,
   phone: u.phone,
   manager: u.manager,
   skills: Array.isArray(u.skills) ? u.skills : [],
   certifications: Array.isArray(u.certifications) ? u.certifications : [],
-  status: u.status ?? 'Active',
-  lastLoginAt: u.last_login_at ? new Date(u.last_login_at).toISOString() : u.lastLoginAt,
+  status: u.status ?? "Active",
+  lastLoginAt: u.last_login_at
+    ? new Date(u.last_login_at).toISOString()
+    : u.lastLoginAt,
   avatar: u.avatar,
   region: u.region,
   mfaEnabled: u.mfa_enabled ?? false,
@@ -92,121 +233,385 @@ const toUserState = (u: any): UserAccount => ({
   createdAt: u.created_at,
 });
 
-const toPresalesEngineer = (user: UserAccount, opportunities: Opportunity[]): PresalesEngineer => {
-  const assigned = opportunities.filter(o => o.leadSolutionArchitect === user.name || o.presalesEngineerSecondary === user.name || (o.supportingPresalesEngineers || []).includes(user.name));
+const toPresalesEngineer = (
+  user: UserAccount,
+  opportunities: Opportunity[],
+): PresalesEngineer => {
+  const assigned = opportunities.filter(
+    (o) =>
+      o.leadSolutionArchitect === user.name ||
+      o.presalesEngineerSecondary === user.name ||
+      (o.supportingPresalesEngineers || []).includes(user.name),
+  );
   return {
     id: user.id,
     name: user.name,
     email: user.email,
     title: user.role,
-    avatar: user.avatar || '',
+    avatar: user.avatar || "",
     skills: [],
-    activeDealsCount: assigned.filter(o => !['closed_won', 'closed_lost', 'on_hold', 'cancelled'].includes(o.stage)).length,
-    totalPipelineValue: assigned.reduce((total, o) => total + (o.contractValue || 0), 0),
-    activePocCount: assigned.filter(o => ['active_testing', 'validating_kpis'].includes(o.poc?.status)).length,
+    activeDealsCount: assigned.filter(
+      (o) =>
+        !["closed_won", "closed_lost", "on_hold", "cancelled"].includes(
+          o.stage,
+        ),
+    ).length,
+    totalPipelineValue: assigned.reduce(
+      (total, o) => total + (o.contractValue || 0),
+      0,
+    ),
+    activePocCount: assigned.filter((o) =>
+      ["active_testing", "validating_kpis"].includes(o.poc?.status),
+    ).length,
     utilizationPercentage: 0,
     certifications: [],
   };
 };
 
-const toSalesKAM = (user: UserAccount, opportunities: Opportunity[]): SalesKAM => {
-  const assigned = opportunities.filter(o => o.accountExecutive === user.name);
+const toSalesKAM = (
+  user: UserAccount,
+  opportunities: Opportunity[],
+): SalesKAM => {
+  const assigned = opportunities.filter(
+    (o) => o.accountExecutive === user.name,
+  );
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    region: user.region || 'Unassigned',
-    accountsCount: new Set(assigned.map(o => o.clientName)).size,
+    region: user.region || "Unassigned",
+    accountsCount: new Set(assigned.map((o) => o.clientName)).size,
     quotaTarget: 0,
-    achievedPipeline: assigned.reduce((total, o) => total + (o.contractValue || 0), 0),
-    assignedLeadSA: assigned[0]?.leadSolutionArchitect || '—',
-    avatar: user.avatar || '',
-    salesTeam: user.salesTeam || 'Unassigned',
+    achievedPipeline: assigned.reduce(
+      (total, o) => total + (o.contractValue || 0),
+      0,
+    ),
+    assignedLeadSA: assigned[0]?.leadSolutionArchitect || "—",
+    avatar: user.avatar || "",
+    salesTeam: user.salesTeam || "Unassigned",
   };
 };
 
-const toLiveCalendarEvents = (opportunities: Opportunity[]): CalendarEvent[] => opportunities.flatMap(opportunity => [
-  ...(opportunity.collaboration?.dueAt && ['working','revision'].includes(opportunity.collaboration.status) ? [{ id: `sla-${opportunity.id}`, title: `${opportunity.name}: solution due`, type: 'Solution SLA', date: opportunity.collaboration.dueAt.slice(0,10), time: new Date(opportunity.collaboration.dueAt).toLocaleTimeString('en-GB',{timeZone:'Asia/Dhaka',hour:'2-digit',minute:'2-digit'}), opportunityCode:opportunity.code, clientName:opportunity.clientName, attendees:[opportunity.leadSolutionArchitect], location:'Team workspace', status:'Pending' } as CalendarEvent] : []),
-  ...(opportunity.activities || []).map(activity => {
-    const date = new Date(activity.timestamp);
-    return { id: `activity-${opportunity.id}-${activity.id}`, title: activity.title, type: activity.type, date: Number.isNaN(date.getTime()) ? opportunity.updatedAt.slice(0, 10) : date.toISOString().slice(0, 10), time: Number.isNaN(date.getTime()) ? 'Time not recorded' : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), opportunityCode: opportunity.code, clientName: opportunity.clientName, attendees: activity.attendees || [], location: 'Opportunity Timeline', status: 'Completed' } as CalendarEvent;
-  }),
-  ...(opportunity.actionItems || []).filter(action => !action.isCompleted).map(action => ({ id: `action-${opportunity.id}-${action.id}`, title: action.title, type: 'Follow-up', date: action.dueDate, time: 'All day', opportunityCode: opportunity.code, clientName: opportunity.clientName, attendees: [action.assignedTo], location: 'Action Center', status: 'Pending' } as CalendarEvent)),
-  ...(opportunity.tender?.submissionDeadline ? [{ id: `tender-${opportunity.id}`, title: `${opportunity.tender.tenderName || opportunity.name} submission deadline`, type: 'RFP Due Date', date: opportunity.tender.submissionDeadline, time: 'All day', opportunityCode: opportunity.code, clientName: opportunity.clientName, attendees: [], location: 'Tender Workspace', status: 'Pending' } as CalendarEvent] : []),
-]);
+const toLiveCalendarEvents = (opportunities: Opportunity[]): CalendarEvent[] =>
+  opportunities.flatMap((opportunity) => [
+    ...(opportunity.collaboration?.dueAt &&
+    ["working", "revision"].includes(opportunity.collaboration.status)
+      ? [
+          {
+            id: `sla-${opportunity.id}`,
+            title: `${opportunity.name}: solution due`,
+            type: "Solution SLA",
+            date: opportunity.collaboration.dueAt.slice(0, 10),
+            time: new Date(opportunity.collaboration.dueAt).toLocaleTimeString(
+              "en-GB",
+              { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit" },
+            ),
+            opportunityCode: opportunity.code,
+            clientName: opportunity.clientName,
+            attendees: [opportunity.leadSolutionArchitect],
+            location: "Team workspace",
+            status: "Pending",
+          } as CalendarEvent,
+        ]
+      : []),
+    ...(opportunity.activities || []).map((activity) => {
+      const date = new Date(activity.timestamp);
+      return {
+        id: `activity-${opportunity.id}-${activity.id}`,
+        title: activity.title,
+        type: activity.type,
+        date: Number.isNaN(date.getTime())
+          ? opportunity.updatedAt.slice(0, 10)
+          : date.toISOString().slice(0, 10),
+        time: Number.isNaN(date.getTime())
+          ? "Time not recorded"
+          : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        opportunityCode: opportunity.code,
+        clientName: opportunity.clientName,
+        attendees: activity.attendees || [],
+        location: "Opportunity Timeline",
+        status: "Completed",
+      } as CalendarEvent;
+    }),
+    ...(opportunity.actionItems || [])
+      .filter((action) => !action.isCompleted)
+      .map(
+        (action) =>
+          ({
+            id: `action-${opportunity.id}-${action.id}`,
+            title: action.title,
+            type: "Follow-up",
+            date: action.dueDate,
+            time: "All day",
+            opportunityCode: opportunity.code,
+            clientName: opportunity.clientName,
+            attendees: [action.assignedTo],
+            location: "Action Center",
+            status: "Pending",
+          }) as CalendarEvent,
+      ),
+    ...(opportunity.tender?.submissionDeadline
+      ? [
+          {
+            id: `tender-${opportunity.id}`,
+            title: `${opportunity.tender.tenderName || opportunity.name} submission deadline`,
+            type: "RFP Due Date",
+            date: opportunity.tender.submissionDeadline,
+            time: "All day",
+            opportunityCode: opportunity.code,
+            clientName: opportunity.clientName,
+            attendees: [],
+            location: "Tender Workspace",
+            status: "Pending",
+          } as CalendarEvent,
+        ]
+      : []),
+  ]);
 
-const toLiveNotifications = (opportunities: Opportunity[]): NotificationItem[] => {
+const toLiveNotifications = (
+  opportunities: Opportunity[],
+): NotificationItem[] => {
   const now = new Date();
-  return opportunities.flatMap(opportunity => [
-    ...(solutionOverdue(opportunity) ? [{id:`alert-sla-${opportunity.id}`,title:'Solution SLA overdue',message:`${opportunity.code}: Presales solution is overdue.`,type:'sla_breach',timestamp:opportunity.collaboration!.dueAt!,read:false,opportunityId:opportunity.id,opportunityCode:opportunity.code} as NotificationItem] : []),
-    ...(opportunity.collaboration?.extensions.filter(e=>e.status==='pending').map(e=>({id:`alert-extension-${e.id}`,title:'Sales approval needed',message:`${opportunity.code}: ${e.reason}`,type:'approval_required',timestamp:e.requestedAt,read:false,opportunityId:opportunity.id,opportunityCode:opportunity.code} as NotificationItem)) || []),
-    ...(!isTerminalOpportunity(opportunity.stage) ? (opportunity.actionItems || []).filter(action => !action.isCompleted && new Date(action.dueDate) < now).map(action => ({ id: `alert-action-${opportunity.id}-${action.id}`, title: 'Overdue follow-up', message: `${action.title} is overdue for ${opportunity.clientName}.`, type: 'sla_breach', timestamp: action.dueDate, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem)) : []),
-    ...(['draft', 'pending_sa_lead', 'pending_sales_vp', 'pending_finance'].includes(opportunity.boq?.approvalStatus || '') ? [{ id: `alert-boq-${opportunity.id}`, title: 'BOQ approval required', message: `${opportunity.code} is awaiting BOQ approval before commercial handoff.`, type: 'approval_required', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
-    ...(['active_testing', 'validating_kpis'].includes(opportunity.poc?.status) ? [{ id: `alert-poc-${opportunity.id}`, title: 'POC milestone active', message: `${opportunity.code} has an active POC validation milestone.`, type: 'poc_milestone', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
-    ...(opportunity.stage === 'closed_won' && !opportunity.handover?.isHandedOver ? [{ id: `alert-handover-${opportunity.id}`, title: 'Implementation handover pending', message: `${opportunity.code} is closed won and awaiting delivery handover.`, type: 'info', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
-    ...(opportunity.tender?.isTender && opportunity.tender.submissionDeadline && new Date(opportunity.tender.submissionDeadline) >= now ? [{ id: `alert-tender-${opportunity.id}`, title: 'Tender deadline upcoming', message: `${opportunity.tender.tenderName || opportunity.name} submission deadline is ${opportunity.tender.submissionDeadline}.`, type: 'info', timestamp: opportunity.tender.submissionDeadline, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
+  return opportunities.flatMap((opportunity) => [
+    ...(reviewOverdue(opportunity)
+      ? [
+          {
+            id: `alert-gate-${opportunity.id}`,
+            title: "Review Gate Overdue",
+            message: `${opportunity.code}: Presales Lead decision is overdue.`,
+            type: "sla_breach",
+            timestamp: reviewDeadline(opportunity)!,
+            read: false,
+            opportunityId: opportunity.id,
+            opportunityCode: opportunity.code,
+          } as NotificationItem,
+        ]
+      : []),
+    ...(opportunity.collaboration?.status === "costing_approval" &&
+    !opportunity.collaboration.costingApproved &&
+    !opportunity.collaboration.costing?.approvedAt
+      ? [
+          {
+            id: `alert-costing-${opportunity.id}`,
+            title: "Sales Head costing approval",
+            message: `${opportunity.code}: Cost and price approval pending.`,
+            type: "approval_required",
+            timestamp: opportunity.updatedAt,
+            read: false,
+            opportunityId: opportunity.id,
+            opportunityCode: opportunity.code,
+          } as NotificationItem,
+        ]
+      : []),
+    ...(opportunity.collaboration?.nextFollowUpAt &&
+    Date.parse(opportunity.collaboration.nextFollowUpAt) < now.getTime() &&
+    !isTerminalOpportunity(opportunity.stage)
+      ? [
+          {
+            id: `alert-followup-${opportunity.id}`,
+            title: "Follow-up due",
+            message: `${opportunity.code}: Contact the client or Sales and record the next action.`,
+            type: "sla_breach",
+            timestamp: opportunity.collaboration.nextFollowUpAt,
+            read: false,
+            opportunityId: opportunity.id,
+            opportunityCode: opportunity.code,
+          } as NotificationItem,
+        ]
+      : []),
+    ...(solutionOverdue(opportunity)
+      ? [
+          {
+            id: `alert-sla-${opportunity.id}`,
+            title: "Solution SLA overdue",
+            message: `${opportunity.code}: Presales solution is overdue.`,
+            type: "sla_breach",
+            timestamp: opportunity.collaboration!.dueAt!,
+            read: false,
+            opportunityId: opportunity.id,
+            opportunityCode: opportunity.code,
+          } as NotificationItem,
+        ]
+      : []),
+    ...(opportunity.collaboration?.extensions
+      .filter((e) => e.status === "pending")
+      .map(
+        (e) =>
+          ({
+            id: `alert-extension-${e.id}`,
+            title: "Sales Head approval needed",
+            message: `${opportunity.code}: ${e.reason}`,
+            type: "approval_required",
+            timestamp: e.requestedAt,
+            read: false,
+            opportunityId: opportunity.id,
+            opportunityCode: opportunity.code,
+          }) as NotificationItem,
+      ) || []),
+    ...(!isTerminalOpportunity(opportunity.stage)
+      ? (opportunity.actionItems || [])
+          .filter(
+            (action) => !action.isCompleted && new Date(action.dueDate) < now,
+          )
+          .map(
+            (action) =>
+              ({
+                id: `alert-action-${opportunity.id}-${action.id}`,
+                title: "Overdue follow-up",
+                message: `${action.title} is overdue for ${opportunity.clientName}.`,
+                type: "sla_breach",
+                timestamp: action.dueDate,
+                read: false,
+                opportunityId: opportunity.id,
+                opportunityCode: opportunity.code,
+              }) as NotificationItem,
+          )
+      : []),
+    ...(!opportunity.collaboration &&
+    [
+      "draft",
+      "pending_sa_lead",
+      "pending_sales_vp",
+      "pending_finance",
+    ].includes(opportunity.boq?.approvalStatus || "")
+      ? [
+          {
+            id: `alert-boq-${opportunity.id}`,
+            title: "BOQ approval required",
+            message: `${opportunity.code} is awaiting BOQ approval before commercial handoff.`,
+            type: "approval_required",
+            timestamp: opportunity.updatedAt,
+            read: false,
+            opportunityId: opportunity.id,
+            opportunityCode: opportunity.code,
+          } as NotificationItem,
+        ]
+      : []),
+    ...(["active_testing", "validating_kpis"].includes(opportunity.poc?.status)
+      ? [
+          {
+            id: `alert-poc-${opportunity.id}`,
+            title: "POC milestone active",
+            message: `${opportunity.code} has an active POC validation milestone.`,
+            type: "poc_milestone",
+            timestamp: opportunity.updatedAt,
+            read: false,
+            opportunityId: opportunity.id,
+            opportunityCode: opportunity.code,
+          } as NotificationItem,
+        ]
+      : []),
+    ...(opportunity.stage === "closed_won" &&
+    !opportunity.handover?.isHandedOver
+      ? [
+          {
+            id: `alert-handover-${opportunity.id}`,
+            title: "Implementation handover pending",
+            message: `${opportunity.code} is closed won and awaiting delivery handover.`,
+            type: "info",
+            timestamp: opportunity.updatedAt,
+            read: false,
+            opportunityId: opportunity.id,
+            opportunityCode: opportunity.code,
+          } as NotificationItem,
+        ]
+      : []),
+    ...(opportunity.tender?.isTender &&
+    opportunity.tender.submissionDeadline &&
+    new Date(opportunity.tender.submissionDeadline) >= now
+      ? [
+          {
+            id: `alert-tender-${opportunity.id}`,
+            title: "Tender deadline upcoming",
+            message: `${opportunity.tender.tenderName || opportunity.name} submission deadline is ${opportunity.tender.submissionDeadline}.`,
+            type: "info",
+            timestamp: opportunity.tender.submissionDeadline,
+            read: false,
+            opportunityId: opportunity.id,
+            opportunityCode: opportunity.code,
+          } as NotificationItem,
+        ]
+      : []),
   ]);
 };
 
-const toLiveCentralDocuments = (opportunities: Opportunity[]) => opportunities.flatMap(opportunity => (opportunity.documents || []).map(document => ({
-  id: document.id,
-  title: document.title,
-  category: document.type,
-  fileType: document.fileName?.split('.').pop()?.toUpperCase() || 'FILE',
-  fileSize: document.size,
-  author: document.uploadedBy,
-  lastUpdated: document.uploadedAt,
-  version: document.version,
-  clientName: opportunity.clientName,
-  tags: [opportunity.code, opportunity.clientName],
-  downloadCount: 0,
-})));
+const toLiveCentralDocuments = (opportunities: Opportunity[]) =>
+  opportunities.flatMap((opportunity) =>
+    (opportunity.documents || []).map((document) => ({
+      id: document.id,
+      opportunityId: opportunity.id,
+      title: document.title,
+      category: document.type,
+      fileType: document.fileName?.split(".").pop()?.toUpperCase() || "FILE",
+      fileSize: document.size,
+      author: document.uploadedBy,
+      lastUpdated: document.uploadedAt,
+      version: document.version,
+      clientName: opportunity.clientName,
+      tags: [opportunity.code, opportunity.clientName],
+      downloadCount: 0,
+    })),
+  );
 
 const toAuditShape = (a: any): AuditLogEntry => ({
   id: `audit-${a.id}`,
-  timestamp: a.created_at ? new Date(a.created_at).toISOString() : '',
+  timestamp: a.created_at ? new Date(a.created_at).toISOString() : "",
   actor: a.meta?.actor ?? a.actor_email,
   actorName: a.meta?.actor ?? a.actor_email,
-  actorRole: a.meta?.actorRole ?? a.actor_role ?? '',
+  actorRole: a.meta?.actorRole ?? a.actor_role ?? "",
   action: a.action,
   targetType: a.target_type,
   targetId: a.target_id,
-  targetName: a.meta?.targetName ?? '',
-  entityCode: a.meta?.entityCode ?? a.meta?.targetName ?? a.target_id ?? '',
-  details: a.meta?.details ?? (a.meta ? JSON.stringify(a.meta) : ''),
-  ipAddress: a.ip ?? a.meta?.ipAddress ?? '',
-  requestId: a.request_id ?? '',
+  targetName: a.meta?.targetName ?? "",
+  entityCode: a.meta?.entityCode ?? a.meta?.targetName ?? a.target_id ?? "",
+  details: a.meta?.details ?? (a.meta ? JSON.stringify(a.meta) : ""),
+  ipAddress: a.ip ?? a.meta?.ipAddress ?? "",
+  requestId: a.request_id ?? "",
 });
 
 function hydrateCurrency(value?: string) {
-  if (value === 'BDT' || value === 'USD' || value === 'EUR') {
-    window.localStorage.setItem('presales_tracker_currency_v1', value);
+  if (value === "BDT" || value === "USD" || value === "EUR") {
+    window.localStorage.setItem("presales_tracker_currency_v1", value);
   }
 }
 
 function hydrateActivityTypes(value?: string[]) {
-  if (Array.isArray(value) && value.length) window.localStorage.setItem('presales_tracker_activity_types_v1', JSON.stringify(value));
+  if (Array.isArray(value) && value.length)
+    window.localStorage.setItem(
+      "presales_tracker_activity_types_v1",
+      JSON.stringify(value),
+    );
 }
 
 function hydrateTaxonomies(value?: Record<string, string[]>) {
-  const keyMap = { tech_stacks: 'techStacks', industries: 'industries', regions: 'regions' } as const;
+  const keyMap = {
+    tech_stacks: "techStacks",
+    industries: "industries",
+    regions: "regions",
+  } as const;
   for (const [serverKey, localKey] of Object.entries(keyMap)) {
     const values = value?.[serverKey];
-    if (Array.isArray(values) && values.length) window.localStorage.setItem(`presales_tracker_taxonomy_${localKey}_v1`, JSON.stringify(values));
+    if (Array.isArray(values) && values.length)
+      window.localStorage.setItem(
+        `presales_tracker_taxonomy_${localKey}_v1`,
+        JSON.stringify(values),
+      );
   }
 }
 
 const flatPermissions = (perms: any): string[] =>
-  Array.isArray(perms) && typeof perms[0] === 'string'
+  Array.isArray(perms) && typeof perms[0] === "string"
     ? (perms as string[])
     : (perms as any[]).flatMap((g: any) =>
-        g && Array.isArray(g.items) ? g.items.filter((p: any) => p?.granted).map((p: any) => p.key) : [],
+        g && Array.isArray(g.items)
+          ? g.items.filter((p: any) => p?.granted).map((p: any) => p.key)
+          : [],
       );
 
 export default function App() {
   const [teamDirectory, setTeamDirectory] = useState<UserAccount[]>([]);
   // Auth / session state
-  const [bootState, setBootState] = useState<'loading' | 'ready'>('loading');
+  const [bootState, setBootState] = useState<"loading" | "ready">("loading");
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
 
   // Persistence state (server-backed)
@@ -217,23 +622,30 @@ export default function App() {
   const [scopes, setScopes] = useState<ScopeCatalogEntry[]>([]);
   const [oems, setOems] = useState<OEMEntry[]>([]);
   const [products, setProducts] = useState<ProductCatalogEntry[]>([]);
-  const [roles, setRoles] = useState<RolePermission[]>(DEFAULT_ROLES as RolePermission[]);
+  const [roles, setRoles] = useState<RolePermission[]>(
+    DEFAULT_ROLES as RolePermission[],
+  );
   const [policies, setPolicies] = useState<SystemPolicies | null>(null);
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
-  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
-  const [fullDetailOpportunity, setFullDetailOpportunity] = useState<Opportunity | null>(null);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("dashboard");
+  const [selectedOpportunity, setSelectedOpportunity] =
+    useState<Opportunity | null>(null);
+  const [fullDetailOpportunity, setFullDetailOpportunity] =
+    useState<Opportunity | null>(null);
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [density, setDensity] = useState<'compact' | 'dense' | 'spacious'>('dense');
+  const [density, setDensity] = useState<"compact" | "dense" | "spacious">(
+    "dense",
+  );
   const [, setCurrencyVersion] = useState(0);
 
   useEffect(() => {
-    const refreshCurrency = () => setCurrencyVersion(value => value + 1);
-    window.addEventListener('presales:currency-changed', refreshCurrency);
-    return () => window.removeEventListener('presales:currency-changed', refreshCurrency);
+    const refreshCurrency = () => setCurrencyVersion((value) => value + 1);
+    window.addEventListener("presales:currency-changed", refreshCurrency);
+    return () =>
+      window.removeEventListener("presales:currency-changed", refreshCurrency);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -258,8 +670,9 @@ export default function App() {
 
   useEffect(() => {
     const onUnauthorized = () => setCurrentUser(null);
-    window.addEventListener('presales:unauthorized', onUnauthorized);
-    return () => window.removeEventListener('presales:unauthorized', onUnauthorized);
+    window.addEventListener("presales:unauthorized", onUnauthorized);
+    return () =>
+      window.removeEventListener("presales:unauthorized", onUnauthorized);
   }, []);
 
   const refreshFromServer = useCallback(async () => {
@@ -286,30 +699,35 @@ export default function App() {
       } catch {
         setCurrentUser(null);
       } finally {
-        setBootState('ready');
+        setBootState("ready");
       }
     })();
   }, [applyBootstrap]);
 
-  const handleLogin = useCallback(async (user: any) => {
-    setCurrentUser(toUserState(user));
-    if (user?.mustChangePassword) return;
-    setBootState('loading');
-    try {
-      const data = await api.bootstrap();
-      applyBootstrap(data);
-      setCurrentUser(toUserState(data.user));
-      setActiveTab('dashboard');
-      setFullDetailOpportunity(null);
-      setSelectedClient(null);
-    } catch {
-      api.logout();
-      setCurrentUser(null);
-      window.alert('Login succeeded, but the workspace could not be loaded. Please try again.');
-    } finally {
-      setBootState('ready');
-    }
-  }, [applyBootstrap]);
+  const handleLogin = useCallback(
+    async (user: any) => {
+      setCurrentUser(toUserState(user));
+      if (user?.mustChangePassword) return;
+      setBootState("loading");
+      try {
+        const data = await api.bootstrap();
+        applyBootstrap(data);
+        setCurrentUser(toUserState(data.user));
+        setActiveTab("dashboard");
+        setFullDetailOpportunity(null);
+        setSelectedClient(null);
+      } catch {
+        api.logout();
+        setCurrentUser(null);
+        window.alert(
+          "Login succeeded, but the workspace could not be loaded. Please try again.",
+        );
+      } finally {
+        setBootState("ready");
+      }
+    },
+    [applyBootstrap],
+  );
 
   const handleLogout = useCallback(() => {
     api.logout();
@@ -317,7 +735,7 @@ export default function App() {
     setSelectedOpportunity(null);
     setFullDetailOpportunity(null);
     setSelectedClient(null);
-    setActiveTab('dashboard');
+    setActiveTab("dashboard");
   }, []);
 
   const canDo = useCallback(
@@ -326,10 +744,14 @@ export default function App() {
   );
 
   const currentRole = resolveRole(roles, currentUser);
-  const currentRoleName = (currentRole as any)?.roleName ?? (currentRole as any)?.name ?? currentUser?.role ?? null;
+  const currentRoleName =
+    (currentRole as any)?.roleName ??
+    (currentRole as any)?.name ??
+    currentUser?.role ??
+    null;
 
   const handleCreateOpportunityRequest = useCallback(() => {
-    if (canDo('create_opportunity')) {
+    if (canDo("create_opportunity")) {
       setIsNewModalOpen(true);
     }
   }, [canDo]);
@@ -337,57 +759,90 @@ export default function App() {
   // Global Keyboard Navigation (Cmd+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setIsCommandPaletteOpen(prev => !prev);
+        setIsCommandPaletteOpen((prev) => !prev);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // ---------------------------------------------------------------------------
   // Opportunity CRUD (server-backed, optimistic)
   // ---------------------------------------------------------------------------
-  const updateOpportunityLocally = useCallback((updated: Opportunity) => {
-    setOpportunities(prev => prev.map(o => o.id === updated.id ? updated : o));
-    if (selectedOpportunity && selectedOpportunity.id === updated.id) setSelectedOpportunity(updated);
-    if (fullDetailOpportunity && fullDetailOpportunity.id === updated.id) setFullDetailOpportunity(updated);
-  }, [selectedOpportunity, fullDetailOpportunity]);
+  const updateOpportunityLocally = useCallback(
+    (updated: Opportunity) => {
+      setOpportunities((prev) =>
+        prev.map((o) => (o.id === updated.id ? updated : o)),
+      );
+      if (selectedOpportunity && selectedOpportunity.id === updated.id)
+        setSelectedOpportunity(updated);
+      if (fullDetailOpportunity && fullDetailOpportunity.id === updated.id)
+        setFullDetailOpportunity(updated);
+    },
+    [selectedOpportunity, fullDetailOpportunity],
+  );
 
-  const handleUpdateOpportunity = useCallback((updated: Opportunity) => {
-    api.updateOpportunity(updated).then(updateOpportunityLocally).catch(async (error: any) => {
-      const detail = error?.missing?.length ? ` Missing: ${error.missing.join(', ')}.` : '';
-      window.alert(`Could not save changes. ${error.message || ''}${detail}`);
-    });
-  }, [opportunities, updateOpportunityLocally]);
+  const handleUpdateOpportunity = useCallback(
+    (updated: Opportunity) => {
+      api
+        .updateOpportunity(updated)
+        .then(updateOpportunityLocally)
+        .catch(async (error: any) => {
+          const detail = error?.missing?.length
+            ? ` Missing: ${error.missing.join(", ")}.`
+            : "";
+          window.alert(
+            `Could not save changes. ${error.message || ""}${detail}`,
+          );
+        });
+    },
+    [opportunities, updateOpportunityLocally],
+  );
 
-  const handleUpdateStage = useCallback((oppId: string, newStage: OpportunityStage) => {
-    api.setStage(oppId, String(newStage)).then(doc => {
-      updateOpportunityLocally({ ...doc, daysInCurrentStage: 0 });
-    }).catch(() => {
-      window.alert('Could not promote the stage. Please try again.');
-    });
-  }, [updateOpportunityLocally]);
+  const handleUpdateStage = useCallback(
+    (oppId: string, newStage: OpportunityStage) => {
+      api
+        .setStage(oppId, String(newStage))
+        .then((doc) => {
+          updateOpportunityLocally({ ...doc, daysInCurrentStage: 0 });
+        })
+        .catch(() => {
+          window.alert("Could not promote the stage. Please try again.");
+        });
+    },
+    [updateOpportunityLocally],
+  );
 
   const handleCreateOpportunity = useCallback((newOpp: Opportunity) => {
-    return api.createOpportunity(newOpp).then(created => {
-      setOpportunities(prev => [created, ...prev]);
-      setIsNewModalOpen(false);
-      setFullDetailOpportunity(created);
-    }).catch(() => {
-      window.alert('Could not create the opportunity. Please try again.');
-    });
+    return api
+      .createOpportunity(newOpp)
+      .then((created) => {
+        setOpportunities((prev) => [created, ...prev]);
+        setIsNewModalOpen(false);
+        setFullDetailOpportunity(created);
+      })
+      .catch(() => {
+        throw new Error(
+          "Could not create the lead. Check the form and try again.",
+        );
+      });
   }, []);
 
   // Reset to Default Dataset (admin)
   const handleResetData = useCallback(async () => {
-    if (!window.confirm('Reset all opportunity and BOQ data to the default enterprise demo dataset?')) return;
+    if (
+      !window.confirm(
+        "Reset all opportunity and BOQ data to the default enterprise demo dataset?",
+      )
+    )
+      return;
     try {
       await api.resetData();
       await refreshFromServer();
     } catch {
-      window.alert('Reset failed. Please try again.');
+      window.alert("Reset failed. Please try again.");
     }
   }, [refreshFromServer]);
 
@@ -396,19 +851,22 @@ export default function App() {
   // ---------------------------------------------------------------------------
   const handleCreateScope = useCallback(async (payload: any) => {
     const created = await api.createScope(payload);
-    setScopes(prev => [...prev, created]);
+    setScopes((prev) => [...prev, created]);
     return created;
   }, []);
 
-  const handleUpdateScope = useCallback(async (scopeId: string, payload: any) => {
-    const updated = await api.updateScope(scopeId, payload);
-    setScopes(prev => prev.map(s => (s.id === scopeId ? updated : s)));
-    return updated;
-  }, []);
+  const handleUpdateScope = useCallback(
+    async (scopeId: string, payload: any) => {
+      const updated = await api.updateScope(scopeId, payload);
+      setScopes((prev) => prev.map((s) => (s.id === scopeId ? updated : s)));
+      return updated;
+    },
+    [],
+  );
 
   const handleDeleteScope = useCallback(async (scopeId: string) => {
     await api.deleteScope(scopeId);
-    setScopes(prev => prev.filter(s => s.id !== scopeId));
+    setScopes((prev) => prev.filter((s) => s.id !== scopeId));
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -416,71 +874,120 @@ export default function App() {
   // ---------------------------------------------------------------------------
   const handleCreateOEM = useCallback(async (payload: any) => {
     const created = await api.createOEM(payload);
-    setOems(prev => [...prev, created]);
+    setOems((prev) => [...prev, created]);
     return created;
   }, []);
 
   const handleUpdateOEM = useCallback(async (oemId: string, payload: any) => {
     const updated = await api.updateOEM(oemId, payload);
-    setOems(prev => prev.map(o => (o.id === oemId ? updated : o)));
+    setOems((prev) => prev.map((o) => (o.id === oemId ? updated : o)));
     return updated;
   }, []);
 
   const handleDeleteOEM = useCallback(async (oemId: string) => {
     await api.deleteOEM(oemId);
-    setOems(prev => prev.filter(o => o.id !== oemId));
+    setOems((prev) => prev.filter((o) => o.id !== oemId));
   }, []);
 
-  const handleCreateProduct = useCallback(async (payload: any) => {
-    const created = await api.createProduct(payload);
-    const oem = oems.find(o => o.id === created.oem_id);
-    setProducts(prev => [...prev, { ...created, oem_name: oem?.name ?? created.oem_name ?? null }]);
-    return created;
-  }, [oems]);
+  const handleCreateProduct = useCallback(
+    async (payload: any) => {
+      const created = await api.createProduct(payload);
+      const oem = oems.find((o) => o.id === created.oem_id);
+      setProducts((prev) => [
+        ...prev,
+        { ...created, oem_name: oem?.name ?? created.oem_name ?? null },
+      ]);
+      return created;
+    },
+    [oems],
+  );
 
-  const handleUpdateProduct = useCallback(async (productId: string, payload: any) => {
-    const updated = await api.updateProduct(productId, payload);
-    const oem = oems.find(o => o.id === updated.oem_id);
-    setProducts(prev => prev.map(p => (p.id === productId ? { ...updated, oem_name: oem?.name ?? null } : p)));
-    return updated;
-  }, [oems]);
+  const handleUpdateProduct = useCallback(
+    async (productId: string, payload: any) => {
+      const updated = await api.updateProduct(productId, payload);
+      const oem = oems.find((o) => o.id === updated.oem_id);
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === productId ? { ...updated, oem_name: oem?.name ?? null } : p,
+        ),
+      );
+      return updated;
+    },
+    [oems],
+  );
 
   const handleDeleteProduct = useCallback(async (productId: string) => {
     await api.deleteProduct(productId);
-    setProducts(prev => prev.filter(p => p.id !== productId));
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
   }, []);
 
   // ---------------------------------------------------------------------------
   // RBAC policy persistence (server-authoritative, diff-based)
   // ---------------------------------------------------------------------------
-  const updateRoles = useCallback((next: RolePermission[]) => {
-    const prevById = new Map<string, RolePermission>(roles.map(r => [r.id, r] as [string, RolePermission]));
-    setRoles(next);
+  const updateRoles = useCallback(
+    (next: RolePermission[]) => {
+      const prevById = new Map<string, RolePermission>(
+        roles.map((r) => [r.id, r] as [string, RolePermission]),
+      );
+      setRoles(next);
 
-    for (const role of next) {
-      const prev = prevById.get(role.id);
-      const perms = flatPermissions(role.permissions);
-      if (!prev) {
-        api.createRole({
-          roleName: role.roleName ?? role.name ?? '(unnamed role)',
-          description: role.description,
-          permissions: perms,
-        }).then(created => {
-          if (created?.id && created.id !== role.id) {
-            setRoles(cur => cur.map(r => (r.id === role.id ? { ...r, id: created.id } : r)));
-          }
-        }).catch(() => window.alert('Could not save the new role.'));
-      } else if (JSON.stringify(flatPermissions(prev.permissions)) !== JSON.stringify(perms)) {
-        api.updateRole(role.id, perms).catch(() => window.alert('Could not save permission changes.'));
+      for (const role of next) {
+        const prev = prevById.get(role.id);
+        const perms = flatPermissions(role.permissions);
+        if (!prev) {
+          api
+            .createRole({
+              roleName: role.roleName ?? role.name ?? "(unnamed role)",
+              description: role.description,
+              permissions: perms,
+            })
+            .then((created) => {
+              if (created?.id && created.id !== role.id) {
+                setRoles((cur) =>
+                  cur.map((r) =>
+                    r.id === role.id ? { ...r, id: created.id } : r,
+                  ),
+                );
+              }
+            })
+            .catch(() => {
+              setRoles((current) =>
+                current.filter((item) => item.id !== role.id),
+              );
+              window.alert("Could not save the new role.");
+            });
+        } else if (
+          JSON.stringify(flatPermissions(prev.permissions)) !==
+          JSON.stringify(perms)
+        ) {
+          api.updateRole(role.id, perms).catch(() => {
+            setRoles((current) =>
+              current.map((item) => (item.id === role.id ? prev : item)),
+            );
+            window.alert(
+              "Could not save permission changes. Previous permissions restored.",
+            );
+          });
+        }
       }
-    }
-  }, [roles]);
+    },
+    [roles],
+  );
 
-  const liveCalendarEvents = useMemo(() => toLiveCalendarEvents(opportunities), [opportunities]);
-  const liveNotifications = useMemo(() => toLiveNotifications(opportunities), [opportunities]);
-  const liveCentralDocuments = useMemo(() => toLiveCentralDocuments(opportunities), [opportunities]);
+  const liveCalendarEvents = useMemo(
+    () => toLiveCalendarEvents(opportunities),
+    [opportunities],
+  );
+  const liveNotifications = useMemo(
+    () => toLiveNotifications(opportunities),
+    [opportunities],
+  );
+  const liveCentralDocuments = useMemo(
+    () => toLiveCentralDocuments(opportunities),
+    [opportunities],
+  );
 
-  if (bootState === 'loading') {
+  if (bootState === "loading") {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 text-sm text-gray-500 font-mono">
         Loading workspace…
@@ -509,325 +1016,563 @@ export default function App() {
   }
 
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-gray-50 text-sm text-gray-500 font-mono">Loading workspace…</div>}>
-    <div className="h-screen overflow-hidden bg-gray-50 text-gray-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
-      {/* Top Header Command Bar */}
-      <Header
-        opportunities={opportunities}
-        onOpenNewOpportunity={handleCreateOpportunityRequest}
-        onNavigateTab={(tab) => {
-          setActiveTab(tab);
-          setFullDetailOpportunity(null);
-          setSelectedClient(null);
-        }}
-         onRefreshData={() => api.bootstrap().then(data => { applyBootstrap(data); if (fullDetailOpportunity) { const fresh = (data.opportunities as Opportunity[]).find(o => o.id === fullDetailOpportunity.id); if (fresh) setFullDetailOpportunity(fresh); } }).catch(() => window.alert('Could not refresh team updates. Please try again.'))}
-         onToggleSidebar={() => setIsMobileSidebarOpen(true)}
-         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-      />
-
-      {/* Main Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Navigation Sidebar */}
-          <Sidebar
-          activeTab={activeTab}
-          setActiveTab={(tab) => {
+    <Suspense
+      fallback={
+        <div className="h-screen flex items-center justify-center bg-gray-50 text-sm text-gray-500 font-mono">
+          Loading workspace…
+        </div>
+      }
+    >
+      <div className="h-dvh overflow-hidden bg-gray-50 text-gray-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+        {/* Top Header Command Bar */}
+        <Header
+          opportunities={opportunities}
+          onOpenNewOpportunity={handleCreateOpportunityRequest}
+          onNavigateTab={(tab) => {
             setActiveTab(tab);
             setFullDetailOpportunity(null);
             setSelectedClient(null);
           }}
-          opportunities={opportunities}
-          onOpenNewOpportunity={handleCreateOpportunityRequest}
-          can={canDo}
-          canCreateOpportunity={canDo('create_opportunity')}
-          currentUser={currentUser}
-          currentRoleName={currentRoleName}
-           onLogout={handleLogout}
-           isMobileOpen={isMobileSidebarOpen}
-           onMobileClose={() => setIsMobileSidebarOpen(false)}
-         />
+          onRefreshData={() =>
+            api
+              .bootstrap()
+              .then((data) => {
+                applyBootstrap(data);
+                if (fullDetailOpportunity) {
+                  const fresh = (data.opportunities as Opportunity[]).find(
+                    (o) => o.id === fullDetailOpportunity.id,
+                  );
+                  if (fresh) setFullDetailOpportunity(fresh);
+                }
+              })
+              .catch(() =>
+                window.alert(
+                  "Could not refresh team updates. Please try again.",
+                ),
+              )
+          }
+          onToggleSidebar={() => setIsMobileSidebarOpen(true)}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        />
 
-        {/* Dynamic Center Viewport */}
-        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto bg-gray-50 p-2 pb-20 sm:p-4 sm:pb-4">
-          {/* RBAC view guard: block access if the active tab is not permitted */}
-          {canDo(TAB_PERMISSIONS[activeTab] ?? 'app.access') ? (
-          <>
-          {/* Full Screen Opportunity Detail View (when active) */}
-          {fullDetailOpportunity ? (
-            <OpportunityDetailView
-              key={fullDetailOpportunity.id}
-              opportunity={fullDetailOpportunity}
-              currentUser={currentUser}
-              teamDirectory={teamDirectory}
-              can={canDo}
-              onWorkflowSaved={updateOpportunityLocally}
-              onBack={() => setFullDetailOpportunity(null)}
-              onUpdateOpportunity={handleUpdateOpportunity}
-              onUpdateStage={handleUpdateStage}
-            />
-          ) : selectedClient ? (
-            <ClientDetailsView
-              key={selectedClient.id}
-              client={selectedClient}
-              opportunities={opportunities}
-              onBack={() => setSelectedClient(null)}
-              onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
-              onUpdateClient={async (client) => {
-                try {
-                  const saved = await api.updateClient(client.id, client);
-                  setClients(current => current.map(item => item.id === saved.id ? saved : item));
-                  setSelectedClient(saved);
-                } catch (error) {
-                  console.error('Failed to update client profile:', error);
+        {/* Main Workspace Layout */}
+        <div className="flex-1 flex overflow-hidden min-h-0">
+          {/* Navigation Sidebar */}
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={(tab) => {
+              setActiveTab(tab);
+              setFullDetailOpportunity(null);
+              setSelectedClient(null);
+            }}
+            opportunities={opportunities}
+            onOpenNewOpportunity={handleCreateOpportunityRequest}
+            can={canDo}
+            canCreateOpportunity={canDo("create_opportunity")}
+            currentUser={currentUser}
+            currentRoleName={currentRoleName}
+            onLogout={handleLogout}
+            isMobileOpen={isMobileSidebarOpen}
+            onMobileClose={() => setIsMobileSidebarOpen(false)}
+          />
+
+          {/* Dynamic Center Viewport */}
+          <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto bg-gray-50 p-2 pb-20 sm:p-4 sm:pb-4">
+            {/* RBAC view guard: block access if the active tab is not permitted */}
+            {canDo(TAB_PERMISSIONS[activeTab] ?? "app.access") ? (
+              <>
+                {/* Full Screen Opportunity Detail View (when active) */}
+                {fullDetailOpportunity ? (
+                  <OpportunityDetailView
+                    key={fullDetailOpportunity.id}
+                    opportunity={fullDetailOpportunity}
+                    currentUser={currentUser}
+                    teamDirectory={teamDirectory}
+                    can={canDo}
+                    onWorkflowSaved={updateOpportunityLocally}
+                    onBack={() => setFullDetailOpportunity(null)}
+                    onUpdateOpportunity={handleUpdateOpportunity}
+                    onUpdateStage={handleUpdateStage}
+                  />
+                ) : selectedClient ? (
+                  <ClientDetailsView
+                    key={selectedClient.id}
+                    client={selectedClient}
+                    opportunities={opportunities}
+                    onBack={() => setSelectedClient(null)}
+                    onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
+                    onUpdateClient={async (client) => {
+                      try {
+                        const saved = await api.updateClient(client.id, client);
+                        setClients((current) =>
+                          current.map((item) =>
+                            item.id === saved.id ? saved : item,
+                          ),
+                        );
+                        setSelectedClient(saved);
+                      } catch (error) {
+                        console.error(
+                          "Failed to update client profile:",
+                          error,
+                        );
+                      }
+                    }}
+                  />
+                ) : (
+                  <>
+                    {activeTab === "dashboard" && (
+                      <>
+                        <WorkQueue
+                          canCreate={canDo("create_opportunity")}
+                          opportunities={opportunities}
+                          onSelectOpportunity={setFullDetailOpportunity}
+                          onCreate={handleCreateOpportunityRequest}
+                        />
+                      </>
+                    )}
+
+                    {activeTab === "opportunities" && (
+                      <>
+                        <WorkQueue
+                          canCreate={canDo("create_opportunity")}
+                          opportunities={opportunities}
+                          onSelectOpportunity={setFullDetailOpportunity}
+                          onCreate={handleCreateOpportunityRequest}
+                          initialFilter="all"
+                        />
+                      </>
+                    )}
+
+                    {activeTab === "board" && (
+                      <OpportunityBoard
+                        opportunities={opportunities}
+                        onSelectOpportunity={(opp) =>
+                          setSelectedOpportunity(opp)
+                        }
+                        onUpdateStage={handleUpdateStage}
+                      />
+                    )}
+
+                    {activeTab === "calendar" && (
+                      <PresalesCalendar
+                        events={liveCalendarEvents}
+                        opportunities={opportunities}
+                        onSelectOpportunity={(opp) =>
+                          setFullDetailOpportunity(opp)
+                        }
+                      />
+                    )}
+
+                    {activeTab === "poc_center" && (
+                      <POCTracker
+                        opportunities={opportunities}
+                        onSelectOpportunity={(opp) =>
+                          setSelectedOpportunity(opp)
+                        }
+                        onUpdateOpportunity={handleUpdateOpportunity}
+                      />
+                    )}
+
+                    {activeTab === "boq_workbench" && (
+                      <BOQWorkbench
+                        opportunities={opportunities}
+                        onUpdateOpportunity={handleUpdateOpportunity}
+                        onSelectOpportunity={(opp) =>
+                          setSelectedOpportunity(opp)
+                        }
+                        products={products}
+                        oems={oems}
+                      />
+                    )}
+
+                    {activeTab === "action_center" && (
+                      <>
+                        <div className="hidden md:block">
+                          <ActionCenter
+                            opportunities={opportunities}
+                            onSelectOpportunity={(opp) =>
+                              setSelectedOpportunity(opp)
+                            }
+                            onUpdateOpportunity={handleUpdateOpportunity}
+                          />
+                        </div>
+                        <div className="md:hidden pb-24">
+                          <MobileActionCenter
+                            opportunities={opportunities}
+                            onSelectOpportunity={(opp) =>
+                              setFullDetailOpportunity(opp)
+                            }
+                            onUpdateOpportunity={handleUpdateOpportunity}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {activeTab === "mobile_capture" && (
+                      <div className="pb-24">
+                        <MobileWorkCapture
+                          opportunities={opportunities}
+                          onUpdateOpportunity={handleUpdateOpportunity}
+                          onOpenNewOpportunity={handleCreateOpportunityRequest}
+                        />
+                      </div>
+                    )}
+
+                    {activeTab === "handover_queue" && (
+                      <WorkQueue
+                        canCreate={canDo("create_opportunity")}
+                        opportunities={opportunities}
+                        onSelectOpportunity={(opp) =>
+                          setSelectedOpportunity(opp)
+                        }
+                        onCreate={handleCreateOpportunityRequest}
+                        initialFilter="delivery"
+                      />
+                    )}
+
+                    {activeTab === "team_capacity" && (
+                      <CapacityMatrix
+                        engineers={users
+                          .filter(
+                            (user) =>
+                              user.roleId === "role-sa" ||
+                              user.department === "Solutions Engineering",
+                          )
+                          .map((user) =>
+                            toPresalesEngineer(user, opportunities),
+                          )}
+                        opportunities={opportunities}
+                        onSelectOpportunity={(opp) =>
+                          setSelectedOpportunity(opp)
+                        }
+                      />
+                    )}
+
+                    {activeTab === "documents" && (
+                      <CentralDocumentsRepo documents={liveCentralDocuments} />
+                    )}
+
+                    {activeTab === "analytics" && (
+                      <>
+                        <div className="hidden md:block">
+                          <PresalesAnalytics opportunities={opportunities} />
+                        </div>
+                        <div className="md:hidden pb-24">
+                          <MobileReportsScreen
+                            opportunities={opportunities}
+                            onNavigateTab={(tab) => setActiveTab(tab)}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {activeTab === "clients" && (
+                      <>
+                        <div className="hidden md:block">
+                          <ClientsDirectory
+                            clients={clients}
+                            opportunities={opportunities}
+                            onSelectClient={(c) => setSelectedClient(c)}
+                            onSelectOpportunity={(opp) =>
+                              setFullDetailOpportunity(opp)
+                            }
+                            onAddClient={async (client) => {
+                              try {
+                                const saved = await api.createClient(client);
+                                setClients((current) => [
+                                  saved,
+                                  ...current.filter(
+                                    (item) => item.id !== saved.id,
+                                  ),
+                                ]);
+                              } catch (error) {
+                                console.error(
+                                  "Failed to persist client profile:",
+                                  error,
+                                );
+                              }
+                            }}
+                            onUpdateClient={async (client) => {
+                              try {
+                                const saved = await api.updateClient(
+                                  client.id,
+                                  client,
+                                );
+                                setClients((current) =>
+                                  current.map((item) =>
+                                    item.id === saved.id ? saved : item,
+                                  ),
+                                );
+                              } catch (error) {
+                                console.error(
+                                  "Failed to update client profile:",
+                                  error,
+                                );
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="md:hidden">
+                          <MobileClientsScreen
+                            clients={clients}
+                            onSelectClient={(client) =>
+                              setSelectedClient(client)
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {activeTab === "sales_kams" && (
+                      <SalesKAMDirectory
+                        salesKAMs={users
+                          .filter(
+                            (user) =>
+                              user.roleId === "role-kam" ||
+                              user.role === "Sales KAM",
+                          )
+                          .map((user) => toSalesKAM(user, opportunities))}
+                        opportunities={opportunities}
+                        onSelectOpportunity={(opp) =>
+                          setFullDetailOpportunity(opp)
+                        }
+                      />
+                    )}
+
+                    {activeTab === "notifications" && (
+                      <NotificationCenter
+                        notifications={liveNotifications}
+                        opportunities={opportunities}
+                        onSelectOpportunity={(opp) =>
+                          setFullDetailOpportunity(opp)
+                        }
+                      />
+                    )}
+
+                    {activeTab === "audit_logs" && (
+                      <AuditLogsView auditLogs={auditLogs} />
+                    )}
+
+                    {activeTab === "user_management" && (
+                      <UserManagementView
+                        users={users}
+                        roles={roles as RolePermission[]}
+                        onCreateUser={async (payload) => {
+                          const roleId =
+                            resolveRole(roles, {
+                              ...currentUser,
+                              role: payload.role,
+                              roleId: undefined,
+                            })?.id ?? "role-sa";
+                          const resp = await api.createUser({
+                            ...payload,
+                            roleId,
+                          });
+                          const createdUser = toUserState(resp);
+                          setUsers((current) => [
+                            createdUser,
+                            ...current.filter(
+                              (user) => user.id !== createdUser.id,
+                            ),
+                          ]);
+                          return resp as any;
+                        }}
+                        onUpdateUser={async (user) => {
+                          const roleId =
+                            resolveRole(roles, user)?.id ??
+                            user.roleId ??
+                            "role-sa";
+                          await api.updateUser(user.id, {
+                            name: user.name,
+                            email: user.email,
+                            role: user.role,
+                            roleId,
+                            department: user.department,
+                            region: user.region,
+                            phone: user.phone,
+                            manager: user.manager,
+                            salesTeam: user.salesTeam,
+                            skills: user.skills,
+                            certifications: user.certifications,
+                            mfaEnabled: user.mfaEnabled,
+                            status: user.status,
+                          });
+                          setUsers((current) =>
+                            current.map((item) =>
+                              item.id === user.id
+                                ? { ...item, ...user, roleId }
+                                : item,
+                            ),
+                          );
+                        }}
+                      />
+                    )}
+
+                    {activeTab === "role_permissions" && (
+                      <RoleManagementView
+                        roles={roles as any}
+                        onRolesChange={updateRoles}
+                      />
+                    )}
+
+                    {activeTab === "master_config" && <MasterConfigView />}
+
+                    {activeTab === "scope_catalog" && (
+                      <ScopeCatalogView
+                        scopes={scopes}
+                        canManage={canDo("manage_scope_catalog")}
+                        onCreate={handleCreateScope}
+                        onUpdate={handleUpdateScope}
+                        onDelete={handleDeleteScope}
+                      />
+                    )}
+
+                    {activeTab === "oem_catalog" && (
+                      <OEMCatalogView
+                        oems={oems}
+                        canManage={canDo("manage_oem_catalog")}
+                        onCreate={handleCreateOEM}
+                        onUpdate={handleUpdateOEM}
+                        onDelete={handleDeleteOEM}
+                        products={products}
+                      />
+                    )}
+
+                    {activeTab === "product_catalog" && (
+                      <ProductCatalogView
+                        products={products}
+                        oems={oems}
+                        canManage={canDo("manage_oem_catalog")}
+                        onCreate={handleCreateProduct}
+                        onUpdate={handleUpdateProduct}
+                        onDelete={handleDeleteProduct}
+                      />
+                    )}
+
+                    {activeTab === "system_settings" && (
+                      <SystemSettingsView
+                        policies={policies || undefined}
+                        onSaved={setPolicies}
+                      />
+                    )}
+
+                    {activeTab === "bulk_upload" && <BulkUploadView />}
+                  </>
+                )}
+              </>
+            ) : (
+              <AccessDenied
+                roleName={currentRoleName}
+                requiredPermission={TAB_PERMISSIONS[activeTab] ?? "app.access"}
+                permissionLabel={
+                  PERMISSION_CATALOG.find(
+                    (p) =>
+                      p.key === (TAB_PERMISSIONS[activeTab] ?? "app.access"),
+                  )?.name ?? null
+                }
+                onBack={() => setActiveTab("dashboard")}
+              />
+            )}
+          </main>
+        </div>
+
+        <nav
+          className="mobile-bottom-nav fixed bottom-0 inset-x-0 z-30 md:hidden bg-white border-t border-gray-200 px-2 py-1.5 grid grid-cols-5 gap-1 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+          aria-label="Mobile navigation"
+        >
+          {[
+            {
+              id: "dashboard" as ActiveTab,
+              label: "Home",
+              Icon: LayoutDashboard,
+            },
+            {
+              id: "opportunities" as ActiveTab,
+              label: "Deals",
+              Icon: TableProperties,
+            },
+            {
+              id: "action_center" as ActiveTab,
+              label: "Tasks",
+              Icon: CheckSquare,
+            },
+            { id: "clients" as ActiveTab, label: "Clients", Icon: Building2 },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                if (canDo(TAB_PERMISSIONS[item.id] || "app.access")) {
+                  setActiveTab(item.id);
+                  setFullDetailOpportunity(null);
+                  setSelectedClient(null);
                 }
               }}
-            />
-          ) : (
-            <>
-              {activeTab === 'dashboard' && (
-                <>
-                  <WorkQueue opportunities={opportunities} onSelectOpportunity={setFullDetailOpportunity} onCreate={handleCreateOpportunityRequest} />
-                </>
-              )}
+              className={`flex flex-col items-center gap-0.5 rounded py-1 text-[10px] font-semibold ${activeTab === item.id ? "text-blue-700 bg-blue-50" : "text-gray-500"}`}
+            >
+              <item.Icon className="w-4 h-4" />
+              {item.label}
+            </button>
+          ))}
+          <button
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="flex flex-col items-center gap-0.5 rounded py-1 text-[10px] font-semibold text-gray-500"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+            More
+          </button>
+        </nav>
 
-              {activeTab === 'opportunities' && (
-                <>
-                  <WorkQueue opportunities={opportunities} onSelectOpportunity={setFullDetailOpportunity} onCreate={handleCreateOpportunityRequest} initialFilter="all" />
-                </>
-              )}
+        {/* Slide-over Deep Opportunity Inspector Drawer */}
+        {selectedOpportunity && !fullDetailOpportunity && (
+          <OpportunityDetailDrawer
+            opportunity={selectedOpportunity}
+            onClose={() => setSelectedOpportunity(null)}
+            onUpdateOpportunity={handleUpdateOpportunity}
+            onOpenFullDetail={(opp) => {
+              setSelectedOpportunity(null);
+              setFullDetailOpportunity(opp);
+            }}
+          />
+        )}
 
-              {activeTab === 'board' && (
-                <OpportunityBoard
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setSelectedOpportunity(opp)}
-                  onUpdateStage={handleUpdateStage}
-                />
-              )}
+        {/* New Opportunity Modal */}
+        {isNewModalOpen && (
+          <NewOpportunityModal
+            key="new-opportunity-open"
+            isOpen
+            onClose={() => setIsNewModalOpen(false)}
+            onCreateOpportunity={handleCreateOpportunity}
+            scopes={scopes}
+            users={teamDirectory}
+            currentUser={currentUser}
+            clients={clients}
+          />
+        )}
 
-              {activeTab === 'calendar' && (
-                <PresalesCalendar
-                  events={liveCalendarEvents}
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
-                />
-              )}
-
-              {activeTab === 'poc_center' && (
-                <POCTracker
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setSelectedOpportunity(opp)}
-                  onUpdateOpportunity={handleUpdateOpportunity}
-                />
-              )}
-
-              {activeTab === 'boq_workbench' && (
-                <BOQWorkbench
-                  opportunities={opportunities}
-                  onUpdateOpportunity={handleUpdateOpportunity}
-                  onSelectOpportunity={(opp) => setSelectedOpportunity(opp)}
-                  products={products}
-                  oems={oems}
-                />
-              )}
-
-              {activeTab === 'action_center' && (
-                <><div className="hidden md:block"><ActionCenter opportunities={opportunities} onSelectOpportunity={(opp) => setSelectedOpportunity(opp)} onUpdateOpportunity={handleUpdateOpportunity} /></div><div className="md:hidden pb-24"><MobileActionCenter opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateOpportunity={handleUpdateOpportunity} /></div></>
-              )}
-
-              {activeTab === 'mobile_capture' && <div className="pb-24"><MobileWorkCapture opportunities={opportunities} onUpdateOpportunity={handleUpdateOpportunity} onOpenNewOpportunity={handleCreateOpportunityRequest} /></div>}
-
-              {activeTab === 'handover_queue' && (
-                <WorkQueue
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setSelectedOpportunity(opp)}
-                  onCreate={handleCreateOpportunityRequest}
-                  initialFilter="delivery"
-                />
-              )}
-
-              {activeTab === 'team_capacity' && (
-                <CapacityMatrix
-                  engineers={users.filter(user => user.roleId === 'role-sa' || user.department === 'Solutions Engineering').map(user => toPresalesEngineer(user, opportunities))}
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setSelectedOpportunity(opp)}
-                />
-              )}
-
-              {activeTab === 'documents' && (
-                <CentralDocumentsRepo
-                  documents={liveCentralDocuments}
-                />
-              )}
-
-              {activeTab === 'analytics' && (
-                <><div className="hidden md:block"><PresalesAnalytics opportunities={opportunities} /></div><div className="md:hidden pb-24"><MobileReportsScreen opportunities={opportunities} onNavigateTab={(tab) => setActiveTab(tab)} /></div></>
-              )}
-
-              {activeTab === 'clients' && (
-                <><div className="hidden md:block"><ClientsDirectory clients={clients} opportunities={opportunities} onSelectClient={(c) => setSelectedClient(c)} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onAddClient={async (client) => { try { const saved = await api.createClient(client); setClients(current => [saved, ...current.filter(item => item.id !== saved.id)]); } catch (error) { console.error('Failed to persist client profile:', error); } }} onUpdateClient={async (client) => { try { const saved = await api.updateClient(client.id, client); setClients(current => current.map(item => item.id === saved.id ? saved : item)); } catch (error) { console.error('Failed to update client profile:', error); } }} /></div><div className="md:hidden"><MobileClientsScreen clients={clients} onSelectClient={(client) => setSelectedClient(client)} /></div></>
-              )}
-
-              {activeTab === 'sales_kams' && (
-                <SalesKAMDirectory
-                  salesKAMs={users.filter(user => user.roleId === 'role-kam' || user.role === 'Sales KAM').map(user => toSalesKAM(user, opportunities))}
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
-                />
-              )}
-
-              {activeTab === 'notifications' && (
-                <NotificationCenter
-                  notifications={liveNotifications}
-                  opportunities={opportunities}
-                  onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)}
-                />
-              )}
-
-              {activeTab === 'audit_logs' && (
-                <AuditLogsView
-                  auditLogs={auditLogs}
-                />
-              )}
-
-              {activeTab === 'user_management' && (
-                <UserManagementView
-                  users={users}
-                  roles={roles as RolePermission[]}
-                  onCreateUser={async (payload) => {
-                    const roleId = resolveRole(roles, { ...currentUser, role: payload.role, roleId: undefined })?.id ?? 'role-sa';
-                    const resp = await api.createUser({ ...payload, roleId });
-                    const createdUser = toUserState(resp);
-                    setUsers(current => [createdUser, ...current.filter(user => user.id !== createdUser.id)]);
-                    return resp as any;
-                  }}
-                  onUpdateUser={async (user) => {
-                    const roleId = resolveRole(roles, user)?.id ?? user.roleId ?? 'role-sa';
-                    await api.updateUser(user.id, { name: user.name, email: user.email, role: user.role, roleId, department: user.department, region: user.region, phone: user.phone, manager: user.manager, salesTeam: user.salesTeam, skills: user.skills, certifications: user.certifications, mfaEnabled: user.mfaEnabled, status: user.status, });
-                    setUsers(current => current.map(item => item.id === user.id ? { ...item, ...user, roleId } : item));
-                  }}
-                />
-              )}
-
-              {activeTab === 'role_permissions' && (
-                <RoleManagementView
-                  roles={roles as any}
-                  onRolesChange={updateRoles}
-                />
-              )}
-
-              {activeTab === 'master_config' && (
-                <MasterConfigView />
-              )}
-
-              {activeTab === 'scope_catalog' && (
-                <ScopeCatalogView
-                  scopes={scopes}
-                  canManage={canDo('manage_scope_catalog')}
-                  onCreate={handleCreateScope}
-                  onUpdate={handleUpdateScope}
-                  onDelete={handleDeleteScope}
-                />
-              )}
-
-              {activeTab === 'oem_catalog' && (
-                <OEMCatalogView
-                  oems={oems}
-                  canManage={canDo('manage_oem_catalog')}
-                  onCreate={handleCreateOEM}
-                   onUpdate={handleUpdateOEM}
-                   onDelete={handleDeleteOEM}
-                   products={products}
-                 />
-              )}
-
-              {activeTab === 'product_catalog' && (
-                <ProductCatalogView
-                  products={products}
-                  oems={oems}
-                  canManage={canDo('manage_oem_catalog')}
-                  onCreate={handleCreateProduct}
-                  onUpdate={handleUpdateProduct}
-                  onDelete={handleDeleteProduct}
-                />
-              )}
-
-              {activeTab === 'system_settings' && (
-                <SystemSettingsView policies={policies || undefined} onSaved={setPolicies} />
-              )}
-
-              {activeTab === 'bulk_upload' && <BulkUploadView />}
-            </>
-          )}
-          </>
-          ) : (
-            <AccessDenied
-              roleName={currentRoleName}
-              requiredPermission={TAB_PERMISSIONS[activeTab] ?? 'app.access'}
-              permissionLabel={
-                PERMISSION_CATALOG.find(p => p.key === (TAB_PERMISSIONS[activeTab] ?? 'app.access'))?.name ?? null
-              }
-              onBack={() => setActiveTab('dashboard')}
-            />
-          )}
-        </main>
+        {/* Global Command Palette (Cmd+K) */}
+        {isCommandPaletteOpen && (
+          <CommandPalette
+            isOpen
+            onClose={() => setIsCommandPaletteOpen(false)}
+            opportunities={opportunities}
+            clients={clients}
+            onSelectOpportunity={(opp) => {
+              setSelectedOpportunity(null);
+              setFullDetailOpportunity(opp);
+            }}
+            onSelectClient={(client) => {
+              setSelectedClient(client);
+              setFullDetailOpportunity(null);
+            }}
+            onNavigateTab={(tab) => {
+              setActiveTab(tab);
+              setFullDetailOpportunity(null);
+              setSelectedClient(null);
+            }}
+            onOpenNewOpportunity={handleCreateOpportunityRequest}
+          />
+        )}
       </div>
-
-      <nav className="mobile-bottom-nav fixed bottom-0 inset-x-0 z-30 md:hidden bg-white border-t border-gray-200 px-2 py-1.5 grid grid-cols-5 gap-1 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]" aria-label="Mobile navigation">
-        {[
-          { id: 'dashboard' as ActiveTab, label: 'Home', Icon: LayoutDashboard },
-          { id: 'opportunities' as ActiveTab, label: 'Deals', Icon: TableProperties },
-          { id: 'action_center' as ActiveTab, label: 'Tasks', Icon: CheckSquare },
-          { id: 'clients' as ActiveTab, label: 'Clients', Icon: Building2 },
-        ].map(item => <button key={item.id} onClick={() => { if (canDo(TAB_PERMISSIONS[item.id] || 'app.access')) { setActiveTab(item.id); setFullDetailOpportunity(null); setSelectedClient(null); } }} className={`flex flex-col items-center gap-0.5 rounded py-1 text-[10px] font-semibold ${activeTab === item.id ? 'text-blue-700 bg-blue-50' : 'text-gray-500'}`}><item.Icon className="w-4 h-4" />{item.label}</button>)}
-        <button onClick={() => setIsMobileSidebarOpen(true)} className="flex flex-col items-center gap-0.5 rounded py-1 text-[10px] font-semibold text-gray-500"><MoreHorizontal className="w-4 h-4" />More</button>
-      </nav>
-
-      {/* Slide-over Deep Opportunity Inspector Drawer */}
-      {selectedOpportunity && !fullDetailOpportunity && (
-        <OpportunityDetailDrawer
-          opportunity={selectedOpportunity}
-          onClose={() => setSelectedOpportunity(null)}
-          onUpdateOpportunity={handleUpdateOpportunity}
-          onOpenFullDetail={(opp) => {
-            setSelectedOpportunity(null);
-            setFullDetailOpportunity(opp);
-          }}
-        />
-      )}
-
-      {/* New Opportunity Modal */}
-      {isNewModalOpen && <NewOpportunityModal
-        key="new-opportunity-open"
-        isOpen
-        onClose={() => setIsNewModalOpen(false)}
-        onCreateOpportunity={handleCreateOpportunity}
-        scopes={scopes}
-        users={teamDirectory}
-        currentUser={currentUser}
-        clients={clients}
-      />}
-
-      {/* Global Command Palette (Cmd+K) */}
-      {isCommandPaletteOpen && <CommandPalette
-        isOpen
-        onClose={() => setIsCommandPaletteOpen(false)}
-        opportunities={opportunities}
-        clients={clients}
-        onSelectOpportunity={(opp) => {
-          setSelectedOpportunity(null);
-          setFullDetailOpportunity(opp);
-        }}
-        onSelectClient={(client) => {
-          setSelectedClient(client);
-          setFullDetailOpportunity(null);
-        }}
-        onNavigateTab={(tab) => {
-          setActiveTab(tab);
-          setFullDetailOpportunity(null);
-          setSelectedClient(null);
-        }}
-        onOpenNewOpportunity={handleCreateOpportunityRequest}
-      />}
-    </div>
     </Suspense>
   );
 }

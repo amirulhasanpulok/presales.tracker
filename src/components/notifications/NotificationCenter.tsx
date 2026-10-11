@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { NotificationItem, Opportunity } from '../../types';
-import { 
-  Bell, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Clock, 
-  Trash2, 
-  ShieldCheck, 
-  FileCheck, 
+import React, { useState, useEffect } from "react";
+import { NotificationItem, Opportunity } from "../../types";
+import {
+  Bell,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  Trash2,
+  ShieldCheck,
+  FileCheck,
   DollarSign,
   ChevronRight,
-  Info
-} from 'lucide-react';
+  Info,
+} from "lucide-react";
 
 interface NotificationCenterProps {
   notifications: NotificationItem[];
@@ -24,40 +24,53 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   opportunities,
   onSelectOpportunity,
 }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
-  const [filterType, setFilterType] = useState<string>('all');
+  const [notifications, setNotifications] =
+    useState<NotificationItem[]>(initialNotifications);
+  useEffect(() => {
+    setNotifications((previous) =>
+      initialNotifications.map((item) => ({
+        ...item,
+        read: previous.find((old) => old.id === item.id)?.read ?? item.read,
+      })),
+    );
+  }, [initialNotifications]);
+  const [filterType, setFilterType] = useState<string>("all");
 
   const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+    setNotifications(notifications.map((n) => ({ ...n, read: true })));
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifications(
+      notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
+    );
   };
 
   const clearAll = () => {
     setNotifications([]);
   };
 
-  const getNotificationIcon = (type: NotificationItem['type']) => {
+  const getNotificationIcon = (type: NotificationItem["type"]) => {
     switch (type) {
-      case 'sla_breach':
+      case "sla_breach":
         return <AlertTriangle className="w-4 h-4 text-red-600" />;
-      case 'approval_required':
+      case "approval_required":
         return <DollarSign className="w-4 h-4 text-amber-600" />;
-      case 'poc_milestone':
+      case "poc_milestone":
         return <CheckCircle2 className="w-4 h-4 text-purple-600" />;
-      case 'deal_assigned':
+      case "deal_assigned":
         return <ShieldCheck className="w-4 h-4 text-blue-600" />;
-      case 'oem_update':
+      case "oem_update":
         return <Info className="w-4 h-4 text-cyan-600" />;
       default:
         return <Bell className="w-4 h-4 text-gray-600" />;
     }
   };
 
-  const filtered = notifications.filter(n => filterType === 'all' || n.type === filterType);
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const filtered = notifications.filter(
+    (n) => filterType === "all" || n.type === filterType,
+  );
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
@@ -65,7 +78,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       <div className="bg-white border border-gray-200 rounded p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-base font-bold text-gray-900 tracking-tight">Presales Notification Center</h1>
+            <h1 className="text-base font-bold text-gray-900 tracking-tight">
+              Presales Notification Center
+            </h1>
             {unreadCount > 0 && (
               <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-red-50 text-red-700 font-semibold border border-red-200">
                 {unreadCount} Unread Alerts
@@ -73,7 +88,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             )}
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            SLA warnings, BOQ margin approvals, security clearances, and deal stage promotions.
+            SLA warnings, BOQ margin approvals, security clearances, and deal
+            stage promotions.
           </p>
         </div>
 
@@ -94,9 +110,11 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       </div>
 
       {/* Filter Bar */}
-       <div className="mobile-filter-scroll bg-white border border-gray-200 rounded p-2.5 flex items-center justify-between gap-2">
+      <div className="mobile-filter-scroll bg-white border border-gray-200 rounded p-2.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-700">Filter Alerts:</span>
+          <span className="text-xs font-semibold text-gray-700">
+            Filter Alerts:
+          </span>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
@@ -114,14 +132,14 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
       {/* Notification Stream */}
       <div className="space-y-2">
-        {filtered.map(notif => (
+        {filtered.map((notif) => (
           <div
             key={notif.id}
             onClick={() => markAsRead(notif.id)}
             className={`p-3.5 rounded border transition-colors flex items-start justify-between gap-3 ${
-              notif.read 
-                ? 'bg-white border-gray-200 opacity-80' 
-                : 'bg-blue-50/40 border-blue-200 shadow-2xs'
+              notif.read
+                ? "bg-white border-gray-200 opacity-80"
+                : "bg-blue-50/40 border-blue-200 shadow-2xs"
             }`}
           >
             <div className="flex items-start gap-3">
@@ -131,7 +149,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className={`text-xs ${notif.read ? 'font-medium text-gray-800' : 'font-bold text-gray-900'}`}>
+                  <h3
+                    className={`text-xs ${notif.read ? "font-medium text-gray-800" : "font-bold text-gray-900"}`}
+                  >
                     {notif.title}
                   </h3>
                   {!notif.read && (
@@ -148,7 +168,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                   {notif.opportunityCode && (
                     <>
                       <span>•</span>
-                      <span className="font-bold text-blue-700">{notif.opportunityCode}</span>
+                      <span className="font-bold text-blue-700">
+                        {notif.opportunityCode}
+                      </span>
                     </>
                   )}
                 </div>
@@ -159,7 +181,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const matched = opportunities.find(o => o.code === notif.opportunityCode);
+                  const matched = opportunities.find(
+                    (o) => o.code === notif.opportunityCode,
+                  );
                   if (matched) onSelectOpportunity(matched);
                 }}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-white hover:bg-gray-50 border border-gray-300 px-2.5 py-1 rounded flex-shrink-0"

@@ -36,7 +36,7 @@ export const PERMISSION_CATALOG: PermissionDef[] = [
   },
   {
     key: "workflow.sales",
-    name: "Approve SLA extensions and close own Sales deals",
+    name: "Manage own Sales leads, proposals and deal outcomes",
     module: "Team Workflow",
   },
   // Opportunities & Deals

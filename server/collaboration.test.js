@@ -353,3 +353,20 @@ test("Head responsibilities cannot be performed by Sales, Finance or Gate review
     { status: 403 },
   );
 });
+
+test("New technical revision resolves old pending extensions and permits a fresh request", () => {
+  let d = step(handed(), "revision", sales);
+  d = step(d, "set_sla", salesHead, { slaHours: 96 });
+  d = step(d, "request_extension", engineer, { dueAt: "2026-10-20" });
+  d = step(d, "submit_solution", engineer);
+  d = step(d, "approve_solution", presalesHead);
+  d = step(d, "handover_sales", engineer);
+  d = step(d, "revision", sales);
+  assert.equal(d.collaboration.extensions[0].status, "superseded");
+  d = step(d, "set_sla", salesHead, { slaHours: 96 });
+  d = step(d, "request_extension", engineer, { dueAt: "2026-10-21" });
+  assert.equal(
+    d.collaboration.extensions.filter((e) => e.status === "pending").length,
+    1,
+  );
+});

@@ -444,14 +444,15 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">MFA Enforcement</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">MFA preference (not enforced)</label>
                   <select
+                    disabled
                     value={editingUser.mfaEnabled ? 'true' : 'false'}
                     onChange={(e) => setEditingUser({ ...editingUser, mfaEnabled: e.target.value === 'true' })}
                     className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5"
                   >
-                    <option value="true">Enforced (Active)</option>
-                    <option value="false">Disabled</option>
+                    <option value="true">Unavailable — MFA is not implemented</option>
+                    <option value="false">Unavailable — MFA is not implemented</option>
                   </select>
                 </div>
               </div>

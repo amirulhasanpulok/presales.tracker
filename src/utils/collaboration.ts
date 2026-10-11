@@ -84,12 +84,12 @@ export function localDate(value?: string | null) {
 }
 
 export function reviewDeadline(o: Opportunity) {
-  return (
-    o.collaboration?.reviewDueAt ||
-    (o.collaboration && o.createdAt
-      ? new Date(Date.parse(o.createdAt) + 86400000).toISOString()
-      : undefined)
-  );
+  const stored = o.collaboration?.reviewDueAt;
+  if (stored && Number.isFinite(Date.parse(stored))) return stored;
+  const created = Date.parse(o.createdAt || "");
+  return o.collaboration && Number.isFinite(created)
+    ? new Date(created + 86400000).toISOString()
+    : undefined;
 }
 export function reviewOverdue(o: Opportunity, now = Date.now()) {
   return (

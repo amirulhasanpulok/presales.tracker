@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface EBProps {
   children: React.ReactNode;
@@ -30,12 +30,12 @@ export class ErrorBoundary extends React.Component<EBProps, EbState> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[ErrorBoundary]', error, info);
+    console.error("[ErrorBoundary]", error, info);
   }
 
-  private clear() {
-    this.state = { error: null };
-  }
+  private clear = () => {
+    this.setState({ error: null });
+  };
 
   render() {
     const error = this.state.error;
@@ -43,12 +43,14 @@ export class ErrorBoundary extends React.Component<EBProps, EbState> {
       return (
         <div className="h-screen flex items-center justify-center bg-gray-50 p-6">
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 max-w-sm w-full text-center">
-            <div className="text-2xl font-bold text-gray-900">Something went wrong</div>
+            <div className="text-2xl font-bold text-gray-900">
+              Something went wrong
+            </div>
             <p className="text-xs text-gray-500 mt-2">
               The page hit an unexpected error. Reloading usually fixes it.
             </p>
             <pre className="mt-3 text-left text-[11px] font-mono text-red-600 bg-red-50 border border-red-100 rounded p-2.5 overflow-auto max-h-28">
-              {(error.message || 'Unknown error').toString()}
+              {(error.message || "Unknown error").toString()}
             </pre>
             <div className="mt-4 flex gap-2 justify-center">
               <button

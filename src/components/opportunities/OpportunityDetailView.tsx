@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Opportunity, OpportunitySubView, OpportunityStage } from '../../types';
-import { 
-  ArrowLeft, 
-  Building2, 
-  Calendar, 
-  DollarSign, 
-  Layers, 
-  Share2, 
-  Download, 
-  ChevronRight, 
-  Clock, 
-  CheckCircle2, 
+import React, { useEffect, useState } from "react";
+import { Opportunity, OpportunitySubView, OpportunityStage } from "../../types";
+import {
+  ArrowLeft,
+  Building2,
+  Calendar,
+  DollarSign,
+  Layers,
+  Share2,
+  Download,
+  ChevronRight,
+  Clock,
+  CheckCircle2,
   Sparkles,
   Users,
   FileText,
@@ -18,31 +18,35 @@ import {
   Cpu,
   TrendingUp,
   ShieldCheck,
-  Gavel
-} from 'lucide-react';
-import { PriorityBadge, StageBadge, TechFitBadge } from '../common/Badge';
-import { STAGE_CONFIG } from '../../config/workflow';
-import { exportOpportunitySADDMarkdown, exportOpportunityJSON, exportBOQCSV } from '../../utils/exportUtils';
-import { formatCurrency } from '../../utils/currency';
-import { OpportunityOverview } from './subviews/OpportunityOverview';
-import { OpportunityTimeline } from './subviews/OpportunityTimeline';
-import { OpportunityTasks } from './subviews/OpportunityTasks';
-import { OpportunityStakeholders } from './subviews/OpportunityStakeholders';
-import { OpportunityDocuments } from './subviews/OpportunityDocuments';
-import { OpportunityBOQ } from './subviews/OpportunityBOQ';
-import { OpportunityTechnical } from './subviews/OpportunityTechnical';
-import { OpportunitySales } from './subviews/OpportunitySales';
-import { OpportunityImplementation } from './subviews/OpportunityImplementation';
-import { TenderAndOutcome } from './subviews/TenderAndOutcome';
-import { api } from '../../api';
-import { CollaborationWorkspace } from './CollaborationWorkspace';
-import { UserAccount } from '../../types';
+  Gavel,
+} from "lucide-react";
+import { PriorityBadge, StageBadge, TechFitBadge } from "../common/Badge";
+import { STAGE_CONFIG } from "../../config/workflow";
+import {
+  exportOpportunitySADDMarkdown,
+  exportOpportunityJSON,
+  exportBOQCSV,
+} from "../../utils/exportUtils";
+import { formatCurrency } from "../../utils/currency";
+import { OpportunityOverview } from "./subviews/OpportunityOverview";
+import { OpportunityTimeline } from "./subviews/OpportunityTimeline";
+import { OpportunityTasks } from "./subviews/OpportunityTasks";
+import { OpportunityStakeholders } from "./subviews/OpportunityStakeholders";
+import { OpportunityDocuments } from "./subviews/OpportunityDocuments";
+import { OpportunityBOQ } from "./subviews/OpportunityBOQ";
+import { OpportunityTechnical } from "./subviews/OpportunityTechnical";
+import { OpportunitySales } from "./subviews/OpportunitySales";
+import { OpportunityImplementation } from "./subviews/OpportunityImplementation";
+import { TenderAndOutcome } from "./subviews/TenderAndOutcome";
+import { api } from "../../api";
+import { CollaborationWorkspace } from "./CollaborationWorkspace";
+import { UserAccount } from "../../types";
 
 interface OpportunityDetailViewProps {
   currentUser?: UserAccount;
   teamDirectory?: UserAccount[];
-  can?: (key:string)=>boolean;
-  onWorkflowSaved?: (o:Opportunity)=>void;
+  can?: (key: string) => boolean;
+  onWorkflowSaved?: (o: Opportunity) => void;
   opportunity: Opportunity;
   initialSubView?: OpportunitySubView;
   onBack: () => void;
@@ -56,36 +60,65 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   can = () => false,
   onWorkflowSaved,
   opportunity,
-  initialSubView = 'overview',
+  initialSubView = "overview",
   onBack,
   onUpdateOpportunity,
   onUpdateStage,
 }) => {
-  const [activeSubView, setActiveSubView] = useState<OpportunitySubView>(currentUser ? 'workspace' : initialSubView);
-  const [currentStage, setCurrentStage] = useState<OpportunityStage>(opportunity.stage);
+  const [activeSubView, setActiveSubView] = useState<OpportunitySubView>(
+    currentUser ? "workspace" : initialSubView,
+  );
+  const [currentStage, setCurrentStage] = useState<OpportunityStage>(
+    opportunity.stage,
+  );
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => setCurrentStage(opportunity.stage), [opportunity.stage]);
 
+  const designOpen =
+    !opportunity.collaboration ||
+    [
+      "lead",
+      "review",
+      "needs_info",
+      "requirements",
+      "design",
+      "working",
+      "revision",
+    ].includes(opportunity.collaboration.status);
+  const canEditDesign = designOpen && (can("author_boq") || can("author_sadd"));
   const stagesList = Object.keys(STAGE_CONFIG) as OpportunityStage[];
 
   const handleStageChange = (newStage: OpportunityStage) => {
     if (onUpdateStage) onUpdateStage(opportunity.id, newStage);
-    else if (onUpdateOpportunity) onUpdateOpportunity({ ...opportunity, stage: newStage, daysInCurrentStage: 0 });
+    else if (onUpdateOpportunity)
+      onUpdateOpportunity({
+        ...opportunity,
+        stage: newStage,
+        daysInCurrentStage: 0,
+      });
   };
 
-  const subTabs: { id: OpportunitySubView; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'workspace', label: 'Team workflow', icon: Users },
-    { id: 'overview', label: 'Overview', icon: Layers },
-    { id: 'timeline', label: 'Activity history', icon: Clock },
-    { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
-    { id: 'stakeholders', label: 'Stakeholders', icon: Users },
-    { id: 'documents', label: 'Documents', icon: FileText },
-    { id: 'boq', label: 'BOQ', icon: Calculator },
-    { id: 'technical', label: 'Requirements & solution', icon: Cpu },
-    { id: 'sales', label: 'Sales & Forecast', icon: TrendingUp },
-    { id: 'implementation', label: 'Implementation Handover', icon: ShieldCheck },
-    { id: 'tender', label: 'Tender & Outcome', icon: Gavel }
+  const subTabs: {
+    id: OpportunitySubView;
+    label: string;
+    icon: React.FC<{ className?: string }>;
+  }[] = [
+    { id: "workspace", label: "Team workflow", icon: Users },
+    { id: "overview", label: "Overview", icon: Layers },
+    { id: "timeline", label: "Activity history", icon: Clock },
+    { id: "tasks", label: "Tasks", icon: CheckCircle2 },
+    { id: "stakeholders", label: "Stakeholders", icon: Users },
+    { id: "documents", label: "Documents", icon: FileText },
+    { id: "boq", label: "BOQ", icon: Calculator },
+    { id: "technical", label: "Requirements & solution", icon: Cpu },
+    { id: "sales", label: "Sales & Forecast", icon: TrendingUp },
+    {
+      id: "implementation",
+      label: "Implementation Handover",
+      icon: ShieldCheck,
+    },
+    { id: "tender", label: "Tender & Outcome", icon: Gavel },
   ];
 
   return (
@@ -103,9 +136,13 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
               Back to Tracker
             </button>
             <span className="text-gray-300">/</span>
-            <span className="text-xs font-mono font-bold text-gray-500">{opportunity.code}</span>
+            <span className="text-xs font-mono font-bold text-gray-500">
+              {opportunity.code}
+            </span>
             <span className="text-gray-300">/</span>
-            <span className="text-xs font-semibold text-gray-800">{opportunity.clientName}</span>
+            <span className="text-xs font-semibold text-gray-800">
+              {opportunity.clientName}
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -118,7 +155,9 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
               >
                 <Download className="w-3 h-3 text-blue-600" />
                 Export Deliverables
-                <ChevronRight className={`w-3 h-3 transition-transform ${showExportMenu ? 'rotate-90' : ''}`} />
+                <ChevronRight
+                  className={`w-3 h-3 transition-transform ${showExportMenu ? "rotate-90" : ""}`}
+                />
               </button>
 
               {showExportMenu && (
@@ -135,8 +174,12 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
                   >
                     <FileText className="w-3.5 h-3.5 text-blue-600" />
                     <div>
-                      <div className="font-semibold text-gray-900">SADD Document (.md)</div>
-                      <div className="text-[10px] text-gray-500">Architecture design & KPIs</div>
+                      <div className="font-semibold text-gray-900">
+                        SADD Document (.md)
+                      </div>
+                      <div className="text-[10px] text-gray-500">
+                        Architecture design & KPIs
+                      </div>
                     </div>
                   </button>
 
@@ -149,8 +192,12 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
                   >
                     <Calculator className="w-3.5 h-3.5 text-emerald-600" />
                     <div>
-                      <div className="font-semibold text-gray-900">BOQ Pricing Sheet (.csv)</div>
-                      <div className="text-[10px] text-gray-500">Line items, margins & discounts</div>
+                      <div className="font-semibold text-gray-900">
+                        BOQ Pricing Sheet (.csv)
+                      </div>
+                      <div className="text-[10px] text-gray-500">
+                        Line items, margins & discounts
+                      </div>
                     </div>
                   </button>
 
@@ -163,8 +210,12 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
                   >
                     <Download className="w-3.5 h-3.5 text-purple-600" />
                     <div>
-                      <div className="font-semibold text-gray-900">Full JSON Package (.json)</div>
-                      <div className="text-[10px] text-gray-500">Raw deal payload & stakeholders</div>
+                      <div className="font-semibold text-gray-900">
+                        Full JSON Package (.json)
+                      </div>
+                      <div className="text-[10px] text-gray-500">
+                        Raw deal payload & stakeholders
+                      </div>
                     </div>
                   </button>
                 </div>
@@ -177,47 +228,84 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2 border-t border-gray-100">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-gray-900 tracking-tight break-words">{opportunity.name}</h1>
-              <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-semibold border border-blue-200 ${opportunity.collaboration ? 'hidden' : ''}`}>
+              <h1 className="text-lg font-bold text-gray-900 tracking-tight break-words">
+                {opportunity.name}
+              </h1>
+              <span
+                className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-semibold border border-blue-200 ${opportunity.collaboration ? "hidden" : ""}`}
+              >
                 {opportunity.primaryTechStack}
               </span>
             </div>
-            <div className={`flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1 ${opportunity.collaboration ? 'hidden' : ''}`}>
+            <div
+              className={`flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1 ${opportunity.collaboration ? "hidden" : ""}`}
+            >
               <span className="flex items-center gap-1 text-gray-700 font-medium">
                 <Building2 className="w-3.5 h-3.5 text-gray-400" />
                 {opportunity.clientName} ({opportunity.clientIndustry})
               </span>
               <span>•</span>
-              <span>Region: <strong className="text-gray-700">{opportunity.region}</strong></span>
+              <span>
+                Region:{" "}
+                <strong className="text-gray-700">{opportunity.region}</strong>
+              </span>
               <span>•</span>
-              <span>Lead SA: <strong className="text-gray-700">{opportunity.leadSolutionArchitect}</strong></span>
+              <span>
+                Lead SA:{" "}
+                <strong className="text-gray-700">
+                  {opportunity.leadSolutionArchitect}
+                </strong>
+              </span>
               <span>•</span>
-              <span>Sales KAM: <strong className="text-gray-700">{opportunity.accountExecutive}</strong></span>
+              <span>
+                Sales KAM:{" "}
+                <strong className="text-gray-700">
+                  {opportunity.accountExecutive}
+                </strong>
+              </span>
             </div>
           </div>
 
-          <div className={`flex flex-wrap items-center gap-3 sm:gap-4 bg-gray-50 p-2.5 rounded border border-gray-200 flex-shrink-0 ${opportunity.collaboration ? 'hidden' : ''}`}>
+          <div
+            className={`flex flex-wrap items-center gap-3 sm:gap-4 bg-gray-50 p-2.5 rounded border border-gray-200 flex-shrink-0 ${opportunity.collaboration ? "hidden" : ""}`}
+          >
             <div className="text-right">
-              <div className="text-[10px] uppercase font-semibold text-gray-500">Contract Value (TCV)</div>
-               <div className="text-base font-bold font-mono text-gray-900">{formatCurrency(opportunity.contractValue)}</div>
+              <div className="text-[10px] uppercase font-semibold text-gray-500">
+                Contract Value (TCV)
+              </div>
+              <div className="text-base font-bold font-mono text-gray-900">
+                {formatCurrency(opportunity.contractValue)}
+              </div>
             </div>
             <div className="h-7 w-[1px] bg-gray-300" />
             <div className="text-right">
-              <div className="text-[10px] uppercase font-semibold text-gray-500">ARR Value</div>
-               <div className="text-base font-bold font-mono text-blue-700">{formatCurrency(opportunity.arr)}/yr</div>
+              <div className="text-[10px] uppercase font-semibold text-gray-500">
+                ARR Value
+              </div>
+              <div className="text-base font-bold font-mono text-blue-700">
+                {formatCurrency(opportunity.arr)}/yr
+              </div>
             </div>
             <div className="h-7 w-[1px] bg-gray-300" />
             <div className="text-right">
-              <div className="text-[10px] uppercase font-semibold text-gray-500">Win Rate</div>
-              <div className="text-base font-bold font-mono text-emerald-700">{opportunity.winProbability}%</div>
+              <div className="text-[10px] uppercase font-semibold text-gray-500">
+                Win Rate
+              </div>
+              <div className="text-base font-bold font-mono text-emerald-700">
+                {opportunity.winProbability}%
+              </div>
             </div>
           </div>
         </div>
 
         {/* Stage Progression Stepper */}
-        <div className={`pt-2 border-t border-gray-100 ${opportunity.collaboration ? 'hidden' : ''}`}>
+        <div
+          className={`pt-2 border-t border-gray-100 ${opportunity.collaboration ? "hidden" : ""}`}
+        >
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Presales Pipeline Gate:</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Presales Pipeline Gate:
+            </span>
             <span className="text-xs font-semibold text-blue-700">
               {STAGE_CONFIG[currentStage]?.label || currentStage}
             </span>
@@ -232,9 +320,11 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
                   key={st}
                   onClick={() => handleStageChange(st)}
                   className={`p-1.5 rounded text-left text-xs transition-all border ${
-                    isActive ? 'bg-blue-600 text-white border-blue-700 font-bold shadow-xs' :
-                    isPassed ? 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium' :
-                    'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                    isActive
+                      ? "bg-blue-600 text-white border-blue-700 font-bold shadow-xs"
+                      : isPassed
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-200 font-medium"
+                        : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
                   }`}
                 >
                   <div className="text-[10px] uppercase tracking-wider font-mono opacity-80">
@@ -252,111 +342,169 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
 
       {/* Sub-view Tabs Navigation Bar */}
       <div className="bg-white border border-gray-200 rounded p-1.5 flex items-center overflow-x-auto gap-1">
-        {subTabs.filter(tab => !opportunity.collaboration || ['workspace','overview','timeline','documents','boq','technical','tasks'].includes(tab.id)).map(tab => {
-          const Icon = tab.icon;
-          const isActive = activeSubView === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSubView(tab.id)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all ${
-                isActive 
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-transparent'
-              }`}
-            >
-              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
-              {tab.label}
-            </button>
-          );
-        })}
+        {subTabs
+          .filter(
+            (tab) =>
+              !opportunity.collaboration ||
+              [
+                "workspace",
+                "overview",
+                "timeline",
+                "documents",
+                "boq",
+                "technical",
+                "tasks",
+              ].includes(tab.id),
+          )
+          .map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeSubView === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveSubView(tab.id)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all ${
+                  isActive
+                    ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-transparent"
+                }`}
+              >
+                <Icon
+                  className={`w-3.5 h-3.5 ${isActive ? "text-blue-600" : "text-gray-400"}`}
+                />
+                {tab.label}
+              </button>
+            );
+          })}
       </div>
 
       {/* Active Sub-screen Render */}
       <div>
-        {activeSubView === 'workspace' && currentUser && <CollaborationWorkspace opportunity={opportunity} user={currentUser} people={teamDirectory} can={can} onSaved={saved => onWorkflowSaved?.(saved)} onNavigate={setActiveSubView} />}
-        {activeSubView === 'overview' && (
-          <OpportunityOverview 
-            opportunity={opportunity} 
-            onNavigateSubView={(sub) => setActiveSubView(sub)} 
+        {activeSubView === "workspace" && currentUser && (
+          <CollaborationWorkspace
+            opportunity={opportunity}
+            user={currentUser}
+            people={teamDirectory}
+            can={can}
+            onSaved={(saved) => onWorkflowSaved?.(saved)}
+            onNavigate={setActiveSubView}
           />
         )}
-        {activeSubView === 'timeline' && (
+        {activeSubView === "overview" && (
+          <OpportunityOverview
+            opportunity={opportunity}
+            onNavigateSubView={(sub) => setActiveSubView(sub)}
+          />
+        )}
+        {activeSubView === "timeline" && (
           <OpportunityTimeline
             opportunity={opportunity}
             onAddActivity={(activity) => {
-              api.addActivity(opportunity.id, activity)
-                .then(updated => onWorkflowSaved ? onWorkflowSaved(updated) : onUpdateOpportunity?.(updated))
-                .catch(() => window.alert('Could not save the activity. Please try again.'));
+              api
+                .addActivity(opportunity.id, activity)
+                .then((updated) =>
+                  onWorkflowSaved
+                    ? onWorkflowSaved(updated)
+                    : onUpdateOpportunity?.(updated),
+                )
+                .catch(() =>
+                  window.alert(
+                    "Could not save the activity. Please try again.",
+                  ),
+                );
             }}
           />
         )}
-        {activeSubView === 'tasks' && (
-          <OpportunityTasks 
-            opportunity={opportunity} 
+        {activeSubView === "tasks" && (
+          <OpportunityTasks
+            opportunity={opportunity}
             onUpdateTask={(taskId, isCompleted) => {
-              const updatedTasks = opportunity.actionItems.map(t => t.id === taskId ? { ...t, isCompleted } : t);
+              const updatedTasks = opportunity.actionItems.map((t) =>
+                t.id === taskId ? { ...t, isCompleted } : t,
+              );
               if (onUpdateOpportunity) {
-                onUpdateOpportunity({ ...opportunity, actionItems: updatedTasks });
+                onUpdateOpportunity({
+                  ...opportunity,
+                  actionItems: updatedTasks,
+                });
               }
             }}
             onAddTask={(task) => {
               if (onUpdateOpportunity) {
-                onUpdateOpportunity({ ...opportunity, actionItems: [task, ...opportunity.actionItems] });
+                onUpdateOpportunity({
+                  ...opportunity,
+                  actionItems: [task, ...opportunity.actionItems],
+                });
               }
             }}
           />
         )}
-        {activeSubView === 'stakeholders' && (
-          <OpportunityStakeholders 
-            opportunity={opportunity} 
+        {activeSubView === "stakeholders" && (
+          <OpportunityStakeholders
+            opportunity={opportunity}
             onAddStakeholder={(stk) => {
               if (onUpdateOpportunity) {
-                onUpdateOpportunity({ ...opportunity, stakeholders: [...opportunity.stakeholders, stk] });
+                onUpdateOpportunity({
+                  ...opportunity,
+                  stakeholders: [...opportunity.stakeholders, stk],
+                });
               }
             }}
           />
         )}
-        {activeSubView === 'documents' && (
-          <OpportunityDocuments 
+        {activeSubView === "documents" && (
+          <OpportunityDocuments
             opportunity={opportunity}
-            onUploadDoc={(doc) => {
-              api.uploadDocument(opportunity.id, doc)
-                .then(updated => onWorkflowSaved ? onWorkflowSaved(updated) : onUpdateOpportunity?.(updated))
-                .catch(() => window.alert('Could not upload the document. Please try again.'));
+            onUploadDoc={async (doc) => {
+              const updated = await api.uploadDocument(opportunity.id, doc);
+              if (onWorkflowSaved) onWorkflowSaved(updated);
+              else onUpdateOpportunity?.(updated);
             }}
           />
         )}
-        {activeSubView === 'boq' && (
-          <OpportunityBOQ 
-            opportunity={opportunity} 
-            onUpdateBOQ={(boq) => {
-              if (onUpdateOpportunity) {
-                onUpdateOpportunity({ ...opportunity, boq, contractValue: boq.totalContractValue });
-              }
-            }}
-          />
+        {activeSubView === "boq" && (
+          <div>
+            {!canEditDesign && (
+              <p className="mb-3 text-sm text-slate-500">
+                BOQ is read-only. Request a technical revision in Team workflow
+                to change a submitted solution.
+              </p>
+            )}
+            <fieldset disabled={!canEditDesign}>
+              <OpportunityBOQ
+                opportunity={opportunity}
+                onUpdateBOQ={(boq) => {
+                  if (onUpdateOpportunity) {
+                    onUpdateOpportunity({
+                      ...opportunity,
+                      boq,
+                      contractValue: boq.totalContractValue,
+                    });
+                  }
+                }}
+              />
+            </fieldset>
+          </div>
         )}
-        {activeSubView === 'technical' && (
-          <OpportunityTechnical 
-            opportunity={opportunity} 
+        {activeSubView === "technical" && (
+          <OpportunityTechnical
+            readOnly={!canEditDesign}
+            opportunity={opportunity}
             onUpdateOpportunity={onUpdateOpportunity}
           />
         )}
-        {activeSubView === 'sales' && (
-          <OpportunitySales 
-            opportunity={opportunity} 
-          />
+        {activeSubView === "sales" && (
+          <OpportunitySales opportunity={opportunity} />
         )}
-        {activeSubView === 'implementation' && (
-          <OpportunityImplementation 
-            opportunity={opportunity} 
+        {activeSubView === "implementation" && (
+          <OpportunityImplementation
+            opportunity={opportunity}
             onUpdateOpportunity={onUpdateOpportunity}
           />
         )}
-        {activeSubView === 'tender' && (
-          <TenderAndOutcome 
-            opportunity={opportunity} 
+        {activeSubView === "tender" && (
+          <TenderAndOutcome
+            opportunity={opportunity}
             onUpdateOpportunity={onUpdateOpportunity}
           />
         )}

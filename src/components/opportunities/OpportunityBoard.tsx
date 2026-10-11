@@ -146,6 +146,8 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
                         {/* Fast Move Trigger */}
                         <div className="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
                           <select
+                            disabled={!!opp.collaboration}
+                            title={opp.collaboration ? "Open the lead workspace to use the required approvals." : "Change stage"}
                             value={opp.stage}
                             onChange={(e) => onUpdateStage(opp.id, e.target.value as OpportunityStage)}
                             aria-label={`Advance stage for ${opp.code}`}

@@ -1,5 +1,6 @@
-import { Opportunity } from '../types';
-import { formatCurrency, getCurrencyCode } from './currency';
+import { csvRows } from "./csv";
+import { Opportunity } from "../types";
+import { formatCurrency, getCurrencyCode } from "./currency";
 
 /**
  * Trigger a browser download of a text blob
@@ -7,7 +8,7 @@ import { formatCurrency, getCurrencyCode } from './currency';
 function downloadBlob(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
@@ -34,23 +35,23 @@ export function exportOpportunitySADDMarkdown(opp: Opportunity) {
 ${opp.currentLegacyStack}
 
 ### 2. Proposed Target Architecture & Solution Overview
-- **Primary Tech Stack:** ${opp.primaryTechStack || 'N/A'}
-- **Secondary Technologies:** ${(opp.technologies || []).join(', ')}
-- **Technical Fit Assessment:** ${opp.technicalFitScore ?? 'N/A'}/100
+- **Primary Tech Stack:** ${opp.primaryTechStack || "N/A"}
+- **Secondary Technologies:** ${(opp.technologies || []).join(", ")}
+- **Technical Fit Assessment:** ${opp.technicalFitScore ?? "N/A"}/100
 - **Architecture Blueprint Description:**
-${opp.proposedArchitecture || 'Pending architecture blueprint.'}
+${opp.proposedArchitecture || "Pending architecture blueprint."}
 
 ### 3. Key Non-Functional & Architecture Requirements
-${(opp.keyTechnicalRequirements || []).map(req => `- ${req}`).join('\n')}
+${(opp.keyTechnicalRequirements || []).map((req) => `- ${req}`).join("\n")}
 
 ### 4. Compliance & Security Clearances
-- **Required Frameworks:** ${(opp.complianceRequirements || []).join(', ')}
-- **Security Audit Status:** ${opp.securityReviewStatus || 'Pending'}
+- **Required Frameworks:** ${(opp.complianceRequirements || []).join(", ")}
+- **Security Audit Status:** ${opp.securityReviewStatus || "Pending"}
 
 ### 5. Stakeholder & Decision Maker Matrix
 | Name | Role | Department | Sentiment | Influence | Buying Role |
 |------|------|------------|-----------|-----------|-------------|
-${(opp.stakeholders || []).map(s => `| ${s.name} | ${s.role} | ${s.department} | ${s.sentiment} | ${s.influence} | ${s.buyingRole} |`).join('\n')}
+${(opp.stakeholders || []).map((s) => `| ${s.name} | ${s.role} | ${s.department} | ${s.sentiment} | ${s.influence} | ${s.buyingRole} |`).join("\n")}
 
 ### 6. Bill of Quantities (BOQ) Summary (v${opp.boq?.version || 1})
 - **Total List Price (${getCurrencyCode()}):** ${formatCurrency(opp.boq?.subtotalListPrice || 0)}
@@ -58,30 +59,34 @@ ${(opp.stakeholders || []).map(s => `| ${s.name} | ${s.role} | ${s.department} |
 - **Direct Cost (${getCurrencyCode()}):** ${formatCurrency(opp.boq?.subtotalCost || 0)}
 - **Total Concessions/Discount (${getCurrencyCode()}):** ${formatCurrency(opp.boq?.totalDiscountAmount || 0)}
 - **Realized Margin:** ${opp.boq?.overallMarginPercent || 0}%
-- **Margin Governance Status:** ${(opp.boq?.approvalStatus || 'pending').toUpperCase()}
+- **Margin Governance Status:** ${(opp.boq?.approvalStatus || "pending").toUpperCase()}
 
 #### Detailed Line Items
 | SKU / Item Code | Description | Category | Qty & Unit | Unit List (${getCurrencyCode()}) | Disc % | Extended Price (${getCurrencyCode()}) | Margin |
 |-----------------|-------------|----------|------------|-----------|--------|----------------|--------|
-${(opp.boq?.items || []).map(item => `| ${item.itemCode} | ${item.description} | ${item.category} | ${item.quantity} ${item.unit} | ${formatCurrency(item.unitListPrice)} | ${item.discountPercent}% | ${formatCurrency(item.extendedPrice || 0)} | ${item.marginPercent}% |`).join('\n')}
+${(opp.boq?.items || []).map((item) => `| ${item.itemCode} | ${item.description} | ${item.category} | ${item.quantity} ${item.unit} | ${formatCurrency(item.unitListPrice)} | ${item.discountPercent}% | ${formatCurrency(item.extendedPrice || 0)} | ${item.marginPercent}% |`).join("\n")}
 
 ### 7. Proof of Concept (POC) Validation
-- **POC Status:** ${(opp.poc?.status || 'not_started').toUpperCase()}
+- **POC Status:** ${(opp.poc?.status || "not_started").toUpperCase()}
 - **Allocated Sandbox Budget (${getCurrencyCode()}):** ${formatCurrency(opp.poc?.allocatedBudget || 0)}
-${(opp.poc?.successCriteria || []).length > 0 ? `\n#### Success Criteria & KPI Gates:\n${opp.poc.successCriteria.map(sc => `- [${sc.verified ? 'X' : ' '}] **${sc.category}**: ${sc.description} (Target: ${sc.targetMetric})`).join('\n')}` : ''}
-${opp.poc?.blockers && opp.poc.blockers.length > 0 ? `\n#### Technical Blockers:\n${opp.poc.blockers.map(b => `- [${b.resolved ? 'RESOLVED' : 'ACTIVE'}] **${b.severity.toUpperCase()}**: ${b.description}`).join('\n')}` : ''}
+${(opp.poc?.successCriteria || []).length > 0 ? `\n#### Success Criteria & KPI Gates:\n${opp.poc.successCriteria.map((sc) => `- [${sc.verified ? "X" : " "}] **${sc.category}**: ${sc.description} (Target: ${sc.targetMetric})`).join("\n")}` : ""}
+${opp.poc?.blockers && opp.poc.blockers.length > 0 ? `\n#### Technical Blockers:\n${opp.poc.blockers.map((b) => `- [${b.resolved ? "RESOLVED" : "ACTIVE"}] **${b.severity.toUpperCase()}**: ${b.description}`).join("\n")}` : ""}
 
 ### 8. Implementation Handover Gate
-- **Handover Completed:** ${opp.handover?.isHandedOver ? 'YES' : 'NO'}
-- **Technical Runbook Ready:** ${opp.handover?.technicalRunbookReady ? 'YES' : 'NO'}
-- **Credentials Securely Transferred:** ${opp.handover?.credentialsSecurelyTransferred ? 'YES' : 'NO'}
-- **Customer Kickoff Scheduled:** ${opp.handover?.customerTechKickoffScheduled ? 'YES' : 'NO'}
+- **Handover Completed:** ${opp.handover?.isHandedOver ? "YES" : "NO"}
+- **Technical Runbook Ready:** ${opp.handover?.technicalRunbookReady ? "YES" : "NO"}
+- **Credentials Securely Transferred:** ${opp.handover?.credentialsSecurelyTransferred ? "YES" : "NO"}
+- **Customer Kickoff Scheduled:** ${opp.handover?.customerTechKickoffScheduled ? "YES" : "NO"}
 
 ---
 *Generated by Presales Engineering Tracker Enterprise Suite*
 `;
 
-  downloadBlob(md, `${opp.code}_SADD_Technical_Architecture.md`, 'text/markdown;charset=utf-8;');
+  downloadBlob(
+    md,
+    `${opp.code}_SADD_Technical_Architecture.md`,
+    "text/markdown;charset=utf-8;",
+  );
 }
 
 /**
@@ -89,7 +94,11 @@ ${opp.poc?.blockers && opp.poc.blockers.length > 0 ? `\n#### Technical Blockers:
  */
 export function exportOpportunityJSON(opp: Opportunity) {
   const jsonStr = JSON.stringify(opp, null, 2);
-  downloadBlob(jsonStr, `${opp.code}_Opportunity_Package.json`, 'application/json;charset=utf-8;');
+  downloadBlob(
+    jsonStr,
+    `${opp.code}_Opportunity_Package.json`,
+    "application/json;charset=utf-8;",
+  );
 }
 
 /**
@@ -97,22 +106,37 @@ export function exportOpportunityJSON(opp: Opportunity) {
  */
 export function exportBOQCSV(opp: Opportunity) {
   const currency = getCurrencyCode();
-  const headers = ['SKU Code', 'Description', 'Category', 'Quantity', 'Unit', `Unit Cost (${currency})`, `Unit List Price (${currency})`, 'Discount (%)', `Extended Price (${currency})`, 'Margin (%)'];
-  const rows = (opp.boq?.items || []).map(item => [
-    `"${item.itemCode}"`,
-    `"${item.description.replace(/"/g, '""')}"`,
-    `"${item.category}"`,
+  const headers = [
+    "SKU Code",
+    "Description",
+    "Category",
+    "Quantity",
+    "Unit",
+    `Unit Cost (${currency})`,
+    `Unit List Price (${currency})`,
+    "Discount (%)",
+    `Extended Price (${currency})`,
+    "Margin (%)",
+  ];
+  const rows = (opp.boq?.items || []).map((item) => [
+    item.itemCode,
+    item.description,
+    item.category,
     item.quantity,
-    `"${item.unit}"`,
+    item.unit,
     item.unitCost,
     item.unitListPrice,
     item.discountPercent,
     item.extendedPrice,
-    item.marginPercent
+    item.marginPercent,
   ]);
 
-  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  downloadBlob(csv, `${opp.code}_BOQ_Pricing_v${opp.boq?.version || 1}.csv`, 'text/csv;charset=utf-8;');
+  const csv = csvRows([headers, ...rows]);
+  downloadBlob(
+    csv,
+    `${opp.code}_BOQ_Pricing_v${opp.boq?.version || 1}.csv`,
+    "text/csv;charset=utf-8;",
+  );
 }
 
 /**
@@ -120,25 +144,45 @@ export function exportBOQCSV(opp: Opportunity) {
  */
 export function exportPipelineCSV(opportunities: Opportunity[]) {
   const currency = getCurrencyCode();
-  const headers = ['Code', 'Opportunity Name', 'Client', 'Industry', 'Region', 'Stage', 'Priority', `TCV (${currency})`, `ARR (${currency})`, 'Win Probability (%)', 'Tech Stack', 'Lead Architect', 'Sales KAM', 'POC Status', 'BOQ Margin (%)'];
-  const rows = opportunities.map(o => [
-    `"${o.code}"`,
-    `"${o.name.replace(/"/g, '""')}"`,
-    `"${o.clientName}"`,
-    `"${o.clientIndustry}"`,
-    `"${o.region}"`,
-    `"${o.stage}"`,
-    `"${o.priority}"`,
+  const headers = [
+    "Code",
+    "Opportunity Name",
+    "Client",
+    "Industry",
+    "Region",
+    "Stage",
+    "Priority",
+    `TCV (${currency})`,
+    `ARR (${currency})`,
+    "Win Probability (%)",
+    "Tech Stack",
+    "Lead Architect",
+    "Sales KAM",
+    "POC Status",
+    "BOQ Margin (%)",
+  ];
+  const rows = opportunities.map((o) => [
+    o.code,
+    o.name,
+    o.clientName,
+    o.clientIndustry,
+    o.region,
+    o.stage,
+    o.priority,
     o.contractValue,
     o.arr,
     o.winProbability,
-    `"${o.primaryTechStack}"`,
-    `"${o.leadSolutionArchitect}"`,
-    `"${o.accountExecutive}"`,
-    `"${o.poc?.status || 'not_started'}"`,
-    o.boq?.overallMarginPercent || 0
+    o.primaryTechStack,
+    o.leadSolutionArchitect,
+    o.accountExecutive,
+    o.poc?.status || "not_started",
+    o.boq?.overallMarginPercent || 0,
   ]);
 
-  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  downloadBlob(csv, `Presales_Pipeline_Export_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;');
+  const csv = csvRows([headers, ...rows]);
+  downloadBlob(
+    csv,
+    `Presales_Pipeline_Export_${new Date().toISOString().slice(0, 10)}.csv`,
+    "text/csv;charset=utf-8;",
+  );
 }

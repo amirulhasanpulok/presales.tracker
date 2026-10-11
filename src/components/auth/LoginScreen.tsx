@@ -1,14 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Lock, Mail, LogIn, AlertCircle, Loader2 } from 'lucide-react';
-import { api, ApiError, PrincipalUser, PrincipalRole } from '../../api';
+import React, { useState, useRef, useEffect } from "react";
+import { Lock, Mail, LogIn, AlertCircle, Loader2 } from "lucide-react";
+import { api, ApiError, PrincipalUser, PrincipalRole } from "../../api";
 
 interface LoginScreenProps {
   onLogin: (user: PrincipalUser, role: PrincipalRole) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [retryAfterSec, setRetryAfterSec] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -28,17 +28,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       onLogin(user, role);
     } catch (err) {
       if (err instanceof ApiError) {
-        if (err.code === 'too_many_attempts' && err.retryAfterSec) {
+        if (err.code === "too_many_attempts" && err.retryAfterSec) {
           setRetryAfterSec(err.retryAfterSec);
-        } else if (err.code === 'account_disabled') {
-          setError('This account has been disabled. Contact your administrator.');
+        } else if (err.code === "account_disabled") {
+          setError(
+            "This account has been disabled. Contact your administrator.",
+          );
         } else if (err.status === 401) {
-          setError('Incorrect email or password.');
+          setError("Incorrect email or password.");
         } else {
-          setError(err.message || 'Unable to sign in. Please try again.');
+          setError(err.message || "Unable to sign in. Please try again.");
         }
       } else {
-        setError('Unable to reach the server. Please try again.');
+        setError("Unable to reach the server. Please try again.");
       }
     } finally {
       setSubmitting(false);
@@ -46,7 +48,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-dvh overflow-y-auto bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
           <div className="flex items-center gap-2 mb-1">
@@ -54,8 +56,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               PT
             </div>
             <div>
-              <h1 className="text-base font-bold text-gray-900 tracking-tight leading-none">Presales Tracker</h1>
-              <p className="text-[11px] text-gray-500 mt-0.5">Enterprise opportunity intelligence</p>
+              <h1 className="text-base font-bold text-gray-900 tracking-tight leading-none">
+                Presales Tracker
+              </h1>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                Sales · Presales · SCM · Postsales
+              </p>
             </div>
           </div>
 
@@ -65,11 +71,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Work Email</label>
+              <label
+                htmlFor="login-email"
+                className="block text-[11px] font-semibold text-gray-700 mb-1"
+              >
+                Work Email
+              </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
                   ref={emailRef}
+                  id="login-email"
                   type="email"
                   required
                   autoComplete="username"
@@ -83,10 +95,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Password</label>
+              <label
+                htmlFor="login-password"
+                className="block text-[11px] font-semibold text-gray-700 mb-1"
+              >
+                Password
+              </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
+                  id="login-password"
                   type="password"
                   required
                   autoComplete="current-password"

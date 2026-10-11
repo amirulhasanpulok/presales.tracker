@@ -39,7 +39,7 @@ export async function loadPrincipal(userId) {
             r.role_name, r.description, r.permissions, r.is_system_role, r.users_count
        FROM users u
        LEFT JOIN roles r ON r.id = u.role_id
-      WHERE u.id = $1 AND u.status != 'Inactive'`,
+      WHERE u.id = $1 AND lower(u.status) = 'active'`,
     [userId],
   );
   const row = rows[0];

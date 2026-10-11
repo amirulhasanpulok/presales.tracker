@@ -79,6 +79,64 @@ try {
   server = app.listen(process.env.WORKFLOW_PREVIEW ? 4100 : 0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   if (process.env.WORKFLOW_PREVIEW) {
+    const { initialCollaboration } = await import("./collaboration.js");
+    for (let i = 0; i < 33; i++) {
+      const created = new Date(
+        Date.now() - (i === 0 ? 27 : 2) * 3600000,
+      ).toISOString();
+      const w = initialCollaboration(new Date(created));
+      w.reviewOwner = "lead";
+      if (i === 1) {
+        w.status = "design";
+        w.reviewDecisionAt = created;
+        w.awaitingSLA = true;
+        w.cycle = 2;
+      }
+      if (i === 2) {
+        w.status = "solution_review";
+        w.reviewDecisionAt = created;
+        w.cycle = 1;
+        w.dueAt = new Date(Date.now() + 86400000).toISOString();
+      }
+      const fixture = {
+        id: "preview-" + i,
+        code: "SI-" + String(i + 1).padStart(3, "0"),
+        name:
+          [
+            "Campus network upgrade",
+            "Firewall scope revision",
+            "Data center design review",
+          ][i] || "Sample project " + (i + 1),
+        clientName: "Demo customer " + (i + 1),
+        stage:
+          i === 1 ? "solution_design" : i === 2 ? "solution_review" : "lead",
+        collaboration: w,
+        accountExecutive: "sales",
+        leadSolutionArchitect: i === 0 ? "Unassigned" : "engineer",
+        postsalesOwner: "Unassigned",
+        scmOwner: "Unassigned",
+        contractValue: 250000,
+        arr: 0,
+        winProbability: 25,
+        activities: [],
+        documents: [],
+        actionItems: [],
+        stakeholders: [],
+        technologies: [],
+        scopes: [],
+        boq: { items: [], approvalStatus: "draft" },
+        poc: { status: "not_started", successCriteria: [], blockers: [] },
+        handover: { isHandedOver: false },
+        requirementDetails:
+          "Confirm the customer requirements and site survey.",
+        createdAt: created,
+        updatedAt: created,
+      };
+      await query(
+        "INSERT INTO opportunities (id,doc,owner_id) VALUES ($1,$2,$3)",
+        [fixture.id, JSON.stringify(fixture), "sales"],
+      );
+    }
     console.log(
       "Isolated workflow preview listening on 127.0.0.1:4100. Login as sales@example.invalid or lead@example.invalid; password Preview-Workflow-123.",
     );
@@ -193,6 +251,16 @@ try {
         { action: name, ...input, expectedUpdatedAt: doc.updatedAt },
         status,
       );
+    await query("UPDATE users SET status='inactive' WHERE id='other-engineer'");
+    await request("other-engineer", "/bootstrap", "GET", undefined, 401);
+    await query("UPDATE users SET status='Active' WHERE id='other-engineer'");
+    await request(
+      "sales",
+      path + "/documents",
+      "POST",
+      { id: "support-test", title: "Duplicate attachment" },
+      409,
+    );
     const leadBootstrap = await request("lead", "/bootstrap");
     assert.equal(leadBootstrap.opportunities.length, 1);
     assert.equal(leadBootstrap.teamDirectory.length, 11);
@@ -264,6 +332,36 @@ try {
       { stage: "closed_won" },
       409,
     );
+    await request(
+      "sales",
+      path,
+      "PUT",
+      { ...doc, proposedArchitecture: "Unauthorized Sales design" },
+      403,
+    );
+    await request("admin", "/settings/policies", "PUT", { minMarginFloor: 50 });
+    await request(
+      "engineer",
+      path,
+      "PUT",
+      { ...doc, boq: { ...doc.boq, overallMarginPercent: 40 } },
+      403,
+    );
+    await request("admin", "/settings/policies", "PUT", { minMarginFloor: 35 });
+    await request(
+      "admin",
+      "/users/engineer",
+      "PUT",
+      { roleId: "missing-role" },
+      422,
+    );
+    await request(
+      "admin",
+      "/users/engineer",
+      "PUT",
+      { name: "Renamed engineer" },
+      422,
+    );
     const stale = doc.updatedAt;
     doc = await action(
       "request_extension",
@@ -327,6 +425,13 @@ try {
       "handover_sales",
       { note: "Reviewed scope handed over" },
       "engineer",
+    );
+    await request(
+      "engineer",
+      path,
+      "PUT",
+      { ...doc, proposedArchitecture: "Mutated after solution approval" },
+      403,
     );
     const costing = {
       equipment: 100,

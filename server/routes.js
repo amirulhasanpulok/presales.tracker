@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -79,7 +80,7 @@ function stripDocumentContent(doc, req) {
   if (!Array.isArray(doc?.documents)) return doc;
   return {
     ...doc,
-    documents: doc.documents.map(({ fileData, ...metadata }) => metadata),
+    documents: doc.documents.filter(item=>item && typeof item==='object').map(({ fileData, ...metadata }) => metadata),
   };
 }
 
@@ -103,12 +104,15 @@ function changed(previous, next, field) {
 
 function validateOpportunityChanges(req, previous, next) {
   if (changed(previous, next, 'stage') && !can(req.role, req.user, 'promote_stage')) return 'promote_stage';
+  const technicalFields = [...(previous.collaboration && !['lead','review','needs_info'].includes(previous.collaboration.status)?['requirementDetails','clientPainPoint','expectedSolution']:[]),'proposedArchitecture','currentLegacyStack','keyTechnicalRequirements','technologies','primaryTechStack','complianceRequirements','securityReviewStatus','technicalFitScore'];
+  if (technicalFields.some(field => changed(previous,next,field)) && !can(req.role,req.user,'author_sadd') && !can(req.role,req.user,'author_boq')) return 'author_sadd';
+  if (previous.collaboration && (changed(previous,next,'boq') || technicalFields.some(field=>changed(previous,next,field))) && !['lead','review','needs_info','requirements','design','working','revision'].includes(previous.collaboration.status)) return 'technical_revision_required';
   if (changed(previous, next, 'boq')) {
     const invalidItem = (next.boq?.items || []).some(item => !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0 || !Number.isFinite(Number(item.unitCost)) || Number(item.unitCost) < 0 || !Number.isFinite(Number(item.unitListPrice)) || Number(item.unitListPrice) < 0 || !Number.isFinite(Number(item.discountPercent)) || Number(item.discountPercent) < 0 || Number(item.discountPercent) > 100);
     if (invalidItem) return 'valid_boq_values';
     if (!can(req.role, req.user, 'author_boq')) return 'author_boq';
     if (previous.boq?.approvalStatus !== next.boq?.approvalStatus && !can(req.role, req.user, 'approve_boq_discount')) return 'approve_boq_discount';
-    if (previous.boq?.overallMarginPercent !== next.boq?.overallMarginPercent && Number(next.boq?.overallMarginPercent) < 35 && !can(req.role, req.user, 'override_margin')) return 'override_margin';
+    if (previous.boq?.overallMarginPercent !== next.boq?.overallMarginPercent && Number(next.boq?.overallMarginPercent) < (req.minMarginFloor ?? 35) && !can(req.role, req.user, 'override_margin')) return 'override_margin';
   }
   if (changed(previous, next, 'poc') && !can(req.role, req.user, 'run_poc_benchmarks')) return 'run_poc_benchmarks';
   if (changed(previous, next, 'handover')) {
@@ -433,8 +437,10 @@ router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async
       if (changed(previousDoc, doc, field)) return res.status(403).json({ error: 'workflow_action_required', hint: 'Use the collaboration workspace for assignment and lifecycle changes.' });
     }
   }
+  const policyRow = await query("SELECT setting_value FROM system_settings WHERE setting_key='policy_config'");
+  req.minMarginFloor = parsePolicy(policyRow.rows[0]?.setting_value).minMarginFloor;
   const deniedPermission = validateOpportunityChanges(req, previousDoc, doc);
-  if (deniedPermission) return res.status(403).json({ error: 'field_permission_required', required: deniedPermission });
+  if (deniedPermission) return res.status(403).json({ error: 'field_permission_required', required: deniedPermission, hint: deniedPermission==='technical_revision_required'?'This solution is submitted. Request a technical revision from Team workflow before editing.':'Your role cannot change these fields.' });
   if (doc.stage !== undefined && doc.stage !== previousDoc.stage) {
     const missing = stagePrerequisites(previousDoc, String(doc.stage), workflow);
     if (missing.length) return res.status(422).json({ error: 'stage_prerequisites_incomplete', stage: doc.stage, missing });
@@ -599,7 +605,8 @@ router.post('/opportunities/:id/outcome', authenticate, requirePermission('promo
   const outcome = { ...requested, outcome: requested.outcome };
   const entry = makeActivity({ req, type: 'Deal Outcome', title: `Opportunity marked ${requested.outcome}`, summary: `Deal outcome changed to ${requested.outcome} by ${req.user?.name || 'Unknown'}.` });
   const out = { ...previous, id: req.params.id, stage, outcome, activities: prependActivities(previous, [entry]), updatedAt: new Date().toISOString() };
-  await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1', [req.params.id, JSON.stringify(out)]);
+  const saved = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 AND doc = $3::jsonb RETURNING id', [req.params.id, JSON.stringify(out), JSON.stringify(previous)]);
+  if (!saved.rowCount) return res.status(409).json({error:'stale_update',hint:'Another team member saved changes. Refresh and retry.'});
   await audit({ req, action: `opportunity.outcome.${requested.outcome}`, targetType: 'opportunity', targetId: req.params.id, meta: { previous: { stage: previous.stage, outcome: previous.outcome || null }, next: { stage, outcome } } });
   res.status(200).json(stripDocumentContent(out, req));
 });
@@ -614,6 +621,7 @@ router.post('/opportunities/:id/documents', authenticate, requireAnyEditPermissi
   if (!current.rowCount) return res.status(404).json({ error: 'not_found' });
   const previous = current.rows[0].doc || {};
   if (!canAccessOpportunity(req, previous)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
+  if (document.id && (previous.documents || []).some(item => item.id === String(document.id))) return res.status(409).json({error:'duplicate_document',hint:'Upload as a new document version with a unique ID.'});
   const savedDocument = {
     ...document,
     id: String(document.id || `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`),
@@ -662,7 +670,8 @@ router.post('/opportunities/:id/handover/signoff', authenticate, requirePermissi
    if (mergedMissing.length) return res.status(422).json({ error: 'handover_gates_incomplete', missing: mergedMissing });
   const activity = makeActivity({ req, type: 'Handover Sign-off', title: 'Sales handover signed off', summary: `Handover signed off by ${updatedHandover.handedOverBy}.` });
   const out = { ...previous, handover: updatedHandover, activities: prependActivities(previous, [activity]), updatedAt: new Date().toISOString() };
-  await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1', [req.params.id, JSON.stringify(out)]);
+  const saved = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 AND doc = $3::jsonb RETURNING id', [req.params.id, JSON.stringify(out), JSON.stringify(previous)]);
+  if (!saved.rowCount) return res.status(409).json({error:'stale_update',hint:'Another team member saved changes. Refresh and retry.'});
   await audit({ req, action: 'opportunity.handover.signoff', targetType: 'opportunity', targetId: req.params.id, meta: { previous: handover, next: updatedHandover } });
   res.json(stripDocumentContent(out, req));
 });
@@ -688,10 +697,12 @@ router.post('/opportunities/:id/stage', authenticate, requirePermission('promote
   const missing = stagePrerequisites(cur.rows[0].doc, String(stage), workflow);
   if (missing.length) return res.status(422).json({ error: 'stage_prerequisites_incomplete', stage, missing });
   doc.activities = prependActivities(doc, [entry]);
-  const result = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 RETURNING doc', [
+  const result = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 AND doc = $3::jsonb RETURNING doc', [
     req.params.id,
     JSON.stringify(doc),
+    JSON.stringify(cur.rows[0].doc),
   ]);
+  if (!result.rowCount) return res.status(409).json({error:'stale_update',hint:'Another team member saved changes. Refresh and retry.'});
   await audit({ req, action: 'opportunity.stage', targetType: 'opportunity', targetId: req.params.id, meta: { stage } });
   res.json(stripDocumentContent(result.rows[0].doc, req));
 });
@@ -823,10 +834,12 @@ router.post('/users', authenticate, requirePermission('sys.users'), async (req, 
   if (typeof password !== 'string' || validatePassword(password).length) {
     return res.status(400).json({ error: 'weak_password', hints: validatePassword(String(password || '')) });
   }
+  if (!(await query('SELECT 1 FROM roles WHERE id=$1',[roleId])).rowCount) return res.status(422).json({error:'invalid_role',hint:'Choose an existing role.'});
+  if ((await query('SELECT 1 FROM users WHERE lower(name)=lower($1)',[String(name).trim()])).rowCount) return res.status(409).json({error:'name_taken',hint:'Use a unique display name so lead assignments stay unambiguous.'});
   const finalPassword = password;
   const exists = await query('SELECT 1 FROM users WHERE lower(email) = lower($1)', [String(email)]);
   if (exists.rows.length) return res.status(409).json({ error: 'email_taken' });
-  const id = `usr-${Date.now()}`;
+  const id = `usr-${randomUUID()}`;
   await query(
     'INSERT INTO users (id, name, email, password_hash, role, role_id, department, sales_team, phone, manager, skills, certifications, region, status, must_change_password) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,\'Active\',true)',
     [id, String(name), String(email), await hashPassword(finalPassword), String(role), String(roleId), department || null, salesTeam || null, phone || null, manager || null, JSON.stringify(skills || []), JSON.stringify(certifications || []), region || null],
@@ -837,6 +850,17 @@ router.post('/users', authenticate, requirePermission('sys.users'), async (req, 
 
 router.put('/users/:id', authenticate, requirePermission('sys.users'), async (req, res) => {
   const { name, email, role, roleId, department, salesTeam, phone, manager, skills, certifications, region, status, mfaEnabled, password } = req.body || {};
+  const currentUser = (await query('SELECT id,name,email FROM users WHERE id=$1',[req.params.id])).rows[0];
+  if(!currentUser)return res.status(404).json({error:'not_found'});
+  if(roleId!==undefined && !(await query('SELECT 1 FROM roles WHERE id=$1',[roleId])).rowCount)return res.status(422).json({error:'invalid_role',hint:'Choose an existing role.'});
+  if(status!==undefined && !['active','inactive'].includes(String(status).toLowerCase()))return res.status(422).json({error:'invalid_status'});
+  if(email!==undefined && (await query('SELECT 1 FROM users WHERE lower(email)=lower($1) AND id<>$2',[String(email).trim(),req.params.id])).rowCount)return res.status(409).json({error:'email_taken'});
+  if(name!==undefined && String(name)!==currentUser.name){
+    if(!String(name).trim())return res.status(422).json({error:'name_required'});
+    const assigned=await query("SELECT 1 FROM opportunities WHERE doc->>'accountExecutive'=$1 OR doc->>'leadSolutionArchitect'=$1 OR doc->>'presalesEngineerSecondary'=$1 OR doc->>'postsalesOwner'=$1 OR doc->>'scmOwner'=$1 OR doc->'supportingPresalesEngineers' ? $1 LIMIT 1",[currentUser.name]);
+    if(assigned.rowCount)return res.status(422).json({error:'assigned_name_locked',hint:'This display name owns lead assignments. Keep it unchanged until those assignments are transferred.'});
+    if((await query('SELECT 1 FROM users WHERE lower(name)=lower($1) AND id<>$2',[String(name).trim(),req.params.id])).rowCount)return res.status(409).json({error:'name_taken'});
+  }
   const fields = [];
   const values = [];
   if (name !== undefined) { values.push(String(name)); fields.push(`name = $${values.length}`); }
@@ -878,7 +902,7 @@ router.post('/roles', authenticate, requirePermission('sys.rbac'), async (req, r
   if (!roleName || !Array.isArray(permissions)) {
     return res.status(400).json({ error: 'invalid_role' });
   }
-  const id = `role-${Date.now()}`;
+  const id = `role-${randomUUID()}`;
   await query(
     `INSERT INTO roles (id, role_name, name, description, users_count, is_system_role, matching_roles, permissions)
      VALUES ($1, $2, $3, $4, 0, false, '[]'::jsonb, $5::jsonb)`,

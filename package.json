@@ -12,7 +12,8 @@
     "lint": "tsc --noEmit",
     "validate:rbac": "tsx scripts/validate_rbac.ts",
     "test:workflow": "node --test server/collaboration.test.js server/lead-intake.test.js",
-    "test:workflow:api": "node server/collaboration.integration.js"
+    "test:workflow:api": "node server/collaboration.integration.js",
+    "test:exports": "tsx scripts/validate_exports.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
@@ -30,5 +31,8 @@
     "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.7"
+  },
+  "overrides": {
+    "postcss-selector-parser": "^7.1.6"
   }
 }

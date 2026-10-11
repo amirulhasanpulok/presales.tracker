@@ -117,20 +117,22 @@ export const SystemSettingsView: React.FC<Props> = ({ policies, onSaved }) => {
             <label className="flex items-start gap-2.5 cursor-pointer">
               <input
                 type="checkbox"
-                checked={requireMFA}
+                disabled
+                checked={false}
                 onChange={(e) => setRequireMFA(e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-0.5"
               />
               <div>
                 <span className="font-semibold text-gray-900">Enforce Multi-Factor Authentication (MFA/FIDO2) for all Presales Architects</span>
-                <p className="text-gray-500 text-[11px] mt-0.5">Requires hardware security key or TOTP token upon every enterprise login.</p>
+                <p className="text-gray-500 text-[11px] mt-0.5">Not available: MFA enforcement is not implemented. Saved preferences do not protect sign-in.</p>
               </div>
             </label>
 
             <div>
-              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Idle Session Invalidation (Minutes)</label>
+              <label className="block text-[11px] font-semibold text-gray-700 mb-1">Idle timeout preference (not enforced; token expiry applies)</label>
               <input
                 type="number"
+                disabled
                 value={sessionTimeoutMinutes}
                 onChange={(e) => setSessionTimeoutMinutes(Number(e.target.value))}
                 className="enterprise-input w-48 text-xs font-mono"
@@ -150,14 +152,15 @@ export const SystemSettingsView: React.FC<Props> = ({ policies, onSaved }) => {
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={enableSlackWebhooks}
+                disabled
+                checked={false}
                 onChange={(e) => setEnableSlackWebhooks(e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="font-semibold text-gray-900">Broadcast P0 Deal Escalations & Won Handover notices to Slack #presales-war-room</span>
+              <span className="font-semibold text-gray-900">Slack notifications — not connected / unavailable</span>
             </label>
 
-            {enableSlackWebhooks && (
+            {false && (
               <div>
                 <label className="block text-[11px] font-semibold text-gray-700 mb-1">Incoming Webhook URL</label>
                 <input

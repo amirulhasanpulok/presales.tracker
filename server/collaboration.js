@@ -74,7 +74,7 @@ export function transition(doc, input, actor, now = new Date()) {
   w.version = 3;
   w.reviewHistory ||= [];
   if (!w.reviewDueAt && ["lead", "review"].includes(w.status)) {
-    w.reviewStartedAt = doc.createdAt || now.toISOString();
+    w.reviewStartedAt = Number.isFinite(Date.parse(doc.createdAt)) ? doc.createdAt : now.toISOString();
     w.reviewDueAt = new Date(Date.parse(w.reviewStartedAt) + DAY).toISOString();
   }
   w.stageNotes ||= {};
@@ -256,8 +256,8 @@ export function transition(doc, input, actor, now = new Date()) {
       e.decisionNote = note;
       title =
         action === "approve_extension"
-          ? "Sales approved SLA extension"
-          : "Sales rejected SLA extension";
+          ? "Sales Head approved SLA extension"
+          : "Sales Head rejected SLA extension";
       break;
     }
     case "submit_solution": {

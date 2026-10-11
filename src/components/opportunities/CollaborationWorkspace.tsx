@@ -1062,8 +1062,12 @@ export function CollaborationWorkspace({
             <details key={s.id} className="border rounded-lg p-3">
               <summary className="cursor-pointer text-sm font-medium">
                 Version {s.version} ·{" "}
-                {s.onTime ? "Within SLA at handover" : "Late at handover"} ·{" "}
-                {s.sentAt ? "Sent to client" : "Awaiting Sales"}
+                {s.handedOverAt
+                  ? s.onTime
+                    ? "Handed over within SLA"
+                    : "Handed over late"
+                  : "Awaiting Sales handover"}{" "}
+                · {s.sentAt ? "Sent to client" : "Awaiting Sales"}
               </summary>
               <div className="space-y-2 text-sm pt-3">
                 <p className="whitespace-pre-wrap">{s.summary}</p>
