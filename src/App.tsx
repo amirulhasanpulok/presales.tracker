@@ -636,10 +636,11 @@ export default function App() {
               {activeTab === 'mobile_capture' && <div className="pb-24"><MobileWorkCapture opportunities={opportunities} onUpdateOpportunity={handleUpdateOpportunity} onOpenNewOpportunity={handleCreateOpportunityRequest} /></div>}
 
               {activeTab === 'handover_queue' && (
-                <HandoverQueue
+                <WorkQueue
                   opportunities={opportunities}
                   onSelectOpportunity={(opp) => setSelectedOpportunity(opp)}
-                  onUpdateOpportunity={handleUpdateOpportunity}
+                  onCreate={handleCreateOpportunityRequest}
+                  initialFilter="delivery"
                 />
               )}
 

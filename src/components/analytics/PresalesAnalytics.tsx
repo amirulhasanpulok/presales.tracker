@@ -23,9 +23,9 @@ export const PresalesAnalytics: React.FC<PresalesAnalyticsProps> = ({
   const [toDate, setToDate] = useState('');
   const totalPipeline = opportunities.reduce((acc, o) => acc + o.contractValue, 0);
   const totalARR = opportunities.reduce((acc, o) => acc + o.arr, 0);
-  const wonOpps = opportunities.filter(o => o.stage === 'closed_won');
+  const wonOpps = opportunities.filter(o => o.outcome?.outcome === 'won' || o.stage === 'closed_won');
   const wonValue = wonOpps.reduce((acc, o) => acc + o.contractValue, 0);
-  const decidedOpps = opportunities.filter(o => ['closed_won', 'closed_lost'].includes(o.stage));
+  const decidedOpps = opportunities.filter(o => (['closed_won', 'closed_lost'].includes(o.stage) || ['won','lost'].includes(o.outcome?.outcome || '')));
   const liveWinRate = decidedOpps.length ? Math.round((wonOpps.length / decidedOpps.length) * 1000) / 10 : 0;
   const boqOpps = opportunities.filter(o => (o.boq?.items || []).length > 0);
   const liveBOQMargin = boqOpps.length ? Math.round(boqOpps.reduce((total, o) => total + (o.boq?.overallMarginPercent || 0), 0) / boqOpps.length * 10) / 10 : 0;

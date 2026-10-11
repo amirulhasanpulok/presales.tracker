@@ -9,6 +9,8 @@ export interface PermissionDef {
 // Canonical permission catalog — single source of truth consumed by both the
 // RoleManagementView editor and the runtime access-control layer.
 export const PERMISSION_CATALOG: PermissionDef[] = [
+  {key:'workflow.scm',name:'Manage SCM costing and delivery',module:'Team Workflow'},
+  {key:'workflow.finance',name:'Approve costing and selling price',module:'Team Workflow'},
   { key: 'workflow.review', name: 'Review leads and assign Presales', module: 'Team Workflow' },
   { key: 'workflow.sales', name: 'Approve SLA extensions and close own Sales deals', module: 'Team Workflow' },
   // Opportunities & Deals
@@ -79,6 +81,8 @@ export interface RbacRole {
 // (System Administrator). Every defined role implicitly carries `app.access`
 // (see can() below) so its user can log into the platform.
 export const DEFAULT_ROLES: RbacRole[] = [
+  {id:'role-scm',roleName:'Supply Chain Management',description:'Procurement, costing and delivery',usersCount:0,isSystemRole:true,matchingRoles:['SCM','Supply Chain Management'],permissions:['workflow.scm','initiate_handover']},
+  {id:'role-finance',roleName:'Finance / Management',description:'Costing and selling price approval',usersCount:0,isSystemRole:true,matchingRoles:['Finance','Management'],permissions:['workflow.finance']},
   {
     id: 'role-sa',
     roleName: 'Presales Lead / Principal Architect',

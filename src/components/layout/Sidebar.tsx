@@ -82,7 +82,7 @@ interface NavSection {
       title: 'Workspace',
       items: [
         { id: 'dashboard' as ActiveTab, label: 'Team workspace', icon: LayoutDashboard, perm: 'app.access' },
-        { id: 'opportunities' as ActiveTab, label: 'Opportunities', icon: TableProperties, count: totalOpps, perm: 'app.access' },
+        { id: 'opportunities' as ActiveTab, label: 'Leads', icon: TableProperties, count: totalOpps, perm: 'app.access' },
         { id: 'board' as ActiveTab, label: 'Stage Matrix Board', icon: Kanban, perm: 'app.access' },
         { id: 'calendar' as ActiveTab, label: 'Calendar & Sessions', icon: Calendar, perm: 'app.access' },
       ]
@@ -145,7 +145,7 @@ interface NavSection {
           }`}
         >
           <Plus className="w-3.5 h-3.5" />
-          New Opportunity
+          Add Lead
         </button>
       </div>
 

@@ -1,29 +1,82 @@
 import { Opportunity } from "../types";
+
 export const WORK_LABELS: Record<string, string> = {
-  review: "Needs review",
-  working: "Presales working",
-  solution_ready: "Ready for Sales",
-  client_followup: "Client follow-up",
-  revision: "Changes requested",
-  declined: "Declined",
-  won: "Won · awaiting Postsales",
+  lead: "Lead",
+  review: "Review Gate",
+  needs_info: "Review Gate · More information needed",
+  requirements: "Requirements Analysis",
+  design: "Solution Design",
+  solution_review: "Solution Review",
+  handover_sales: "Handover to Sales",
+  costing: "Price and Costing",
+  costing_approval: "Costing Approval",
+  proposal: "Proposal Submitted",
+  followup: "Follow-up",
+  negotiation: "Negotiation",
+  won: "Won",
   lost: "Lost",
-  delivery: "In delivery",
-  completed: "Accepted",
+  hold: "Hold",
+  cancelled: "Cancel",
+  delivery: "Delivery · SCM",
+  deployment: "Deployment",
+  completed: "Completed",
+  client_handover: "Handover to Client",
+  declined: "Declined",
+  working: "Requirements Analysis",
+  revision: "Solution Design",
+  solution_ready: "Handover to Sales",
+  client_followup: "Follow-up",
 };
+export const FLOW = [
+  "lead",
+  "review",
+  "requirements",
+  "design",
+  "solution_review",
+  "handover_sales",
+  "costing",
+  "costing_approval",
+  "proposal",
+  "followup",
+  "negotiation",
+  "won",
+  "delivery",
+  "deployment",
+  "completed",
+  "client_handover",
+];
+export const activeSLA = (o: Opportunity) =>
+  !!o.collaboration?.dueAt &&
+  !o.collaboration.slaFinishedAt &&
+  [
+    "working",
+    "revision",
+    "requirements",
+    "design",
+    "solution_review",
+    "handover_sales",
+  ].includes(o.collaboration.status);
+export const currentStatus = (o: Opportunity) =>
+  ({
+    working: "requirements",
+    revision: "design",
+    solution_ready: "handover_sales",
+    client_followup: "followup",
+  })[o.collaboration?.status || ""] ||
+  o.collaboration?.status ||
+  "";
 export function overdue(opp: Opportunity, now = Date.now()) {
-  return (
-    !!opp.collaboration?.dueAt &&
-    ["working", "revision"].includes(opp.collaboration.status) &&
-    Date.parse(opp.collaboration.dueAt) < now
-  );
+  return activeSLA(opp) && Date.parse(opp.collaboration!.dueAt!) < now;
 }
+
 export function localDate(value?: string | null) {
   return value
     ? new Date(value).toLocaleString("en-GB", {
         timeZone: "Asia/Dhaka",
+
         dateStyle: "medium",
+
         timeStyle: "short",
       })
-    : "—";
+    : "â€”";
 }

@@ -209,21 +209,35 @@ export const DEFAULT_SCOPES = [
 ];
 
 export const DEFAULT_WORKFLOW_STAGES = [
-  ['qualification', '1. Technical Qualification', 'Qualification', 'Initial intake, technical feasibility scoring, BANT qualification', false, false],
-  ['tech_discovery', '2. Technical Discovery', 'Discovery', 'Architecture deep-dive, pain points, compliance & legacy stack audit', false, false],
-  ['solution_design', '3. Solution Architecture', 'Solution Design', 'Target state diagrams, sizing models, integration feasibility specs', false, false],
-  ['poc_demo', '4. POC & Technical Validation', 'POC / Demo', 'Live lab benchmarks, customer KPI validation, blocker resolution', false, false],
-  ['proposal_boq', '5. Proposal & BOQ Sizing', 'Proposal / BOQ', 'Bill of Quantities pricing, margin governance, SOW generation', true, false],
-  ['commercial_negotiation', '6. Commercial & Security Signoff', 'Negotiation', 'InfoSec clearance, MSA review, executive approval gate', false, true],
-  ['closed_won', '7. Closed Won (Handover)', 'Won / Handover', 'Technical knowledge transfer to Delivery / Professional Services', false, true],
-  ['closed_lost', '8. Closed Lost', 'Closed Lost', 'Technical post-mortem, lost reason, competitor analysis', false, false],
-  ['on_hold', '9. On Hold', 'On Hold', 'Opportunity paused pending client, commercial, or technical action', false, false],
-  ['cancelled', '10. Cancelled', 'Cancelled', 'Opportunity withdrawn or no longer being pursued', false, false],
+  ['lead', 'Lead', 'Lead', 'Lead', false, false],
+  ['qualification', 'Review Gate', 'Review Gate', 'Review Gate', false, false],
+  ['tech_discovery', 'Requirements Analysis', 'Requirements Analysis', 'Requirements Analysis', false, false],
+  ['solution_design', 'Solution Design', 'Solution Design', 'Solution Design', false, false],
+  ['solution_review', 'Solution Review', 'Solution Review', 'Solution Review', false, false],
+  ['handover_sales', 'Handover to Sales', 'Handover to Sales', 'Handover to Sales', false, false],
+  ['costing', 'Price and Costing', 'Price and Costing', 'Price and Costing', false, false],
+  ['costing_approval', 'Costing Approval', 'Costing Approval', 'Finance / Management approves cost and selling price', false, false],
+  ['proposal_boq', 'Proposal Submitted', 'Proposal Submitted', 'Proposal Submitted', false, false],
+  ['followup', 'Follow-up', 'Follow-up', 'Follow-up', false, false],
+  ['commercial_negotiation', 'Negotiation', 'Negotiation', 'Negotiation', false, false],
+  ['closed_won', 'Won', 'Won', 'Won', false, false],
+  ['closed_lost', 'Lost', 'Lost', 'Lost', false, false],
+  ['on_hold', 'Hold', 'Hold', 'Hold', false, false],
+  ['cancelled', 'Cancel', 'Cancel', 'Cancel', false, false],
+  ['delivery', 'Delivery', 'Delivery', 'Delivery', false, false],
+  ['deployment', 'Deployment', 'Deployment', 'Deployment', false, false],
+  ['completed', 'Completed', 'Completed', 'Completed', false, false],
+  ['client_handover', 'Handover to Client', 'Handover to Client', 'Handover to Client', false, false],
 ];
 
 export async function ensureWorkflowConfig() {
+  const migrated = await query("SELECT 1 FROM system_settings WHERE setting_key='si_cycle_v2'");
   const stages = DEFAULT_WORKFLOW_STAGES.map(([id, label, shortLabel, description, requiresScope, requiresApprovedBOQ]) => ({ id, label, shortLabel, description, requiresScope, requiresApprovedBOQ }));
   await query("INSERT INTO system_settings (setting_key, setting_value, updated_at) VALUES ('workflow_stages', $1, now()) ON CONFLICT (setting_key) DO NOTHING", [JSON.stringify(stages)]);
+  if (!migrated.rowCount) {
+    await query("INSERT INTO system_settings (setting_key,setting_value) VALUES ('workflow_stages', $1) ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value, updated_at=now()", [JSON.stringify(stages)]);
+    await query("INSERT INTO system_settings (setting_key,setting_value) VALUES ('si_cycle_v2','applied') ON CONFLICT DO NOTHING");
+  }
 }
 
 export async function seedScopeCatalog() {
@@ -318,6 +332,10 @@ export async function seedOEMCatalog() {
 }
 
 export async function ensureSystemRoles() {
+  await query(`INSERT INTO roles (id,role_name,name,description,permissions,is_system_role) VALUES
+    ('role-scm','Supply Chain Management','Supply Chain Management','Procurement, costing and delivery.','["workflow.scm","initiate_handover"]'::jsonb,true),
+    ('role-finance','Finance / Management','Finance / Management','Approves cost sheets and selling prices.','["workflow.finance"]'::jsonb,true)
+    ON CONFLICT (id) DO NOTHING`);
   await query(`INSERT INTO roles (id, role_name, name, description, users_count, is_system_role, matching_roles, permissions)
     VALUES ('role-presales-lead', 'Presales Team Lead', 'Presales Team Lead', 'Reviews Sales leads and assigns Presales engineers.', 0, true, '["Presales Team Lead"]'::jsonb,
     '["workflow.review","create_opportunity","edit_opportunity_core","author_sadd","approve_sadd","run_poc_benchmarks","author_boq","approve_boq_discount","initiate_handover","signoff_handover"]'::jsonb)

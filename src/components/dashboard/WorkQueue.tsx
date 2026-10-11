@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { Opportunity } from "../../types";
-import { WORK_LABELS, overdue, localDate } from "../../utils/collaboration";
+import {
+  WORK_LABELS,
+  overdue,
+  activeSLA,
+  localDate,
+} from "../../utils/collaboration";
 
 export function WorkQueue({
   opportunities,
@@ -23,25 +28,49 @@ export function WorkQueue({
   const matches = (o: Opportunity, key: string) => {
     const s = o.collaboration?.status;
     if (key === "all") return true;
-    if (key === "review") return s === "review";
+    if (key === "approvals")
+      return (
+        s === "costing_approval" &&
+        !o.collaboration?.costing?.approvedAt &&
+        !o.collaboration?.costingApproved
+      );
+    if (key === "hold") return s === "hold";
+    if (key === "review")
+      return ["lead", "review", "needs_info", "solution_review"].includes(
+        s || "",
+      );
     if (key === "overdue") return overdue(o, now);
     if (key === "extensions")
       return o.collaboration?.extensions.some((e) => e.status === "pending");
     if (key === "followup")
-      return ["solution_ready", "client_followup"].includes(s || "");
-    if (key === "delivery") return ["won", "delivery"].includes(s || "");
+      return [
+        "handover_sales",
+        "costing",
+        "costing_approval",
+        "proposal",
+        "followup",
+        "negotiation",
+        "solution_ready",
+        "client_followup",
+      ].includes(s || "");
+    if (key === "delivery")
+      return ["won", "delivery", "deployment", "completed"].includes(s || "");
     return s
-      ? !["completed", "lost", "declined"].includes(s)
+      ? !["client_handover", "lost", "declined", "cancelled", "hold"].includes(
+          s,
+        )
       : !["closed_won", "closed_lost", "cancelled"].includes(o.stage);
   };
   const queues = [
     ["active", "Active"],
     ["review", "Needs review"],
+    ["approvals", "Costing approvals"],
+    ["hold", "On hold"],
     ["overdue", "SLA overdue"],
     ["extensions", "Extension requests"],
     ["followup", "Sales follow-up"],
-    ["delivery", "Postsales"],
-    ["all", "All opportunities"],
+    ["delivery", "SCM & Postsales"],
+    ["all", "All leads"],
   ];
   const visible = opportunities
     .filter(
@@ -65,14 +94,14 @@ export function WorkQueue({
             Team workspace
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Sales → Presales → Client → Postsales
+            Sales → Presales → SCM → Postsales → Client
           </p>
         </div>
         <button
           onClick={onCreate}
           className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm"
         >
-          New opportunity
+          Add Lead
         </button>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -90,15 +119,15 @@ export function WorkQueue({
         ))}
       </div>
       <input
-        aria-label="Search opportunities"
+        aria-label="Search leads"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search client, opportunity or owner…"
+        placeholder="Search client, lead or owner…"
         className="border border-slate-200 rounded-lg bg-white px-4 py-3 w-full text-sm"
       />
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="hidden md:grid grid-cols-12 gap-3 px-5 py-3 text-xs text-slate-500 bg-slate-50">
-          <span className="col-span-4">Opportunity / Client</span>
+          <span className="col-span-4">Lead / Client</span>
           <span className="col-span-3">Team</span>
           <span className="col-span-2">Status</span>
           <span className="col-span-3">Deadline / Next follow-up · Dhaka</span>
@@ -124,15 +153,14 @@ export function WorkQueue({
             </div>
             <div className="md:col-span-2">
               <span className="inline-flex px-2 py-1 rounded bg-slate-100 text-xs text-slate-700">
-                {WORK_LABELS[o.collaboration?.status || ""] ||
-                  "Existing opportunity"}
+                {WORK_LABELS[o.collaboration?.status || ""] || "Existing lead"}
               </span>
             </div>
             <div
               className={`md:col-span-3 text-xs space-y-1 ${overdue(o, now) ? "text-red-600" : "text-slate-500"}`}
             >
               <p>
-                {["working", "revision"].includes(o.collaboration?.status || "")
+                {activeSLA(o)
                   ? `${overdue(o, now) ? "Overdue · " : "Solution due · "}${localDate(o.collaboration?.dueAt)}`
                   : "No active solution SLA"}
               </p>
@@ -144,7 +172,7 @@ export function WorkQueue({
         ))}
         {!visible.length && (
           <p className="text-sm text-slate-500 text-center p-12">
-            No opportunities in this queue.
+            No leads in this queue.
           </p>
         )}
       </div>

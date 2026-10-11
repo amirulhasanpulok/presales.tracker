@@ -1,8 +1,40 @@
+export const GATE_KEYS = [
+  "scope",
+  "technical",
+  "budget",
+  "timeline",
+  "business",
+  "information",
+];
+export const STAGE_IDS = {
+  lead: "lead",
+  review: "qualification",
+  needs_info: "qualification",
+  requirements: "tech_discovery",
+  design: "solution_design",
+  solution_review: "solution_review",
+  handover_sales: "handover_sales",
+  costing: "costing",
+  costing_approval: "costing_approval",
+  proposal: "proposal_boq",
+  followup: "followup",
+  negotiation: "commercial_negotiation",
+  won: "closed_won",
+  lost: "closed_lost",
+  hold: "on_hold",
+  cancelled: "cancelled",
+  declined: "cancelled",
+  delivery: "delivery",
+  deployment: "deployment",
+  completed: "completed",
+  client_handover: "client_handover",
+};
 import { randomUUID } from "node:crypto";
 
 export const DAY = 86400000;
 export const initialCollaboration = () => ({
-  status: "review",
+  status: "lead",
+  version: 2,
   cycle: 0,
   solutions: [],
   extensions: [],
@@ -27,6 +59,29 @@ const date = (value) => {
 export function transition(doc, input, actor, now = new Date()) {
   const next = structuredClone(doc);
   const w = next.collaboration || initialCollaboration();
+  // Preserve existing records and snapshots; translate legacy statuses on action.
+  const legacy = {
+    working: "requirements",
+    revision: "design",
+    solution_ready: "handover_sales",
+    client_followup: "followup",
+  };
+  w.status = legacy[w.status] || w.status;
+  w.version = 2;
+  w.stageNotes ||= {};
+  const setStage = (status) => {
+    w.status = status;
+    next.stage = STAGE_IDS[status] || next.stage;
+  };
+  const at = (...statuses) =>
+    need(
+      statuses.includes(w.status),
+      "This action is not available in the current stage.",
+    );
+  const record = () => {
+    need(note, "Add completion details / evidence.");
+    w.stageNotes[w.status] = { note, at: stamp, by: actor.name };
+  };
   const stamp = now.toISOString();
   const action = input.action;
   const note = text(input.note);
@@ -35,6 +90,10 @@ export function transition(doc, input, actor, now = new Date()) {
     "lost",
     "delivery",
     "completed",
+    "client_handover",
+    "deployment",
+    "cancelled",
+    "hold",
     "declined",
   ].includes(w.status);
   const requireRole = (key) =>
@@ -43,7 +102,9 @@ export function transition(doc, input, actor, now = new Date()) {
     need(!terminal, "This opportunity is already closed or declined.");
   const working = () =>
     need(
-      ["working", "revision"].includes(w.status),
+      ["requirements", "design", "solution_review", "handover_sales"].includes(
+        w.status,
+      ),
       "No active solution cycle.",
     );
   const futureDate = (value) => {
@@ -56,13 +117,26 @@ export function transition(doc, input, actor, now = new Date()) {
     case "assign": {
       requireRole("review");
       need(
-        w.status === "review" || !doc.collaboration,
+        w.status === "review" ||
+          w.status === "needs_info" ||
+          !doc.collaboration,
         "Lead is already reviewed.",
       );
       need(
         !["closed_won", "closed_lost", "cancelled"].includes(doc.stage),
         "Closed historical opportunities cannot be restarted by assignment.",
       );
+      need(
+        GATE_KEYS.every((key) => input.criteria?.[key] === true),
+        "Complete all six qualification criteria before assignment.",
+      );
+      w.qualification = {
+        criteria: structuredClone(input.criteria),
+        decision: "qualified",
+        note,
+        at: stamp,
+        by: actor.name,
+      };
       need(text(input.assignee), "Choose a Presales engineer.");
       next.leadSolutionArchitect = text(input.assignee);
       next.supportingPresalesEngineers = [
@@ -72,7 +146,7 @@ export function transition(doc, input, actor, now = new Date()) {
             .filter((n) => n && n !== next.leadSolutionArchitect),
         ),
       ];
-      w.status = "working";
+      setStage("requirements");
       w.cycle = 1;
       w.assignedAt = stamp;
       w.assignedBy = actor.name;
@@ -84,7 +158,10 @@ export function transition(doc, input, actor, now = new Date()) {
     }
     case "decline":
       requireRole("review");
-      need(w.status === "review", "Lead is already reviewed.");
+      need(
+        ["review", "needs_info"].includes(w.status),
+        "Lead is already reviewed.",
+      );
       need(note, "Explain why the lead is declined.");
       w.status = "declined";
       w.declineReason = note;
@@ -149,12 +226,12 @@ export function transition(doc, input, actor, now = new Date()) {
     }
     case "submit_solution": {
       requireRole("presales");
-      working();
+      at("design");
       need(note, "Add the solution summary.");
       need(
         (next.boq?.items || []).length ||
           text(next.proposedArchitecture) ||
-          (next.documents || []).length,
+          text(next.proposedArchitecture),
         "Add a solution, BOQ or solution document before submitting.",
       );
       w.solutions.push({
@@ -172,50 +249,96 @@ export function transition(doc, input, actor, now = new Date()) {
           ({ fileData, ...metadata }) => metadata,
         ),
       });
-      w.extensions
-        .filter((e) => e.status === "pending")
-        .forEach((e) => {
-          e.status = "superseded";
-        });
-      w.status = "solution_ready";
-      next.stage = "proposal_boq";
-      title = `Solution v${w.solutions.length} submitted to Sales`;
+
+      setStage("solution_review");
+      title = `Solution v${w.solutions.length} submitted for review`;
       break;
     }
     case "sent_client": {
       requireRole("sales");
       need(
-        w.status === "solution_ready",
+        w.status === "costing_approval",
         "Submit a solution before recording client submission.",
       );
       need(note, "Add the client submission details.");
+      need(
+        w.costing?.approvedAt &&
+          w.costing?.solutionVersion === w.solutions.at(-1)?.version,
+        "Approve current-version costing before proposal submission.",
+      );
+      need(
+        text(input.proposalReference) &&
+          text(input.paymentTerms) &&
+          text(input.validUntil) &&
+          text(input.deliveryTimeline) &&
+          text(input.warranty),
+        "Add proposal reference, payment terms, validity, delivery timeline and warranty/support.",
+      );
+      need(
+        Date.parse(input.validUntil) >= now.getTime(),
+        "Proposal validity must be in the future.",
+      );
+      w.proposals ||= [];
+      w.proposals.push({
+        version: w.proposals.length + 1,
+        solutionVersion: w.solutions.at(-1).version,
+        reference: text(input.proposalReference),
+        paymentTerms: text(input.paymentTerms),
+        validUntil: date(input.validUntil),
+        deliveryTimeline: text(input.deliveryTimeline),
+        warranty: text(input.warranty),
+        at: stamp,
+        by: actor.name,
+      });
       const s = w.solutions.at(-1);
       s.sentAt = stamp;
       s.sentBy = actor.name;
       s.submissionNote = note;
-      w.status = "client_followup";
-      next.stage = "commercial_negotiation";
+      setStage("proposal");
       title = `Sales sent solution v${s.version} to client`;
       break;
     }
     case "revision":
       need(
-        actor.sales || actor.presales,
+        actor.sales || actor.presales || actor.scm,
         "Your role cannot record a change request.",
         403,
       );
       need(
-        ["solution_ready", "client_followup"].includes(w.status),
+        [
+          "handover_sales",
+          "costing",
+          "costing_approval",
+          "proposal",
+          "followup",
+          "negotiation",
+        ].includes(w.status),
         "Submit the current solution before opening a revision.",
       );
       need(note, "Describe the client changes.");
-      w.status = "revision";
+      need(
+        !actor.scm ||
+          actor.sales ||
+          actor.presales ||
+          input.returnTo !== "requirements",
+        "SCM supply changes must return to Solution Design.",
+      );
+      setStage(input.returnTo === "requirements" ? "requirements" : "design");
+      if (w.costing) {
+        w.costingHistory ||= [];
+        w.costingHistory.push(structuredClone(w.costing));
+      }
+      w.costing = undefined;
       w.cycle += 1;
-      w.dueAt = futureDate(input.dueAt);
+      w.dueAt = new Date(now.getTime() + 4 * DAY).toISOString();
+      w.slaFinishedAt = undefined;
       w.changeRequest = note;
       w.revisionRequestedAt = stamp;
-      next.stage = "solution_design";
-      title = "Client changes requested";
+      next.stage = STAGE_IDS[w.status];
+      title =
+        actor.scm && !actor.sales && !actor.presales
+          ? "SCM requested product / supply revision"
+          : "Client changes requested";
       break;
     case "followup":
       need(
@@ -238,6 +361,8 @@ export function transition(doc, input, actor, now = new Date()) {
           author: actor.name,
           at: stamp,
           nextAt,
+          owner: text(input.followupOwner) || actor.name,
+          nextAction: text(input.nextAction),
         });
         w.nextFollowUpAt = nextAt || null;
         if (input.target === "client") next.lastContactedAt = stamp;
@@ -249,7 +374,27 @@ export function transition(doc, input, actor, now = new Date()) {
       requireRole("sales");
       requireOpen();
       need(note, "Add the outcome details.");
+      at("proposal", "followup", "negotiation");
       if (action === "close_won") {
+        need(
+          text(input.orderReference),
+          "Add PO / Work Order / contract reference.",
+        );
+        need(text(input.scmOwner), "Choose an SCM owner.");
+        need(
+          Number.isFinite(Number(input.finalValue)) &&
+            Number(input.finalValue) > 0,
+          "Enter the final deal value.",
+        );
+        next.scmOwner = text(input.scmOwner);
+        next.contractValue = Number(input.finalValue);
+        w.order = {
+          reference: text(input.orderReference),
+          finalValue: next.contractValue,
+          note,
+          at: stamp,
+          by: actor.name,
+        };
         need(w.solutions.length > 0, "Submit a solution before closing won.");
         need(text(input.assignee), "Choose a Postsales owner.");
         next.postsalesOwner = text(input.assignee);
@@ -279,10 +424,10 @@ export function transition(doc, input, actor, now = new Date()) {
         action === "close_won" ? "Deal won; ready for Postsales" : "Deal lost";
       break;
     case "start_delivery":
-      requireRole("postsales");
+      requireRole("scm");
       need(w.status === "won", "Only won deals can enter delivery.");
       need(note, "Add handover and delivery notes.");
-      w.status = "delivery";
+      setStage("delivery");
       w.deliveryStartedAt = stamp;
       next.handover = {
         ...next.handover,
@@ -294,17 +439,320 @@ export function transition(doc, input, actor, now = new Date()) {
         assignedDeliveryLead: next.postsalesOwner,
         boqVersion: `v${w.solutions.length}`,
       };
-      title = "Postsales accepted handover and started delivery";
+      title = "SCM accepted handover and started delivery";
       break;
     case "accept_delivery":
       requireRole("postsales");
-      need(w.status === "delivery", "Start delivery before client acceptance.");
+      need(
+        w.status === "deployment",
+        "Complete deployment before client acceptance.",
+      );
+      need(
+        text(input.acceptanceReference),
+        "Add UAT / customer acceptance reference.",
+      );
+      w.acceptanceReference = text(input.acceptanceReference);
       need(note, "Record client acceptance details.");
-      w.status = "completed";
+      setStage("completed");
       w.acceptedAt = stamp;
       w.acceptedBy = actor.name;
       w.acceptanceNote = note;
       title = "Delivery completed and client acceptance recorded";
+      break;
+    case "submit_lead":
+      requireRole("sales");
+      at("lead", "needs_info");
+      record();
+      setStage("review");
+      title = "Lead submitted to Review Gate";
+      break;
+    case "request_info":
+      requireRole("review");
+      at("review");
+      record();
+      setStage("needs_info");
+      title = "Review Gate requested more information";
+      break;
+    case "finish_requirements":
+      requireRole("presales");
+      at("requirements");
+      need(
+        text(next.requirementDetails),
+        "Save client requirements before completing analysis.",
+      );
+      record();
+      setStage("design");
+      title = "Requirements Analysis completed";
+      break;
+    case "approve_solution": {
+      requireRole("review");
+      at("solution_review");
+      record();
+      const s = w.solutions.at(-1);
+      need(s, "Submit solution for review first.");
+      s.reviewedAt = stamp;
+      s.reviewedBy = actor.name;
+      s.reviewNote = note;
+      setStage("handover_sales");
+      title = "Solution Review approved";
+      break;
+    }
+    case "return_solution":
+      requireRole("review");
+      at("solution_review");
+      record();
+      setStage("design");
+      title = "Solution returned for corrections";
+      break;
+    case "handover_sales": {
+      requireRole("presales");
+      at("handover_sales");
+      record();
+      const s = w.solutions.at(-1);
+      need(
+        s?.reviewedAt || !doc.collaboration?.version,
+        "Solution must be reviewed before handover.",
+      );
+      s.handedOverAt = stamp;
+      s.handedOverBy = actor.name;
+      s.onTime = now.getTime() <= Date.parse(w.dueAt);
+      w.slaFinishedAt = stamp;
+      w.extensions
+        .filter((e) => e.status === "pending")
+        .forEach((e) => (e.status = "superseded"));
+      setStage("costing");
+      title = "Reviewed solution handed over to Sales";
+      break;
+    }
+    case "supply_issue":
+      requireRole("scm");
+      at("costing", "costing_approval");
+      record();
+      w.supplyIssue = { note, at: stamp, by: actor.name };
+      if (w.costing) {
+        w.costingHistory ||= [];
+        w.costingHistory.push(structuredClone(w.costing));
+      }
+      w.costing = undefined;
+      setStage("costing");
+      title = "SCM pricing pending / supply issue recorded";
+      break;
+    case "save_costing": {
+      need(
+        actor.sales || actor.scm,
+        "Only Sales and SCM can prepare costing.",
+        403,
+      );
+      at("costing");
+      record();
+      need(
+        input.supplyConfirmed === true,
+        "Confirm vendor prices and product availability before requesting costing approval.",
+      );
+      const keys = [
+        "equipment",
+        "license",
+        "implementation",
+        "service",
+        "transport",
+        "tax",
+        "other",
+        "sellingPrice",
+        "discount",
+      ];
+      const c = {};
+      for (const key of keys) {
+        const n = Number(input.costing?.[key]);
+        need(
+          Number.isFinite(n) && n >= 0,
+          "Enter valid non-negative costing amounts.",
+        );
+        c[key] = n;
+      }
+      c.totalCost = keys.slice(0, 7).reduce((sum, k) => sum + c[k], 0);
+      c.netPrice = c.sellingPrice - c.discount;
+      need(c.netPrice > 0, "Selling price after discount must be positive.");
+      c.marginPercent = ((c.netPrice - c.totalCost) / c.netPrice) * 100;
+      need(text(input.vendorReference), "Add vendor/OEM quotation references.");
+      if (w.costing) {
+        w.costingHistory ||= [];
+        w.costingHistory.push(structuredClone(w.costing));
+      }
+      w.supplyIssue = undefined;
+      w.costing = {
+        id: randomUUID(),
+        supplyConfirmed: true,
+        ...c,
+        vendorReference: text(input.vendorReference),
+        solutionVersion: w.solutions.at(-1)?.version,
+        preparedBy: actor.name,
+        preparedAt: stamp,
+        note,
+      };
+      setStage("costing_approval");
+      title = "Cost sheet submitted for approval";
+      break;
+    }
+    case "approve_costing":
+      requireRole("finance");
+      at("costing_approval");
+      record();
+      need(w.costing, "Save costing first.");
+      w.costing.approvedAt = stamp;
+      w.costing.approvedBy = actor.name;
+      w.costing.approvalNote = note;
+      setStage("costing_approval");
+      title = "Costing and selling price approved";
+      break;
+    case "return_costing":
+      requireRole("finance");
+      at("costing_approval");
+      record();
+      w.costing.approvedAt = undefined;
+      w.costing.approvedBy = undefined;
+      setStage("costing");
+      title = "Costing returned for correction";
+      break;
+    case "start_followup":
+      requireRole("sales");
+      at("proposal");
+      record();
+      setStage("followup");
+      title = "Proposal follow-up started";
+      break;
+    case "start_negotiation":
+      requireRole("sales");
+      at("followup");
+      record();
+      setStage("negotiation");
+      title = "Negotiation started";
+      break;
+    case "revise_costing":
+      requireRole("sales");
+      at("proposal", "followup", "negotiation");
+      record();
+      if (w.costing) {
+        w.costingHistory ||= [];
+        w.costingHistory.push(structuredClone(w.costing));
+      }
+      w.costing = undefined;
+      setStage("costing");
+      title = "Commercial revision requested";
+      break;
+    case "hold":
+      requireRole("sales");
+      requireOpen();
+      record();
+      w.resumeStatus = w.status;
+      w.resumeOutcome = next.outcome?.outcome || "open";
+      next.outcome = { ...next.outcome, outcome: "on_hold", finalNotes: note };
+      w.holdReviewAt = futureDate(input.dueAt);
+      setStage("hold");
+      title = "Lead put on hold";
+      break;
+    case "resume":
+      requireRole("sales");
+      at("hold");
+      record();
+      need(w.resumeStatus, "Previous stage unavailable.");
+      setStage(w.resumeStatus);
+      next.outcome = { ...next.outcome, outcome: w.resumeOutcome || "open" };
+      title = "Lead resumed; original SLA retained";
+      break;
+    case "cancel":
+      requireRole("sales");
+      need(
+        !["lost", "cancelled", "client_handover", "declined"].includes(
+          w.status,
+        ),
+        "Lead is already closed.",
+      );
+      record();
+      setStage("cancelled");
+      next.outcome = {
+        ...next.outcome,
+        outcome: "cancelled",
+        finalNotes: note,
+      };
+      w.closedAt = stamp;
+      w.closedBy = actor.name;
+      title = "Lead cancelled";
+      break;
+    case "delivery_update":
+      requireRole("scm");
+      at("delivery");
+      record();
+      w.supplyProgress = {
+        vendor: text(input.vendor),
+        stock: text(input.stock),
+        shipment: text(input.shipment),
+        pendingItems: text(input.pendingItems),
+        note,
+        at: stamp,
+        by: actor.name,
+      };
+      title = "SCM delivery progress updated";
+      break;
+    case "deployment_update":
+      requireRole("postsales");
+      at("deployment");
+      record();
+      w.deploymentProgress = {
+        implementation: text(input.implementation),
+        issues: text(input.issues),
+        pendingItems: text(input.pendingItems),
+        note,
+        at: stamp,
+        by: actor.name,
+      };
+      title = "Deployment progress updated";
+      break;
+    case "finish_delivery":
+      requireRole("scm");
+      at("delivery");
+      record();
+      need(
+        text(input.deliveryReference) && text(input.receivingReference),
+        "Add delivery challan and receiving confirmation references.",
+      );
+      w.deliveryEvidence = {
+        challan: text(input.deliveryReference),
+        receiving: text(input.receivingReference),
+        note,
+        at: stamp,
+        by: actor.name,
+      };
+      setStage("deployment");
+      title = "SCM delivery confirmed; ready for deployment";
+      break;
+    case "client_handover":
+      requireRole("postsales");
+      at("completed");
+      record();
+      need(
+        [
+          "asBuilt",
+          "backup",
+          "credentials",
+          "training",
+          "warranty",
+          "support",
+        ].every((k) => input.handoverChecklist?.[k] === true),
+        "Complete all client handover checklist items.",
+      );
+      need(
+        text(input.acknowledgement),
+        "Add client handover acknowledgement reference.",
+      );
+      w.clientHandover = {
+        checklist: structuredClone(input.handoverChecklist),
+        acknowledgement: text(input.acknowledgement),
+        at: stamp,
+        by: actor.name,
+        note,
+      };
+      setStage("client_handover");
+      title = "Handover to Client completed; project closed";
       break;
     default:
       throw workflowError("Unknown workflow action.", 400);

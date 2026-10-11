@@ -1,227 +1,281 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { initialCollaboration, transition, DAY } from "./collaboration.js";
+import {
+  transition,
+  initialCollaboration,
+  DAY,
+  GATE_KEYS,
+} from "./collaboration.js";
 const now = new Date("2026-10-11T10:00:00Z");
-const lead = { id: "lead", name: "Lead", review: true, presales: true };
-const engineer = { id: "engineer", name: "Engineer", presales: true };
-const sales = { id: "sales", name: "Sales", sales: true };
-const delivery = { id: "delivery", name: "Delivery", postsales: true };
-const doc = () => ({
+const sales = { id: "s", name: "Sales", sales: true };
+const lead = { id: "l", name: "Lead", review: true, presales: true };
+const engineer = { id: "e", name: "Engineer", presales: true };
+const scm = { id: "scm", name: "SCM", scm: true };
+const finance = { id: "f", name: "Finance", finance: true };
+const postsales = { id: "p", name: "Postsales", postsales: true };
+const criteria = Object.fromEntries(GATE_KEYS.map((k) => [k, true]));
+const base = () => ({
   id: "test",
+  stage: "lead",
   collaboration: initialCollaboration(),
   activities: [],
-  proposedArchitecture: "Firewall and switching solution",
-  boq: { items: [{ description: "Firewall", quantity: 1 }], version: 1 },
+  requirementDetails: "Network upgrade",
+  proposedArchitecture: "HA firewall",
+  boq: { items: [{ description: "Firewall", quantity: 2 }] },
+  documents: [],
 });
-const assigned = () =>
-  transition(doc(), { action: "assign", assignee: "Engineer" }, lead, now);
-test("SLA starts at assignment, exactly 96 hours, independent of lead age", () => {
-  const d = doc();
-  d.createdAt = "2020-01-01";
-  const a = transition(
+const step = (d, action, actor, input = {}, time = now) =>
+  transition(
     d,
-    { action: "assign", assignee: "Engineer" },
-    lead,
-    now,
+    { action, note: "Evidence / completion details", ...input },
+    actor,
+    time,
   );
-  assert.equal(Date.parse(a.collaboration.dueAt) - now.getTime(), 4 * DAY);
-  assert.equal(a.collaboration.originalDueAt, a.collaboration.dueAt);
-  assert.equal(d.collaboration.status, "review");
-});
-test("Engineers and Sales cannot self-assign or review a lead", () => {
-  for (const actor of [engineer, sales])
-    assert.throws(
-      () =>
-        transition(
-          doc(),
-          { action: "assign", assignee: "Engineer" },
-          actor,
-          now,
-        ),
-      { status: 403 },
-    );
-});
-test("Only Sales approves extensions, original deadline retained and audited", () => {
-  let a = assigned();
-  const original = a.collaboration.dueAt;
-  a = transition(
-    a,
-    {
-      action: "request_extension",
-      note: "OEM sizing needed",
-      dueAt: "2026-10-18T10:00:00Z",
-    },
-    engineer,
-    now,
-  );
-  assert.equal(a.collaboration.dueAt, original);
-  const input = {
-    action: "approve_extension",
-    extensionId: a.collaboration.extensions[0].id,
-    note: "Approved due to scope",
-  };
-  assert.throws(() => transition(a, input, engineer, now), { status: 403 });
-  a = transition(a, input, sales, now);
-  assert.equal(a.collaboration.originalDueAt, original);
-  assert.equal(a.collaboration.dueAt, "2026-10-18T10:00:00.000Z");
-  assert.equal(a.collaboration.extensions[0].decidedBy, "Sales");
-});
-test("Invalid/earlier deadlines and duplicate pending extensions are refused", () => {
-  const a = assigned();
-  for (const dueAt of ["invalid", "2026-10-10", "2026-10-12"])
-    assert.throws(() =>
-      transition(
-        a,
-        { action: "request_extension", note: "OEM", dueAt },
-        engineer,
-        now,
-      ),
-    );
-  const b = transition(
-    a,
-    { action: "request_extension", note: "OEM", dueAt: "2026-10-20" },
-    engineer,
-    now,
+const reviewed = () => step(base(), "submit_lead", sales);
+const assigned = () =>
+  step(reviewed(), "assign", lead, { assignee: "Engineer", criteria });
+const designed = () => step(assigned(), "finish_requirements", engineer);
+const submitted = () => step(designed(), "submit_solution", engineer);
+const handed = () =>
+  step(step(submitted(), "approve_solution", lead), "handover_sales", engineer);
+const costs = {
+  equipment: 100,
+  license: 10,
+  implementation: 20,
+  service: 5,
+  transport: 5,
+  tax: 10,
+  other: 0,
+  sellingPrice: 200,
+  discount: 10,
+};
+const costed = () =>
+  step(handed(), "save_costing", scm, {
+    costing: costs,
+    vendorReference: "OEM-Q1",
+    supplyConfirmed: true,
+  });
+const approved = () => step(costed(), "approve_costing", finance);
+const proposal = () =>
+  step(approved(), "sent_client", sales, {
+    proposalReference: "P-1",
+    paymentTerms: "30 days",
+    validUntil: "2026-11-11",
+    deliveryTimeline: "2 weeks",
+    warranty: "1 year",
+  });
+test("Lead must enter Review Gate and pass all criteria before assignment", () => {
+  assert.throws(() =>
+    step(base(), "assign", lead, { assignee: "Engineer", criteria }),
   );
   assert.throws(() =>
-    transition(
-      b,
-      { action: "request_extension", note: "OEM", dueAt: "2026-10-21" },
-      engineer,
-      now,
-    ),
-  );
-});
-test("Repeated client revisions preserve previous solution, BOQ and submission", () => {
-  let a = transition(
-    assigned(),
-    { action: "submit_solution", note: "First solution" },
-    engineer,
-    now,
-  );
-  a = transition(
-    a,
-    { action: "sent_client", note: "Sent proposal by email" },
-    sales,
-    now,
-  );
-  a = transition(
-    a,
-    {
-      action: "revision",
-      note: "Client needs redundant firewall",
-      dueAt: "2026-10-20",
-    },
-    engineer,
-    now,
-  );
-  a.boq.items[0].quantity = 2;
-  a.proposedArchitecture = "Redundant firewalls";
-  a = transition(
-    a,
-    { action: "submit_solution", note: "Revised design" },
-    engineer,
-    now,
-  );
-  assert.equal(a.collaboration.solutions.length, 2);
-  assert.equal(a.collaboration.solutions[0].boq.items[0].quantity, 1);
-  assert.equal(a.collaboration.solutions[1].boq.items[0].quantity, 2);
-  assert.equal(a.collaboration.solutions[0].sentBy, "Sales");
-  assert.equal(a.collaboration.cycle, 2);
-});
-test("Sales and Presales can follow up with client, Sales or OEM until close", () => {
-  for (const actor of [sales, engineer])
-    for (const target of ["client", "sales", "oem"]) {
-      const a = transition(
-        assigned(),
-        {
-          action: "followup",
-          target,
-          note: "Discussed requirements",
-          dueAt: "2026-10-14",
-        },
-        actor,
-        now,
-      );
-      assert.equal(a.collaboration.followups[0].author, actor.name);
-    }
-});
-test("A sale is separate from Postsales delivery and client acceptance", () => {
-  let a = transition(
-    assigned(),
-    { action: "submit_solution", note: "Final solution" },
-    engineer,
-    now,
+    step(reviewed(), "assign", lead, {
+      assignee: "Engineer",
+      criteria: { scope: true },
+    }),
   );
   assert.throws(
-    () =>
-      transition(
-        a,
-        { action: "close_won", note: "PO received", assignee: "Delivery" },
-        engineer,
-        now,
-      ),
+    () => step(reviewed(), "assign", sales, { assignee: "Engineer", criteria }),
     { status: 403 },
   );
-  a = transition(
-    a,
-    { action: "close_won", note: "PO received", assignee: "Delivery" },
-    sales,
-    now,
-  );
-  assert.equal(a.collaboration.status, "won");
-  assert.equal(a.handover, undefined);
-  assert.throws(() =>
-    transition(
-      a,
-      { action: "accept_delivery", note: "Signed acceptance" },
-      delivery,
-      now,
-    ),
-  );
-  assert.throws(() =>
-    transition(
-      a,
-      { action: "followup", target: "client", note: "Follow-up" },
-      engineer,
-      now,
-    ),
-  );
-  a = transition(
-    a,
-    { action: "start_delivery", note: "Accepted final BOQ" },
-    delivery,
-    now,
-  );
-  assert.equal(a.handover.isHandedOver, true);
-  a = transition(
-    a,
-    { action: "accept_delivery", note: "Client signed acceptance" },
-    delivery,
-    now,
-  );
-  assert.equal(a.collaboration.status, "completed");
-  assert.equal(a.collaboration.acceptanceNote, "Client signed acceptance");
+  const d = assigned();
+  assert.equal(d.collaboration.status, "requirements");
+  assert.equal(Date.parse(d.collaboration.dueAt) - now.getTime(), 4 * DAY);
+  assert.equal(d.collaboration.qualification.decision, "qualified");
 });
-test("Late submissions retain lateness even if now ready for Sales", () => {
-  const a = transition(
-    assigned(),
-    { action: "submit_solution", note: "Late solution" },
+test("More information returns to Sales and can be resubmitted; decline requires reason", () => {
+  const d = step(reviewed(), "request_info", lead);
+  assert.equal(d.collaboration.status, "needs_info");
+  assert.equal(step(d, "submit_lead", sales).collaboration.status, "review");
+  assert.throws(() => step(reviewed(), "decline", lead, { note: "" }));
+  assert.equal(
+    step(reviewed(), "decline", lead).collaboration.status,
+    "declined",
+  );
+});
+test("Requirements, design, review and handover enforce stage and team gates", () => {
+  assert.throws(() => step(assigned(), "submit_solution", engineer));
+  assert.throws(() => step(submitted(), "handover_sales", engineer));
+  assert.throws(() => step(submitted(), "approve_solution", engineer), {
+    status: 403,
+  });
+  assert.equal(
+    step(submitted(), "return_solution", lead).collaboration.status,
+    "design",
+  );
+  const d = handed();
+  assert.equal(d.collaboration.status, "costing");
+  assert.ok(d.collaboration.slaFinishedAt);
+  assert.ok(d.collaboration.solutions[0].reviewedBy);
+  assert.ok(d.collaboration.solutions[0].handedOverAt);
+});
+test("SLA ends at Sales handover, not at solution submission", () => {
+  const d = step(
+    step(submitted(), "approve_solution", lead),
+    "handover_sales",
     engineer,
+    {},
     new Date(now.getTime() + 5 * DAY),
   );
-  assert.equal(a.collaboration.solutions[0].onTime, false);
+  assert.equal(d.collaboration.solutions[0].onTime, false);
+  assert.equal(submitted().collaboration.slaFinishedAt, undefined);
 });
-test("Decline/lost require reasons and invalid transitions are rejected", () => {
-  assert.throws(() => transition(doc(), { action: "decline" }, lead, now));
+test("Extension requires Sales approval and retains original deadline", () => {
+  let d = step(assigned(), "request_extension", engineer, {
+    dueAt: "2026-10-20",
+  });
+  const original = d.collaboration.dueAt;
+  const extensionId = d.collaboration.extensions[0].id;
+  assert.throws(() => step(d, "approve_extension", engineer, { extensionId }), {
+    status: 403,
+  });
+  d = step(d, "approve_extension", sales, { extensionId });
+  assert.equal(d.collaboration.originalDueAt, original);
+  assert.equal(d.collaboration.dueAt, "2026-10-20T00:00:00.000Z");
   assert.throws(() =>
-    transition(assigned(), { action: "sent_client", note: "Sent" }, sales, now),
+    step(assigned(), "request_extension", engineer, { dueAt: "2026-10-12" }),
   );
-  assert.throws(() =>
-    transition(assigned(), { action: "close_lost" }, sales, now),
+});
+test("Costing Approval is separate; totals are calculated by server and only Finance approves", () => {
+  const d = costed();
+  assert.equal(d.collaboration.status, "costing_approval");
+  assert.equal(d.collaboration.costing.totalCost, 150);
+  assert.equal(d.collaboration.costing.netPrice, 190);
+  assert.throws(() => step(d, "approve_costing", sales), { status: 403 });
+  assert.throws(() => step(d, "sent_client", sales));
+  assert.equal(
+    step(d, "return_costing", finance).collaboration.status,
+    "costing",
   );
+  assert.ok(approved().collaboration.costing.approvedAt);
   assert.throws(
-    () => transition(assigned(), { action: "unknown" }, sales, now),
-    { status: 400 },
+    () =>
+      step(handed(), "save_costing", engineer, {
+        costing: costs,
+        vendorReference: "Q",
+      }),
+    { status: 403 },
+  );
+  assert.throws(() =>
+    step(handed(), "save_costing", scm, {
+      costing: { ...costs, tax: -1 },
+      vendorReference: "Q",
+    }),
+  );
+});
+test("Proposal, follow-up and negotiation are explicit stages", () => {
+  let d = proposal();
+  assert.equal(d.collaboration.status, "proposal");
+  assert.equal(d.collaboration.proposals[0].version, 1);
+  d = step(d, "start_followup", sales);
+  assert.equal(d.collaboration.status, "followup");
+  d = step(d, "start_negotiation", sales);
+  assert.equal(d.collaboration.status, "negotiation");
+  d = step(d, "followup", engineer, {
+    target: "client",
+    nextAction: "Confirm design",
+    followupOwner: "Sales",
+    dueAt: "2026-10-20",
+  });
+  assert.equal(d.collaboration.followups[0].nextAction, "Confirm design");
+});
+test("Technical revisions preserve solution snapshots and invalidate costing approval", () => {
+  let d = step(proposal(), "revision", sales, {
+    dueAt: "2026-10-20",
+    returnTo: "requirements",
+  });
+  assert.equal(d.collaboration.status, "requirements");
+  assert.equal(d.collaboration.costing, undefined);
+  assert.equal(d.collaboration.costingHistory.length, 1);
+  assert.equal(d.collaboration.costingHistory[0].approvedBy, "Finance");
+  assert.equal(d.collaboration.slaFinishedAt, undefined);
+  d.proposedArchitecture = "Changed design";
+  d = step(
+    step(d, "finish_requirements", engineer),
+    "submit_solution",
+    engineer,
+  );
+  assert.equal(d.collaboration.solutions.length, 2);
+  assert.equal(d.collaboration.solutions[0].architecture, "HA firewall");
+});
+test("Hold resumes previous stage and preserves SLA; Lost and Cancel stop progress", () => {
+  const original = assigned();
+  let d = step(original, "hold", sales, { dueAt: "2026-10-25" });
+  assert.equal(d.collaboration.status, "hold");
+  assert.throws(() => step(d, "followup", engineer, { target: "client" }));
+  d = step(d, "resume", sales);
+  assert.equal(d.collaboration.status, "requirements");
+  assert.equal(d.collaboration.dueAt, original.collaboration.dueAt);
+  assert.equal(step(d, "cancel", sales).collaboration.status, "cancelled");
+  assert.equal(
+    step(proposal(), "close_lost", sales).collaboration.status,
+    "lost",
+  );
+});
+test("SCM delivers; Postsales deploys, records acceptance and hands over to client", () => {
+  let d = step(proposal(), "close_won", sales, {
+    assignee: "Postsales",
+    scmOwner: "SCM",
+    orderReference: "PO-1",
+    finalValue: 190,
+  });
+  assert.throws(() => step(d, "start_delivery", postsales), { status: 403 });
+  d = step(d, "start_delivery", scm);
+  assert.throws(() =>
+    step(d, "accept_delivery", postsales, { acceptanceReference: "UAT" }),
+  );
+  d = step(d, "finish_delivery", scm, {
+    deliveryReference: "DC-1",
+    receivingReference: "RC-1",
+  });
+  assert.equal(d.collaboration.status, "deployment");
+  d = step(d, "accept_delivery", postsales, { acceptanceReference: "UAT-1" });
+  assert.equal(d.collaboration.status, "completed");
+  assert.throws(() =>
+    step(d, "client_handover", postsales, { acknowledgement: "ACK" }),
+  );
+  d = step(d, "client_handover", postsales, {
+    acknowledgement: "ACK-1",
+    handoverChecklist: Object.fromEntries(
+      [
+        "asBuilt",
+        "backup",
+        "credentials",
+        "training",
+        "warranty",
+        "support",
+      ].map((k) => [k, true]),
+    ),
+  });
+  assert.equal(d.collaboration.status, "client_handover");
+  assert.equal(d.stage, "client_handover");
+});
+test("Legacy work translates without deleting histories or restarting its deadline", () => {
+  const d = assigned();
+  d.collaboration.version = undefined;
+  d.collaboration.status = "working";
+  const next = step(d, "finish_requirements", engineer);
+  assert.equal(next.collaboration.status, "design");
+  assert.equal(next.collaboration.dueAt, d.collaboration.dueAt);
+  assert.equal(d.collaboration.status, "working");
+});
+
+test("SCM missing prices block approval and unavailable products return to reviewed design", () => {
+  const d = handed();
+  assert.throws(() =>
+    step(d, "save_costing", scm, {
+      costing: costs,
+      vendorReference: "Pending",
+    }),
+  );
+  const issue = step(costed(), "supply_issue", scm);
+  assert.equal(issue.collaboration.status, "costing");
+  assert.equal(issue.collaboration.costing, undefined);
+  const revision = step(costed(), "revision", scm, { returnTo: "design" });
+  assert.equal(revision.collaboration.status, "design");
+  assert.equal(revision.collaboration.costing, undefined);
+  assert.equal(revision.collaboration.solutions.length, 1);
+  assert.throws(() =>
+    step(costed(), "revision", scm, { returnTo: "requirements" }),
   );
 });

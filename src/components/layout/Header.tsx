@@ -32,7 +32,7 @@ export function Header({
           Presales Tracker
         </button>
         <span className="hidden sm:block text-xs text-slate-400">
-          Sales · Presales · Postsales
+          Sales · Presales · SCM · Postsales
         </span>
       </div>
       <div className="flex gap-3 items-center text-slate-500">

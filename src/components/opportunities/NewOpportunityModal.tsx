@@ -97,7 +97,7 @@ export function NewOpportunityModal({
         clientName: client.trim(),
         clientIndustry: "Enterprise SaaS",
         region: "APAC (Singapore/Tokyo)",
-        stage: "qualification",
+        stage: "lead",
         priority: "p2_medium",
         dealComplexity: "medium",
         technicalFitScore: "moderate",
@@ -172,7 +172,7 @@ export function NewOpportunityModal({
         <div className="p-6 border-b flex justify-between gap-3">
           <div>
             <h2 id="new-lead-title" className="text-lg font-semibold">
-              New opportunity
+              Add Lead
             </h2>
             <p className="text-sm text-slate-500 mt-1">
               Add the lead. Presales Team Lead will review and assign.
@@ -324,7 +324,7 @@ export function NewOpportunityModal({
               disabled={busy}
               className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50"
             >
-              {busy ? "Preparing…" : "Submit for review"}
+              {busy ? "Preparing…" : "Create Lead"}
             </button>
           </div>
         </form>

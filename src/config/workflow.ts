@@ -11,6 +11,25 @@ export const STAGE_CONFIG: Record<string, { label: string; shortLabel: string; c
   cancelled: { label: '10. Cancelled', shortLabel: 'Cancelled', color: 'text-gray-500', bg: 'bg-gray-100', borderColor: 'border-gray-300', description: 'Opportunity withdrawn or no longer being pursued' },
 };
 
+STAGE_CONFIG['lead']={label:'Lead',shortLabel:'Lead',description:'Lead',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['qualification']={label:'Review Gate',shortLabel:'Review Gate',description:'Review Gate',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['tech_discovery']={label:'Requirements Analysis',shortLabel:'Requirements Analysis',description:'Requirements Analysis',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['solution_design']={label:'Solution Design',shortLabel:'Solution Design',description:'Solution Design',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['solution_review']={label:'Solution Review',shortLabel:'Solution Review',description:'Solution Review',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['handover_sales']={label:'Handover to Sales',shortLabel:'Handover to Sales',description:'Handover to Sales',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['costing']={label:'Price and Costing',shortLabel:'Price and Costing',description:'Price and Costing',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['proposal_boq']={label:'Proposal Submitted',shortLabel:'Proposal Submitted',description:'Proposal Submitted',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['followup']={label:'Follow-up',shortLabel:'Follow-up',description:'Follow-up',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['commercial_negotiation']={label:'Negotiation',shortLabel:'Negotiation',description:'Negotiation',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['closed_won']={label:'Won',shortLabel:'Won',description:'Won',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['closed_lost']={label:'Lost',shortLabel:'Lost',description:'Lost',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['on_hold']={label:'Hold',shortLabel:'Hold',description:'Hold',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['cancelled']={label:'Cancel',shortLabel:'Cancel',description:'Cancel',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['delivery']={label:'Delivery',shortLabel:'Delivery',description:'Delivery',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['deployment']={label:'Deployment',shortLabel:'Deployment',description:'Deployment',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['completed']={label:'Completed',shortLabel:'Completed',description:'Completed',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+STAGE_CONFIG['client_handover']={label:'Handover to Client',shortLabel:'Handover to Client',description:'Handover to Client',color:'text-slate-700',bg:'bg-slate-100',borderColor:'border-slate-200'};
+
 // The database controls stage order and business-facing copy at runtime. CSS
 // tokens remain local because they are presentation policy, not business data.
 export function applyWorkflowConfig(stages: Array<{ id: string; label?: string; shortLabel?: string; description?: string }>): void {
@@ -26,3 +45,5 @@ export function applyWorkflowConfig(stages: Array<{ id: string; label?: string; 
   for (const key of Object.keys(STAGE_CONFIG)) delete STAGE_CONFIG[key];
   Object.assign(STAGE_CONFIG, next);
 }
+
+STAGE_CONFIG.costing_approval={label:'Costing Approval',shortLabel:'Costing Approval',description:'Finance / Management approves costing',color:'text-amber-700',bg:'bg-amber-50',borderColor:'border-amber-200'};

@@ -52,10 +52,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const now = new Date();
   const totalClients = new Set(opportunities.map(o => o.clientName).filter(Boolean)).size;
   const newOpportunitiesThisMonth = opportunities.filter(o => new Date(o.createdAt) >= monthStart).length;
-  const activeOpportunities = opportunities.filter(o => !['closed_won', 'closed_lost', 'on_hold', 'cancelled'].includes(o.stage)).length;
+  const activeOpportunities = opportunities.filter(o => !['client_handover', 'closed_lost', 'on_hold', 'cancelled'].includes(o.stage)).length;
   const wonOpportunities = opportunities.filter(o => o.stage === 'closed_won' || o.outcome?.outcome === 'won').length;
   const lostOpportunities = opportunities.filter(o => o.stage === 'closed_lost' || o.outcome?.outcome === 'lost').length;
-  const onHoldOpportunities = opportunities.filter(o => o.outcome?.outcome === 'on_hold').length;
+  const onHoldOpportunities = opportunities.filter(o => o.stage === 'on_hold' || o.outcome?.outcome === 'on_hold').length;
   const pendingFollowUps = opportunities.reduce((total, o) => total + (!isTerminalOpportunity(o.stage) ? (o.actionItems || []).filter(a => !a.isCompleted).length : 0), 0);
   const overdueFollowUps = opportunities.reduce((total, o) => total + (!isTerminalOpportunity(o.stage) ? (o.actionItems || []).filter(a => !a.isCompleted && new Date(a.dueDate || 0) < now).length : 0), 0);
   const upcomingFollowUps = pendingFollowUps - overdueFollowUps;
@@ -252,7 +252,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           {[
             { label: 'Total Clients', value: totalClients, tone: 'text-gray-900' },
             { label: 'New This Month', value: newOpportunitiesThisMonth, tone: 'text-blue-700' },
-            { label: 'Active Opportunities', value: activeOpportunities, tone: 'text-blue-700' },
+            { label: 'Active Leads', value: activeOpportunities, tone: 'text-blue-700' },
             { label: 'Won / Matured', value: wonOpportunities, tone: 'text-emerald-700' },
             { label: 'Lost', value: lostOpportunities, tone: 'text-red-700' },
             { label: 'On Hold', value: onHoldOpportunities, tone: 'text-amber-700' },

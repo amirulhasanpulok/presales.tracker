@@ -47,6 +47,8 @@ try {
     ["lead", "role-presales-lead"],
     ["delivery", "role-delivery"],
     ["admin", "role-admin"],
+    ["scm", "role-scm"],
+    ["finance", "role-finance"],
   ]) {
     const row = { id, name: id, email: `${id}@example.invalid`, role_id: role };
     users[id] = row;
@@ -158,7 +160,7 @@ try {
       201,
     );
     assert.equal(doc.accountExecutive, "sales");
-    assert.equal(doc.stage, "qualification");
+    assert.equal(doc.stage, "lead");
     assert.equal(doc.leadSolutionArchitect, "Unassigned");
     const path = "/opportunities/" + doc.id;
     assert.equal(doc.leadInfo.surveyNumber, "SUR-42");
@@ -191,12 +193,28 @@ try {
       );
     const leadBootstrap = await request("lead", "/bootstrap");
     assert.equal(leadBootstrap.opportunities.length, 1);
-    assert.equal(leadBootstrap.teamDirectory.length, 7);
+    assert.equal(leadBootstrap.teamDirectory.length, 9);
     const otherSales = await request("other-sales", "/bootstrap");
     assert.equal(otherSales.opportunities.length, 0);
+    doc = await action(
+      "submit_lead",
+      { note: "Ready for qualification" },
+      "sales",
+    );
+    const criteria = Object.fromEntries(
+      [
+        "scope",
+        "technical",
+        "budget",
+        "timeline",
+        "business",
+        "information",
+      ].map((k) => [k, true]),
+    );
+    await action("assign", { assignee: "engineer" }, "lead", 422);
     await action("assign", { assignee: "engineer" }, "sales", 403);
     await action("assign", { assignee: "sales" }, "lead", 422);
-    doc = await action("assign", { assignee: "engineer" });
+    doc = await action("assign", { assignee: "engineer", criteria });
     assert.equal(
       (await request("engineer", "/bootstrap")).opportunities.length,
       1,
@@ -277,11 +295,90 @@ try {
       "sales",
     );
     doc = await action(
+      "finish_requirements",
+      { note: "Client requirements confirmed" },
+      "engineer",
+    );
+    doc = await action(
       "submit_solution",
       { note: "Firewall design" },
       "engineer",
     );
-    doc = await action("sent_client", { note: "Emailed proposal" }, "sales");
+    doc = await action("approve_solution", { note: "Design and BOQ verified" });
+    doc = await action(
+      "handover_sales",
+      { note: "Reviewed scope handed over" },
+      "engineer",
+    );
+    const costing = {
+      equipment: 100,
+      license: 10,
+      implementation: 20,
+      service: 5,
+      transport: 5,
+      tax: 10,
+      other: 0,
+      sellingPrice: 200,
+      discount: 10,
+    };
+    await action(
+      "save_costing",
+      { costing, vendorReference: "Pending", note: "Quote not confirmed" },
+      "scm",
+      422,
+    );
+    doc = await action(
+      "supply_issue",
+      { note: "Waiting for confirmed vendor quotation" },
+      "scm",
+    );
+    doc = await action(
+      "save_costing",
+      {
+        costing,
+        supplyConfirmed: true,
+        vendorReference: "OEM-Q1",
+        note: "Quotation verified",
+      },
+      "scm",
+    );
+    assert.equal(doc.collaboration.status, "costing_approval");
+    await action(
+      "approve_costing",
+      { note: "Sales cannot approve" },
+      "sales",
+      403,
+    );
+    doc = await action(
+      "approve_costing",
+      { note: "Margin approved" },
+      "finance",
+    );
+    const engineerView = (await request("engineer", "/bootstrap"))
+      .opportunities[0];
+    assert.equal(engineerView.collaboration.costing, undefined);
+    doc = await action(
+      "sent_client",
+      {
+        note: "Emailed proposal",
+        proposalReference: "P-1",
+        paymentTerms: "30 days",
+        validUntil: new Date(Date.now() + 30 * 86400000).toISOString(),
+        deliveryTimeline: "2 weeks",
+        warranty: "1 year",
+      },
+      "sales",
+    );
+    doc = await action(
+      "start_followup",
+      { note: "Awaiting customer feedback" },
+      "sales",
+    );
+    doc = await action(
+      "start_negotiation",
+      { note: "Customer requested discussion" },
+      "sales",
+    );
     doc = await action(
       "followup",
       { target: "client", note: "Client requests redundant design" },
@@ -320,6 +417,8 @@ try {
       },
       "sales",
     );
+    doc = (await request("engineer", "/bootstrap")).opportunities[0];
+    assert.equal(doc.collaboration.costingHistory, undefined);
     doc = await request("engineer", path, "PUT", {
       ...doc,
       proposedArchitecture: "Redundant firewall pair",
@@ -330,9 +429,48 @@ try {
       doc.collaboration.solutions[0].architecture,
       "Firewall solution",
     );
+    doc = await action("approve_solution", { note: "HA solution approved" });
+    doc = await action(
+      "handover_sales",
+      { note: "Final reviewed solution" },
+      "engineer",
+    );
+    doc = await action(
+      "save_costing",
+      {
+        costing,
+        supplyConfirmed: true,
+        vendorReference: "OEM-Q2",
+        note: "Revised costs",
+      },
+      "scm",
+    );
+    doc = await action(
+      "approve_costing",
+      { note: "Revised margin approved" },
+      "finance",
+    );
+    doc = await action(
+      "sent_client",
+      {
+        note: "Final proposal",
+        proposalReference: "P-2",
+        paymentTerms: "30 days",
+        validUntil: new Date(Date.now() + 30 * 86400000).toISOString(),
+        deliveryTimeline: "2 weeks",
+        warranty: "1 year",
+      },
+      "sales",
+    );
     doc = await action(
       "close_won",
-      { note: "Purchase order received", assignee: "delivery" },
+      {
+        note: "Purchase order received",
+        assignee: "delivery",
+        scmOwner: "scm",
+        orderReference: "PO-1",
+        finalValue: 190,
+      },
       "sales",
     );
     await action(
@@ -344,14 +482,52 @@ try {
     doc = await action(
       "start_delivery",
       { note: "Accepted delivery scope" },
+      "scm",
+    );
+    await action(
+      "finish_delivery",
+      {
+        note: "Postsales cannot confirm SCM delivery",
+        deliveryReference: "DC-1",
+        receivingReference: "RC-1",
+      },
       "delivery",
+      403,
+    );
+    doc = await action(
+      "finish_delivery",
+      {
+        note: "Delivered and received",
+        deliveryReference: "DC-1",
+        receivingReference: "RC-1",
+      },
+      "scm",
     );
     doc = await action(
       "accept_delivery",
-      { note: "Client signed acceptance" },
+      { note: "Client signed acceptance", acceptanceReference: "UAT-1" },
       "delivery",
     );
     assert.equal(doc.collaboration.status, "completed");
+    doc = await action(
+      "client_handover",
+      {
+        note: "Final client handover",
+        acknowledgement: "ACK-1",
+        handoverChecklist: Object.fromEntries(
+          [
+            "asBuilt",
+            "backup",
+            "credentials",
+            "training",
+            "warranty",
+            "support",
+          ].map((k) => [k, true]),
+        ),
+      },
+      "delivery",
+    );
+    assert.equal(doc.collaboration.status, "client_handover");
     const stored = (
       await query("SELECT doc FROM opportunities WHERE id=$1", [doc.id])
     ).rows[0].doc;

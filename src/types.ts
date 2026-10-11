@@ -1,4 +1,5 @@
 export type OpportunityStage = 
+  | 'lead' | 'solution_review' | 'handover_sales' | 'costing_approval' | 'costing' | 'followup' | 'delivery' | 'deployment' | 'completed' | 'client_handover'
   | 'qualification'
   | 'tech_discovery'
   | 'solution_design'
@@ -240,6 +241,7 @@ export interface Opportunity {
   importReviewRequired?: boolean;
   salesTeam?: string;
   postsalesOwner?: string;
+  scmOwner?: string;
   oemEngagements?: string[];
   presalesEngineerSecondary?: string;
   supportingPresalesEngineers?: string[];
@@ -285,7 +287,24 @@ export interface LeadInformation {
 }
 
 export interface Collaboration {
-  status: 'review' | 'working' | 'solution_ready' | 'client_followup' | 'revision' | 'declined' | 'won' | 'lost' | 'delivery' | 'completed';
+  version?: number;
+  qualification?: {criteria:Record<string,boolean>;decision:string;note:string;at:string;by:string};
+  stageNotes?: Record<string,{note:string;at:string;by:string}>;
+  costing?: Record<string,any>;
+  costingApproved?: boolean;
+  costingHistory?: Array<Record<string,any>>;
+  supplyProgress?: Record<string,string>;
+  supplyIssue?: {note:string;at:string;by:string};
+  deploymentProgress?: Record<string,string>;
+  proposals?: Array<Record<string,any>>;
+  order?: {reference:string;finalValue:number;note:string;at:string;by:string};
+  holdReviewAt?: string;
+  resumeStatus?: string;
+  slaFinishedAt?: string;
+  deliveryEvidence?: {challan:string;receiving:string;note:string;at:string;by:string};
+  acceptanceReference?: string;
+  clientHandover?: {checklist:Record<string,boolean>;acknowledgement:string;note:string;at:string;by:string};
+  status: 'lead' | 'needs_info' | 'requirements' | 'design' | 'solution_review' | 'handover_sales' | 'costing_approval' | 'costing' | 'proposal' | 'followup' | 'negotiation' | 'hold' | 'cancelled' | 'deployment' | 'client_handover' | 'review' | 'working' | 'solution_ready' | 'client_followup' | 'revision' | 'declined' | 'won' | 'lost' | 'delivery' | 'completed';
   cycle: number;
   assignedAt?: string;
   assignedBy?: string;
@@ -293,9 +312,9 @@ export interface Collaboration {
   dueAt?: string;
   changeRequest?: string;
   nextFollowUpAt?: string | null;
-  solutions: Array<{ id: string; version: number; cycle: number; summary: string; submittedAt: string; submittedBy: string; dueAt: string; onTime: boolean; architecture: string; boq: BOQSummary; documents: OpportunityDocument[]; sentAt?: string; sentBy?: string; submissionNote?: string }>;
+  solutions: Array<{ id: string; version: number; cycle: number; summary: string; submittedAt: string; submittedBy: string; dueAt: string; onTime: boolean; architecture: string; boq: BOQSummary; documents: OpportunityDocument[]; reviewedAt?: string; reviewedBy?: string; reviewNote?: string; handedOverAt?: string; handedOverBy?: string; sentAt?: string; sentBy?: string; submissionNote?: string }>;
   extensions: Array<{ id: string; cycle: number; status: 'pending' | 'approved' | 'rejected' | 'superseded'; reason: string; previousDueAt: string; requestedDueAt: string; requestedAt: string; requestedBy: string; decidedAt?: string; decidedBy?: string; decisionNote?: string }>;
-  followups: Array<{ id: string; target: string; note: string; author: string; at: string; nextAt?: string }>;
+  followups: Array<{ id: string; target: string; note: string; author: string; at: string; nextAt?: string; owner?: string; nextAction?: string }>;
   acceptanceNote?: string;
 }
 

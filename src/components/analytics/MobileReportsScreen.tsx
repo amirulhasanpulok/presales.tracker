@@ -4,7 +4,7 @@ import { ActiveTab, Opportunity } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 
 export const MobileReportsScreen: React.FC<{ opportunities: Opportunity[]; onNavigateTab: (tab: ActiveTab) => void }> = ({ opportunities, onNavigateTab }) => {
-  const won = opportunities.filter(o => o.stage === 'closed_won').length;
+  const won = opportunities.filter(o => (o.stage === 'closed_won' || o.outcome?.outcome === 'won')).length;
   const lost = opportunities.filter(o => o.stage === 'closed_lost').length;
   const activities = opportunities.reduce((total, opportunity) => total + (opportunity.activities || []).length, 0);
   const boqValue = opportunities.reduce((total, opportunity) => total + (opportunity.boq?.totalContractValue || 0), 0);

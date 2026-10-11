@@ -1,9 +1,16 @@
 import React, { useState } from "react";
 import { Opportunity, UserAccount } from "../../types";
 import { api } from "../../api";
-import { WORK_LABELS, localDate, overdue } from "../../utils/collaboration";
+import {
+  WORK_LABELS,
+  FLOW,
+  activeSLA,
+  currentStatus,
+  localDate,
+  overdue,
+} from "../../utils/collaboration";
 import { exportBOQCSV } from "../../utils/exportUtils";
-import { LeadInformation } from './LeadInformation';
+import { LeadInformation } from "./LeadInformation";
 
 type Props = {
   opportunity: Opportunity;
@@ -22,6 +29,14 @@ export function CollaborationWorkspace({
   onNavigate,
 }: Props) {
   const w = o.collaboration;
+  const status = currentStatus(o);
+  const [extras, setExtras] = useState<Record<string, string>>({});
+  const [supplyConfirmed, setSupplyConfirmed] = useState(false);
+  const [criteria, setCriteria] = useState<Record<string, boolean>>({});
+  const [handoverChecklist, setHandoverChecklist] = useState<
+    Record<string, boolean>
+  >({});
+  const [costing, setCosting] = useState<Record<string, string>>({});
   const [action, setAction] = useState("");
   const [note, setNote] = useState("");
   const [assignee, setAssignee] = useState("");
@@ -48,10 +63,32 @@ export function CollaborationWorkspace({
     admin ||
     (["role-delivery", "role-postsales"].includes(user.roleId || "") &&
       o.postsalesOwner === user.name);
-  const working = ["working", "revision"].includes(w?.status || "");
+  const scm =
+    admin ||
+    (user.roleId === "role-scm" &&
+      (o.scmOwner === user.name ||
+        [
+          "costing",
+          "costing_approval",
+          "proposal",
+          "followup",
+          "negotiation",
+        ].includes(status)));
+  const finance = admin || can("workflow.finance");
+  const working = activeSLA(o);
   const open =
     !!w &&
-    !["declined", "won", "lost", "delivery", "completed"].includes(w.status);
+    ![
+      "declined",
+      "won",
+      "lost",
+      "hold",
+      "cancelled",
+      "delivery",
+      "deployment",
+      "completed",
+      "client_handover",
+    ].includes(status);
   const start = (value: string, id = "") => {
     setAction(value);
     setNote("");
@@ -60,31 +97,101 @@ export function CollaborationWorkspace({
     setSupporters([]);
     setExtensionId(id);
     setError("");
+    setExtras({});
+    setSupplyConfirmed(false);
+    setCriteria({});
+    setHandoverChecklist({});
+    setCosting({});
   };
   const choices: Array<[string, string]> = [];
-  if (review && (!w || w.status === "review"))
-    choices.push(["assign", w ? "Accept & assign" : "Start team workflow"]);
-  if (review && w?.status === "review")
-    choices.push(["decline", "Decline lead"]);
-  if (presales && working)
+  if (sales && ["lead", "needs_info"].includes(status))
+    choices.push(["submit_lead", "Submit to Review Gate"]);
+  if (review && (!w || ["review", "needs_info"].includes(status)))
+    choices.push(["assign", "Qualify & assign"], ["decline", "Decline lead"]);
+  if (review && status === "review")
+    choices.push(["request_info", "Request more information"]);
+  if (presales && status === "requirements")
+    choices.push(["finish_requirements", "Complete Requirements Analysis"]);
+  if (presales && status === "design")
+    choices.push(["submit_solution", "Submit for Solution Review"]);
+  if (review && status === "solution_review")
     choices.push(
-      ["submit_solution", "Submit solution to Sales"],
-      ["request_extension", "Request more time"],
+      ["approve_solution", "Approve solution"],
+      ["return_solution", "Return to Solution Design"],
     );
-  if (sales && w?.status === "solution_ready")
-    choices.push(["sent_client", "Record sent to client"]);
+  if (presales && status === "handover_sales")
+    choices.push(["handover_sales", "Handover to Sales"]);
+  if (presales && working)
+    choices.push(["request_extension", "Request more time"]);
+  if ((sales || scm) && status === "costing")
+    choices.push(["save_costing", "Prepare / revise costing"]);
+  if (
+    finance &&
+    status === "costing_approval" &&
+    w?.costing &&
+    !w.costing.approvedAt
+  )
+    choices.push(["approve_costing", "Approve cost and price"]);
+  if (finance && status === "costing_approval")
+    choices.push(["return_costing", "Return costing for correction"]);
+  if (sales && status === "costing_approval" && w?.costing?.approvedAt)
+    choices.push(["sent_client", "Submit proposal to client"]);
+  if (sales && status === "proposal")
+    choices.push(["start_followup", "Start follow-up"]);
+  if (sales && status === "followup")
+    choices.push(["start_negotiation", "Start negotiation"]);
+  if (scm && ["costing", "costing_approval"].includes(status))
+    choices.push(["supply_issue", "Vendor price pending / supply issue"]);
+  if (
+    scm &&
+    [
+      "costing",
+      "costing_approval",
+      "proposal",
+      "followup",
+      "negotiation",
+    ].includes(status)
+  )
+    choices.push(["revision", "Product unavailable — request redesign"]);
   if (
     (sales || presales) &&
-    ["solution_ready", "client_followup"].includes(w?.status || "")
+    [
+      "handover_sales",
+      "costing",
+      "costing_approval",
+      "proposal",
+      "followup",
+      "negotiation",
+    ].includes(status)
   )
-    choices.push(["revision", "Client requested changes"]);
+    choices.push(["revision", "Client requested technical changes"]);
+  if (sales && ["proposal", "followup", "negotiation"].includes(status))
+    choices.push(
+      ["revise_costing", "Revise commercial terms"],
+      ["close_won", "Won"],
+      ["close_lost", "Lost"],
+    );
   if ((sales || presales) && open) choices.push(["followup", "Log follow-up"]);
-  if (sales && open && w?.status !== "review")
-    choices.push(["close_won", "Close won"], ["close_lost", "Close lost"]);
-  if (postsales && w?.status === "won")
-    choices.push(["start_delivery", "Accept handover & start delivery"]);
-  if (postsales && w?.status === "delivery")
-    choices.push(["accept_delivery", "Record client acceptance"]);
+  if (sales && open) choices.push(["hold", "Hold"], ["cancel", "Cancel lead"]);
+  if (sales && status === "hold")
+    choices.push(["resume", "Resume lead"], ["cancel", "Cancel lead"]);
+  if (scm && status === "won")
+    choices.push(["start_delivery", "Accept handover & start Delivery"]);
+  if (scm && status === "delivery")
+    choices.push(
+      ["delivery_update", "Update procurement / delivery"],
+      ["finish_delivery", "Confirm delivery & release to Deployment"],
+    );
+  if (postsales && status === "deployment")
+    choices.push(
+      ["deployment_update", "Update deployment progress"],
+      ["accept_delivery", "Complete deployment & record acceptance"],
+    );
+  if (postsales && status === "completed")
+    choices.push(["client_handover", "Complete Handover to Client"]);
+  const uniqueChoices = choices.filter(
+    ([key], i) => choices.findIndex(([k]) => k === key) === i,
+  );
   const labels: Record<string, string> = Object.fromEntries([
     ...choices,
     ["approve_extension", "Approve extension"],
@@ -109,6 +216,13 @@ export function CollaborationWorkspace({
         target,
         extensionId,
         dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
+        ...extras,
+        criteria,
+        handoverChecklist,
+        supplyConfirmed,
+        costing: Object.fromEntries(
+          Object.entries(costing).map(([k, v]) => [k, Number(v)]),
+        ),
         expectedUpdatedAt: o.updatedAt,
       });
       onSaved(saved);
@@ -123,11 +237,25 @@ export function CollaborationWorkspace({
     "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white";
   return (
     <div className="space-y-4">
+      <nav
+        aria-label="Lead lifecycle"
+        className="flex gap-2 overflow-x-auto pb-2"
+      >
+        {FLOW.map((step, i) => (
+          <span
+            key={step}
+            aria-current={status === step ? "step" : undefined}
+            className={`shrink-0 text-xs rounded-lg px-3 py-2 border ${status === step ? "bg-blue-600 text-white" : "bg-white text-slate-500"}`}
+          >
+            {i + 1}. {WORK_LABELS[step]}
+          </span>
+        ))}
+      </nav>
       <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
         <div className="flex flex-wrap justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">
-              {WORK_LABELS[w?.status || ""] || "Existing opportunity"}
+              {WORK_LABELS[status] || "Existing lead"}
             </h2>
             <p className="text-sm text-slate-500 mt-1">
               {w
@@ -163,12 +291,165 @@ export function CollaborationWorkspace({
           <div>
             <p className="text-xs text-slate-400">Postsales</p>
             {o.postsalesOwner || "Unassigned"}
+            <p className="text-xs text-slate-500 mt-1">
+              SCM · {o.scmOwner || "Unassigned"}
+            </p>
           </div>
         </div>
         {w?.originalDueAt && (
           <p className="text-xs text-slate-500">
             First SLA deadline: {localDate(w.originalDueAt)} · 4 calendar days
             from assignment
+          </p>
+        )}
+        {status === "hold" && (
+          <p className="text-sm text-amber-700">
+            On hold · review {localDate(w?.holdReviewAt)} · resumes to{" "}
+            {WORK_LABELS[w?.resumeStatus || ""]}
+          </p>
+        )}
+        {w?.qualification && (
+          <details className="text-sm border rounded-lg p-3">
+            <summary>Qualification Gate · {w.qualification.decision}</summary>
+            <p>
+              {w.qualification.by} · {localDate(w.qualification.at)}
+            </p>
+            <p>{w.qualification.note}</p>
+            {Object.entries(w.qualification.criteria).map(([k, v]) => (
+              <p key={k}>
+                {v ? "✓" : "—"} {k}
+              </p>
+            ))}
+          </details>
+        )}
+        {w?.supplyIssue && (
+          <p className="text-sm text-amber-700 bg-amber-50 rounded-lg p-3">
+            SCM issue — costing pending: {w.supplyIssue.note} ·{" "}
+            {w.supplyIssue.by}
+          </p>
+        )}
+        {w?.costing && (
+          <div className="text-sm bg-slate-50 rounded-lg p-3">
+            <h3 className="font-medium">
+              Cost sheet ·{" "}
+              {w.costing.approvedAt
+                ? "Approved"
+                : "Awaiting Finance / Management approval"}
+            </h3>
+            <div className="grid sm:grid-cols-3 gap-2 mt-2">
+              {[
+                "equipment",
+                "license",
+                "implementation",
+                "service",
+                "transport",
+                "tax",
+                "other",
+                "totalCost",
+                "sellingPrice",
+                "discount",
+                "netPrice",
+                "marginPercent",
+              ].map((k) => (
+                <p key={k}>
+                  {k}:{" "}
+                  {Number(w.costing![k] || 0).toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                  {k === "marginPercent" ? "%" : ""}
+                </p>
+              ))}
+            </div>
+            <p className="mt-2">
+              Vendor quotations: {w.costing.vendorReference}
+            </p>
+            <p>
+              {w.costing.preparedBy} · {localDate(w.costing.preparedAt)}
+              {w.costing.approvedBy
+                ? ` · Approved by ${w.costing.approvedBy}`
+                : ""}
+            </p>
+          </div>
+        )}
+        {!!w?.costingHistory?.length && (
+          <details className="text-sm border rounded-lg p-3">
+            <summary>Previous cost sheets ({w.costingHistory.length})</summary>
+            {w.costingHistory.map((c, i) => (
+              <div key={i} className="mt-3">
+                <p>
+                  Solution v{c.solutionVersion} · {c.vendorReference} ·{" "}
+                  {localDate(c.preparedAt)}
+                </p>
+                <p>
+                  Total cost: {c.totalCost} · Net price: {c.netPrice} · Margin:{" "}
+                  {Number(c.marginPercent).toFixed(2)}%
+                </p>
+                <p>
+                  {c.approvedBy
+                    ? `Approved by ${c.approvedBy}`
+                    : "Not approved"}{" "}
+                  · {c.note}
+                </p>
+              </div>
+            ))}
+          </details>
+        )}
+        {w?.order && (
+          <p className="text-sm">
+            Order: {w.order.reference} · Final value:{" "}
+            {w.order.finalValue.toLocaleString()}
+          </p>
+        )}
+        {w?.proposals?.map((p, i) => (
+          <details key={i} className="text-sm border rounded-lg p-3">
+            <summary>
+              Proposal v{p.version} · {p.reference} · {localDate(p.at)}
+            </summary>
+            <p>Payment: {p.paymentTerms}</p>
+            <p>Valid until: {localDate(p.validUntil)}</p>
+            <p>Delivery: {p.deliveryTimeline}</p>
+            <p>Warranty / support: {p.warranty}</p>
+          </details>
+        ))}
+        {[w?.supplyProgress, w?.deploymentProgress]
+          .filter(Boolean)
+          .map((progress, i) => (
+            <div key={i} className="text-sm bg-slate-50 rounded-lg p-3">
+              {Object.entries(progress!).map(([k, v]) => (
+                <p key={k}>
+                  <span className="capitalize text-slate-500">{k}: </span>
+                  {k === "at" ? localDate(v) : v}
+                </p>
+              ))}
+            </div>
+          ))}
+        {w?.stageNotes && (
+          <details className="text-sm border rounded-lg p-3">
+            <summary>Stage completion notes</summary>
+            {Object.entries(w.stageNotes).map(([k, v]) => (
+              <div key={k} className="mt-3">
+                <p className="font-medium">{WORK_LABELS[k] || k}</p>
+                <p className="whitespace-pre-wrap">{v.note}</p>
+                <p className="text-xs text-slate-500">
+                  {v.by} · {localDate(v.at)}
+                </p>
+              </div>
+            ))}
+          </details>
+        )}
+        {w?.deliveryEvidence && (
+          <p className="text-sm">
+            Delivery challan: {w.deliveryEvidence.challan} · Receiving
+            confirmation: {w.deliveryEvidence.receiving}
+          </p>
+        )}
+        {w?.acceptanceReference && (
+          <p className="text-sm">UAT / acceptance: {w.acceptanceReference}</p>
+        )}
+        {w?.clientHandover && (
+          <p className="text-sm text-green-700">
+            Client handover: {w.clientHandover.acknowledgement} ·{" "}
+            {localDate(w.clientHandover.at)}
           </p>
         )}
         {o.requirementDetails && (
@@ -190,7 +471,7 @@ export function CollaborationWorkspace({
           </p>
         )}
         <div className="flex flex-wrap gap-2">
-          {choices.map(([key, label]) => (
+          {uniqueChoices.map(([key, label]) => (
             <button
               key={key}
               disabled={busy}
@@ -265,6 +546,33 @@ export function CollaborationWorkspace({
               </label>
             )}
             {action === "assign" && (
+              <fieldset className="grid sm:grid-cols-2 gap-2">
+                <legend className="text-sm font-medium mb-2">
+                  Qualification criteria — all required
+                </legend>
+                {[
+                  ["scope", "Scope clear"],
+                  ["technical", "Technical capability confirmed"],
+                  ["budget", "Budget feasible / uncertainty documented"],
+                  ["timeline", "Timeline feasible"],
+                  ["business", "Business viability confirmed"],
+                  ["information", "Required information available"],
+                ].map(([k, label]) => (
+                  <label key={k} className="text-sm flex gap-2">
+                    <input
+                      required
+                      type="checkbox"
+                      checked={!!criteria[k]}
+                      onChange={(e) =>
+                        setCriteria({ ...criteria, [k]: e.target.checked })
+                      }
+                    />
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
+            )}
+            {action === "assign" && (
               <fieldset>
                 <legend className="text-xs text-slate-600 mb-2">
                   Supporting engineers (optional)
@@ -308,7 +616,7 @@ export function CollaborationWorkspace({
                 </select>
               </label>
             )}
-            {["request_extension", "revision", "followup"].includes(action) && (
+            {["request_extension", "followup", "hold"].includes(action) && (
               <label className="block text-xs text-slate-600">
                 {action === "followup"
                   ? "Next follow-up (optional)"
@@ -322,6 +630,204 @@ export function CollaborationWorkspace({
                   className={`${field} mt-1`}
                 />
               </label>
+            )}
+            {action === "revision" && (
+              <p className="text-xs text-slate-500">
+                A new 4-day revision SLA starts now. More time requires a
+                Sales-approved extension.
+              </p>
+            )}
+            {action === "close_won" && (
+              <label className="block text-xs">
+                SCM owner
+                <select
+                  required
+                  className={field}
+                  value={extras.scmOwner || ""}
+                  onChange={(e) =>
+                    setExtras({ ...extras, scmOwner: e.target.value })
+                  }
+                >
+                  <option value="">Choose SCM owner</option>
+                  {people
+                    .filter((p) => p.roleId === "role-scm")
+                    .map((p) => (
+                      <option key={p.id} value={p.name}>
+                        {p.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            )}
+            {action === "revision" && (
+              <label className="block text-xs">
+                Return to
+                <select
+                  className={field}
+                  value={extras.returnTo || "design"}
+                  onChange={(e) =>
+                    setExtras({ ...extras, returnTo: e.target.value })
+                  }
+                >
+                  <option value="design">Solution Design</option>
+                  <option value="requirements">Requirements Analysis</option>
+                </select>
+              </label>
+            )}
+            {action === "save_costing" && (
+              <label className="flex gap-2 text-sm">
+                <input
+                  required
+                  type="checkbox"
+                  checked={supplyConfirmed}
+                  onChange={(e) => setSupplyConfirmed(e.target.checked)}
+                />
+                Vendor prices and product availability confirmed
+              </label>
+            )}
+            {action === "save_costing" && (
+              <div className="grid sm:grid-cols-3 gap-3">
+                {[
+                  "equipment",
+                  "license",
+                  "implementation",
+                  "service",
+                  "transport",
+                  "tax",
+                  "other",
+                  "sellingPrice",
+                  "discount",
+                ].map((k) => (
+                  <label key={k} className="text-xs capitalize">
+                    {k.replace(/([A-Z])/g, " $1")}
+                    <input
+                      required
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className={field}
+                      value={costing[k] ?? ""}
+                      onChange={(e) =>
+                        setCosting({ ...costing, [k]: e.target.value })
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+            )}
+            {(action === "delivery_update"
+              ? [
+                  ["vendor", "Vendor / procurement status"],
+                  ["stock", "Stock allocation"],
+                  ["shipment", "Shipment / delivery status"],
+                  ["pendingItems", "Pending items (or None)"],
+                ]
+              : action === "deployment_update"
+                ? [
+                    [
+                      "implementation",
+                      "Installation / configuration / testing progress",
+                    ],
+                    ["issues", "Issues / risks (or None)"],
+                    ["pendingItems", "Pending work (or None)"],
+                  ]
+                : action === "save_costing"
+                  ? [["vendorReference", "Vendor/OEM quotation references"]]
+                  : action === "sent_client"
+                    ? [
+                        ["proposalReference", "Proposal reference / document"],
+                        ["paymentTerms", "Payment terms"],
+                        ["validUntil", "Valid until (date)"],
+                        ["deliveryTimeline", "Delivery timeline"],
+                        ["warranty", "Warranty and support"],
+                      ]
+                    : action === "close_won"
+                      ? [
+                          [
+                            "orderReference",
+                            "PO / Work Order / contract reference",
+                          ],
+                          ["finalValue", "Final deal value"],
+                        ]
+                      : action === "finish_delivery"
+                        ? [
+                            ["deliveryReference", "Delivery challan reference"],
+                            [
+                              "receivingReference",
+                              "Client receiving confirmation",
+                            ],
+                          ]
+                        : action === "accept_delivery"
+                          ? [
+                              [
+                                "acceptanceReference",
+                                "UAT / customer acceptance reference",
+                              ],
+                            ]
+                          : action === "client_handover"
+                            ? [
+                                [
+                                  "acknowledgement",
+                                  "Client handover acknowledgement reference",
+                                ],
+                              ]
+                            : action === "followup"
+                              ? [
+                                  ["followupOwner", "Next action owner"],
+                                  ["nextAction", "Next action"],
+                                ]
+                              : []
+            ).map(([k, label]) => (
+              <label key={k} className="block text-xs text-slate-600">
+                {label}
+                <input
+                  required
+                  type={
+                    k === "finalValue"
+                      ? "number"
+                      : k === "validUntil"
+                        ? "date"
+                        : "text"
+                  }
+                  min={k === "finalValue" ? 0 : undefined}
+                  step={k === "finalValue" ? "0.01" : undefined}
+                  className={`${field} mt-1`}
+                  value={extras[k] || ""}
+                  onChange={(e) =>
+                    setExtras({ ...extras, [k]: e.target.value })
+                  }
+                />
+              </label>
+            ))}
+            {action === "client_handover" && (
+              <fieldset className="grid sm:grid-cols-2 gap-2">
+                <legend className="text-sm font-medium mb-2">
+                  Client handover checklist
+                </legend>
+                {[
+                  ["asBuilt", "As-built documents"],
+                  ["backup", "Configuration backup"],
+                  ["credentials", "Credentials transferred securely"],
+                  ["training", "Training / user guide"],
+                  ["warranty", "License / warranty details"],
+                  ["support", "Support contact and responsibilities"],
+                ].map(([k, label]) => (
+                  <label className="text-sm flex gap-2" key={k}>
+                    <input
+                      required
+                      type="checkbox"
+                      checked={!!handoverChecklist[k]}
+                      onChange={(e) =>
+                        setHandoverChecklist({
+                          ...handoverChecklist,
+                          [k]: e.target.checked,
+                        })
+                      }
+                    />
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
             )}
             <label className="block text-xs text-slate-600">
               {action === "revision"
@@ -340,8 +846,8 @@ export function CollaborationWorkspace({
             </label>
             {action === "submit_solution" && (
               <p className="text-xs text-slate-500">
-                Saves an immutable copy of the current solution, BOQ and
-                document references.
+                Sends for review and saves an immutable copy of the current
+                solution, BOQ and document references.
               </p>
             )}
             {error && (
@@ -368,7 +874,12 @@ export function CollaborationWorkspace({
           </form>
         )}
       </div>
-      <LeadInformation opportunity={o} canEdit={sales || review} onSaved={onSaved} onDocuments={()=>onNavigate('documents')} />
+      <LeadInformation
+        opportunity={o}
+        canEdit={sales || review}
+        onSaved={onSaved}
+        onDocuments={() => onNavigate("documents")}
+      />
       <div className="flex flex-wrap gap-2">
         {[
           ["technical", "Requirements & solution"],
@@ -434,6 +945,10 @@ export function CollaborationWorkspace({
             .map((f) => (
               <div key={f.id} className="text-sm border-t pt-3">
                 <p className="whitespace-pre-wrap">{f.note}</p>
+                <p className="text-xs mt-1">
+                  {f.nextAction && `Next action: ${f.nextAction}`}{" "}
+                  {f.owner && `· Owner: ${f.owner}`}
+                </p>
                 <p className="text-xs text-slate-500 mt-1">
                   {f.author} → {f.target} · {localDate(f.at)}
                   {f.nextAt && ` · next: ${localDate(f.nextAt)}`}
