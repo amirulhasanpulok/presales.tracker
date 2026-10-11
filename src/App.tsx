@@ -13,6 +13,8 @@ import { api, getToken, SystemPolicies } from './api';
 import { LayoutDashboard, TableProperties, CheckSquare, Building2, MoreHorizontal } from 'lucide-react';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
+import { WorkQueue } from './components/dashboard/WorkQueue';
+import { overdue as solutionOverdue } from './utils/collaboration';
 import { AccessDenied } from './components/common/AccessDenied';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { ChangePasswordScreen } from './components/auth/ChangePasswordScreen';
@@ -124,6 +126,7 @@ const toSalesKAM = (user: UserAccount, opportunities: Opportunity[]): SalesKAM =
 };
 
 const toLiveCalendarEvents = (opportunities: Opportunity[]): CalendarEvent[] => opportunities.flatMap(opportunity => [
+  ...(opportunity.collaboration?.dueAt && ['working','revision'].includes(opportunity.collaboration.status) ? [{ id: `sla-${opportunity.id}`, title: `${opportunity.name}: solution due`, type: 'Solution SLA', date: opportunity.collaboration.dueAt.slice(0,10), time: new Date(opportunity.collaboration.dueAt).toLocaleTimeString('en-GB',{timeZone:'Asia/Dhaka',hour:'2-digit',minute:'2-digit'}), opportunityCode:opportunity.code, clientName:opportunity.clientName, attendees:[opportunity.leadSolutionArchitect], location:'Team workspace', status:'Pending' } as CalendarEvent] : []),
   ...(opportunity.activities || []).map(activity => {
     const date = new Date(activity.timestamp);
     return { id: `activity-${opportunity.id}-${activity.id}`, title: activity.title, type: activity.type, date: Number.isNaN(date.getTime()) ? opportunity.updatedAt.slice(0, 10) : date.toISOString().slice(0, 10), time: Number.isNaN(date.getTime()) ? 'Time not recorded' : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), opportunityCode: opportunity.code, clientName: opportunity.clientName, attendees: activity.attendees || [], location: 'Opportunity Timeline', status: 'Completed' } as CalendarEvent;
@@ -135,6 +138,8 @@ const toLiveCalendarEvents = (opportunities: Opportunity[]): CalendarEvent[] => 
 const toLiveNotifications = (opportunities: Opportunity[]): NotificationItem[] => {
   const now = new Date();
   return opportunities.flatMap(opportunity => [
+    ...(solutionOverdue(opportunity) ? [{id:`alert-sla-${opportunity.id}`,title:'Solution SLA overdue',message:`${opportunity.code}: Presales solution is overdue.`,type:'sla_breach',timestamp:opportunity.collaboration!.dueAt!,read:false,opportunityId:opportunity.id,opportunityCode:opportunity.code} as NotificationItem] : []),
+    ...(opportunity.collaboration?.extensions.filter(e=>e.status==='pending').map(e=>({id:`alert-extension-${e.id}`,title:'Sales approval needed',message:`${opportunity.code}: ${e.reason}`,type:'approval_required',timestamp:e.requestedAt,read:false,opportunityId:opportunity.id,opportunityCode:opportunity.code} as NotificationItem)) || []),
     ...(!isTerminalOpportunity(opportunity.stage) ? (opportunity.actionItems || []).filter(action => !action.isCompleted && new Date(action.dueDate) < now).map(action => ({ id: `alert-action-${opportunity.id}-${action.id}`, title: 'Overdue follow-up', message: `${action.title} is overdue for ${opportunity.clientName}.`, type: 'sla_breach', timestamp: action.dueDate, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem)) : []),
     ...(['draft', 'pending_sa_lead', 'pending_sales_vp', 'pending_finance'].includes(opportunity.boq?.approvalStatus || '') ? [{ id: `alert-boq-${opportunity.id}`, title: 'BOQ approval required', message: `${opportunity.code} is awaiting BOQ approval before commercial handoff.`, type: 'approval_required', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
     ...(['active_testing', 'validating_kpis'].includes(opportunity.poc?.status) ? [{ id: `alert-poc-${opportunity.id}`, title: 'POC milestone active', message: `${opportunity.code} has an active POC validation milestone.`, type: 'poc_milestone', timestamp: opportunity.updatedAt, read: false, opportunityId: opportunity.id, opportunityCode: opportunity.code } as NotificationItem] : []),
@@ -199,6 +204,7 @@ const flatPermissions = (perms: any): string[] =>
       );
 
 export default function App() {
+  const [teamDirectory, setTeamDirectory] = useState<UserAccount[]>([]);
   // Auth / session state
   const [bootState, setBootState] = useState<'loading' | 'ready'>('loading');
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
@@ -243,6 +249,7 @@ export default function App() {
     setOpportunities((data.opportunities ?? []) as Opportunity[]);
     setClients((data.clients ?? []) as ClientAccount[]);
     setUsers((data.users ?? []).map(toUserState));
+    setTeamDirectory(data.teamDirectory ?? []);
     setAuditLogs((data.auditLogs ?? []).map(toAuditShape));
     setScopes((data.scopes ?? []) as ScopeCatalogEntry[]);
     setOems((data.oems ?? []) as OEMEntry[]);
@@ -287,6 +294,7 @@ export default function App() {
   const handleLogin = useCallback(async (user: any) => {
     setCurrentUser(toUserState(user));
     if (user?.mustChangePassword) return;
+    setBootState('loading');
     try {
       const data = await api.bootstrap();
       applyBootstrap(data);
@@ -298,6 +306,8 @@ export default function App() {
       api.logout();
       setCurrentUser(null);
       window.alert('Login succeeded, but the workspace could not be loaded. Please try again.');
+    } finally {
+      setBootState('ready');
     }
   }, [applyBootstrap]);
 
@@ -346,12 +356,9 @@ export default function App() {
   }, [selectedOpportunity, fullDetailOpportunity]);
 
   const handleUpdateOpportunity = useCallback((updated: Opportunity) => {
-    const prev = opportunities.find(o => o.id === updated.id);
-    updateOpportunityLocally(updated);
-    api.updateOpportunity(updated).catch(async (error: any) => {
+    api.updateOpportunity(updated).then(updateOpportunityLocally).catch(async (error: any) => {
       const detail = error?.missing?.length ? ` Missing: ${error.missing.join(', ')}.` : '';
-      window.alert(`Could not save changes.${detail} Reverting to the last saved state.`);
-      if (prev) updateOpportunityLocally(prev);
+      window.alert(`Could not save changes. ${error.message || ''}${detail}`);
     });
   }, [opportunities, updateOpportunityLocally]);
 
@@ -513,7 +520,7 @@ export default function App() {
           setFullDetailOpportunity(null);
           setSelectedClient(null);
         }}
-         onRefreshData={canDo('sys.integrations') ? handleResetData : undefined}
+         onRefreshData={() => api.bootstrap().then(data => { applyBootstrap(data); if (fullDetailOpportunity) { const fresh = (data.opportunities as Opportunity[]).find(o => o.id === fullDetailOpportunity.id); if (fresh) setFullDetailOpportunity(fresh); } }).catch(() => window.alert('Could not refresh team updates. Please try again.'))}
          onToggleSidebar={() => setIsMobileSidebarOpen(true)}
          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
@@ -549,6 +556,10 @@ export default function App() {
             <OpportunityDetailView
               key={fullDetailOpportunity.id}
               opportunity={fullDetailOpportunity}
+              currentUser={currentUser}
+              teamDirectory={teamDirectory}
+              can={canDo}
+              onWorkflowSaved={updateOpportunityLocally}
               onBack={() => setFullDetailOpportunity(null)}
               onUpdateOpportunity={handleUpdateOpportunity}
               onUpdateStage={handleUpdateStage}
@@ -574,15 +585,13 @@ export default function App() {
             <>
               {activeTab === 'dashboard' && (
                 <>
-                  <div className="hidden md:block"><ExecutiveDashboard opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onNavigateTab={(tab) => setActiveTab(tab)} onOpenNewModal={() => setIsNewModalOpen(true)} /></div>
-                  <div className="md:hidden pb-24"><MobileHomeScreen opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onNavigateTab={(tab) => setActiveTab(tab)} onOpenNewOpportunity={handleCreateOpportunityRequest} /></div>
+                  <WorkQueue opportunities={opportunities} onSelectOpportunity={setFullDetailOpportunity} onCreate={handleCreateOpportunityRequest} />
                 </>
               )}
 
               {activeTab === 'opportunities' && (
                 <>
-                  <div className="hidden md:block"><OpportunityTable opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateStage={handleUpdateStage} onOpenNewModal={handleCreateOpportunityRequest} density={density} /></div>
-                  <div className="md:hidden"><MobileOpportunityScreen opportunities={opportunities} onSelectOpportunity={(opp) => setFullDetailOpportunity(opp)} onUpdateStage={handleUpdateStage} onOpenNewModal={handleCreateOpportunityRequest} /></div>
+                  <WorkQueue opportunities={opportunities} onSelectOpportunity={setFullDetailOpportunity} onCreate={handleCreateOpportunityRequest} initialFilter="all" />
                 </>
               )}
 
@@ -791,7 +800,9 @@ export default function App() {
         onClose={() => setIsNewModalOpen(false)}
         onCreateOpportunity={handleCreateOpportunity}
         scopes={scopes}
-        users={users}
+        users={teamDirectory}
+        currentUser={currentUser}
+        clients={clients}
       />}
 
       {/* Global Command Palette (Cmd+K) */}

@@ -9,6 +9,8 @@ export interface PermissionDef {
 // Canonical permission catalog — single source of truth consumed by both the
 // RoleManagementView editor and the runtime access-control layer.
 export const PERMISSION_CATALOG: PermissionDef[] = [
+  { key: 'workflow.review', name: 'Review leads and assign Presales', module: 'Team Workflow' },
+  { key: 'workflow.sales', name: 'Approve SLA extensions and close own Sales deals', module: 'Team Workflow' },
   // Opportunities & Deals
   { key: 'create_opportunity', name: 'Create New Opportunity', module: 'Opportunities & Deals' },
   { key: 'edit_opportunity_core', name: 'Edit Core Deal Terms & TCV', module: 'Opportunities & Deals' },

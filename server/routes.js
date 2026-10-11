@@ -6,6 +6,8 @@ import { query, DEFAULT_WORKFLOW_STAGES } from './db.js';
 import { signToken, verifyPassword, hashPassword, authenticate, loadPrincipal, validatePassword } from './auth.js';
 import { can, requirePermission, requireAnyEditPermission } from './rbac.js';
 import { audit } from './audit.js';
+import { initialCollaboration, transition } from './collaboration.js';
+import { isDeepStrictEqual } from 'node:util';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -59,6 +61,7 @@ async function getWorkflowStages() {
 
 function canAccessOpportunity(req, doc) {
   if (can(req.role, req.user, 'sys.users') || can(req.role, req.user, 'sys.rbac')) return true;
+  if (can(req.role, req.user, 'workflow.review')) return true;
   const roleId = req.user?.roleId || req.user?.role_id;
   if (roleId === 'role-kam') return doc.accountExecutive === req.user?.name;
   if (roleId === 'role-sa') return doc.leadSolutionArchitect === req.user?.name || doc.presalesEngineerSecondary === req.user?.name || (doc.supportingPresalesEngineers || []).includes(req.user?.name);
@@ -89,7 +92,7 @@ function stagePrerequisites(doc, nextStage, workflow = fallbackWorkflow()) {
 }
 
 function changed(previous, next, field) {
-  return JSON.stringify(previous?.[field] ?? null) !== JSON.stringify(next?.[field] ?? null);
+  return !isDeepStrictEqual(previous?.[field] ?? null, next?.[field] ?? null);
 }
 
 function validateOpportunityChanges(req, previous, next) {
@@ -230,6 +233,8 @@ router.get('/bootstrap', authenticate, async (req, res) => {
   const isAdministrator = (req.user?.roleId || req.user?.role_id) === 'role-admin' || (can(req.role, req.user, 'sys.users') && can(req.role, req.user, 'sys.rbac'));
   const scope = isAdministrator
     ? { sql: null, params: [] }
+    : can(req.role, req.user, 'workflow.review')
+      ? { sql: 'true', params: [] }
     : roleId === 'role-kam'
       ? { sql: "o.doc->>'accountExecutive' = $1", params: [req.user?.name] }
       : roleId === 'role-sa'
@@ -281,6 +286,7 @@ router.get('/bootstrap', authenticate, async (req, res) => {
      workflow: parseWorkflow(systemSettings.rows.find(s => s.setting_key === 'workflow_stages')?.setting_value),
      policies: can(req.role, req.user, 'sys.integrations') ? parsePolicy(systemSettings.rows.find(s => s.setting_key === 'policy_config')?.setting_value) : undefined,
     users: can(req.role, req.user, 'sys.users') ? (users.rows || []) : [req.user],
+    teamDirectory: (await query("SELECT id, name, role_id, role, department, status FROM users WHERE lower(status) = 'active' ORDER BY name")).rows.map(u => ({ id: u.id, name: u.name, roleId: u.role_id, role: u.role, department: u.department, status: u.status })),
     auditLogs: can(req.role, req.user, 'sys.audit') ? (auditLogs.rows || []) : [],
   });
 });
@@ -344,12 +350,21 @@ router.post('/opportunities', authenticate, requirePermission('create_opportunit
   }
   const out = {
     ...doc,
+    stage: 'qualification',
+    accountExecutive: (req.user?.roleId || req.user?.role_id) === 'role-kam' ? req.user.name : doc.accountExecutive,
+    leadSolutionArchitect: 'Unassigned',
+    supportingPresalesEngineers: [],
+    postsalesOwner: 'Unassigned',
+    collaboration: initialCollaboration(),
     activities: prependActivities(doc, [
       makeActivity({ req, type: 'Created', title: 'Opportunity created', summary: `Opportunity created by ${req.user?.name || 'Unknown'}.` }),
     ]),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
+  if (!String(out.name || '').trim() || !String(out.clientName || '').trim()) return res.status(400).json({ error: 'invalid_opportunity', hint: 'Client and opportunity name are required.' });
+  const salesOwner = await query("SELECT 1 FROM users WHERE name=$1 AND role_id='role-kam' AND lower(status)='active'", [out.accountExecutive]);
+  if (!salesOwner.rowCount) return res.status(422).json({ error: 'invalid_sales_owner', hint: 'Choose an active Sales owner.' });
   await query('INSERT INTO opportunities (id, doc, owner_id, updated_at) VALUES ($1, $2, $3, now())', [
     out.id,
     JSON.stringify(out),
@@ -395,6 +410,13 @@ router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async
   if (!current.rowCount) return res.status(404).json({ error: 'not_found' });
   const previousDoc = current.rows[0].doc || {};
   if (!canAccessOpportunity(req, previousDoc)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
+  if (changed(previousDoc, doc, 'collaboration')) return res.status(403).json({ error: 'workflow_action_required', hint: 'Use the collaboration workspace for workflow changes.' });
+  if (previousDoc.collaboration) {
+    if (doc.updatedAt !== previousDoc.updatedAt) return res.status(409).json({ error: 'stale_update', hint: 'This opportunity changed. Refresh before saving.' });
+    for (const field of ['collaboration', 'leadSolutionArchitect', 'presalesEngineerSecondary', 'supportingPresalesEngineers', 'postsalesOwner', 'stage', 'outcome', 'accountExecutive', 'handover']) {
+      if (changed(previousDoc, doc, field)) return res.status(403).json({ error: 'workflow_action_required', hint: 'Use the collaboration workspace for assignment and lifecycle changes.' });
+    }
+  }
   const deniedPermission = validateOpportunityChanges(req, previousDoc, doc);
   if (deniedPermission) return res.status(403).json({ error: 'field_permission_required', required: deniedPermission });
   if (doc.stage !== undefined && doc.stage !== previousDoc.stage) {
@@ -441,11 +463,14 @@ router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async
     };
   }
   delete out.updateNote;
-  const result = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 RETURNING id', [
+  out.activities = [out.activities[0], ...(previousDoc.activities || [])];
+  out.documents = (out.documents || []).map(d => ({ ...d, ...(previousDoc.documents || []).find(p => p.id === d.id && p.fileData) }));
+  const result = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 AND doc = $3::jsonb RETURNING id', [
     req.params.id,
     JSON.stringify(out),
+    JSON.stringify(previousDoc),
   ]);
-  if (!result.rowCount) return res.status(404).json({ error: 'not_found' });
+  if (!result.rowCount) return res.status(409).json({ error: 'stale_update', hint: 'Another team member saved changes. Refresh and retry.' });
   const trackedFields = ['stage', 'scopes', 'tender', 'outcome', 'handover', 'boq'];
   const changes = trackedFields.reduce((acc, field) => {
     const before = previousDoc[field];
@@ -461,6 +486,39 @@ router.put('/opportunities/:id', authenticate, requireAnyEditPermission(), async
     meta: { changedFields: Object.keys(changes), changes },
   });
   res.json(stripDocumentContent(out));
+});
+
+router.post('/opportunities/:id/collaboration', authenticate, async (req, res) => {
+  const current = await query('SELECT doc FROM opportunities WHERE id = $1', [req.params.id]);
+  if (!current.rowCount) return res.status(404).json({ error: 'not_found' });
+  const previous = current.rows[0].doc;
+  if (!canAccessOpportunity(req, previous)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
+  if (req.body?.expectedUpdatedAt !== previous.updatedAt) return res.status(409).json({ error: 'stale_update', hint: 'Another team member changed this opportunity. Refresh before continuing.' });
+  const admin = can(req.role, req.user, 'sys.rbac');
+  const roleId = req.user.roleId || req.user.role_id;
+  const actor = {
+    id: req.user.id, name: req.user.name,
+    review: admin || can(req.role, req.user, 'workflow.review'),
+    sales: admin || (can(req.role, req.user, 'workflow.sales') && previous.accountExecutive === req.user.name),
+    presales: admin || can(req.role, req.user, 'workflow.review') || (can(req.role, req.user, 'author_boq') && [previous.leadSolutionArchitect, previous.presalesEngineerSecondary, ...(previous.supportingPresalesEngineers || [])].includes(req.user.name)),
+    postsales: admin || (['role-delivery', 'role-postsales'].includes(roleId) && previous.postsalesOwner === req.user.name),
+  };
+  try {
+    if (['assign', 'close_won'].includes(req.body.action)) {
+      const names = req.body.action === 'assign' ? [req.body.assignee, ...(Array.isArray(req.body.supporters) ? req.body.supporters : [])] : [req.body.assignee];
+      const allowed = req.body.action === 'assign' ? ['role-sa', 'role-presales-lead'] : ['role-delivery', 'role-postsales'];
+      const people = (await query("SELECT name, role_id FROM users WHERE lower(status) = 'active' AND name = ANY($1::text[])", [names])).rows;
+      if (names.some(name => !people.some(p => p.name === name && allowed.includes(p.role_id)))) return res.status(422).json({ error: 'invalid_assignee', hint: 'Choose an active member of the correct team.' });
+    }
+    const out = transition(previous, req.body, actor);
+    const saved = await query('UPDATE opportunities SET doc=$2, updated_at=now() WHERE id=$1 AND doc=$3::jsonb RETURNING id', [req.params.id, JSON.stringify(out), JSON.stringify(previous)]);
+    if (!saved.rowCount) return res.status(409).json({ error: 'stale_update', hint: 'Another team member saved changes. Refresh and retry.' });
+    await audit({ req, action: `workflow.${req.body.action}`, targetType: 'opportunity', targetId: out.id, meta: { previousStatus: previous.collaboration?.status, status: out.collaboration.status, cycle: out.collaboration.cycle } });
+    return res.json(stripDocumentContent(out));
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ error: 'invalid_workflow_action', hint: error.message });
+    throw error;
+  }
 });
 
 router.post('/opportunities/:id/activities', authenticate, requireAnyEditPermission(), async (req, res) => {
@@ -488,7 +546,8 @@ router.post('/opportunities/:id/activities', authenticate, requireAnyEditPermiss
     },
   });
   const out = { ...doc, id: req.params.id, activities: prependActivities(doc, [entry]), updatedAt: new Date().toISOString() };
-  await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1', [req.params.id, JSON.stringify(out)]);
+  const saved = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 AND doc = $3::jsonb RETURNING id', [req.params.id, JSON.stringify(out), JSON.stringify(doc)]);
+  if (!saved.rowCount) return res.status(409).json({ error: 'stale_update', hint: 'Another team member saved changes. Refresh and retry.' });
   await audit({ req, action: 'opportunity.activity.create', targetType: 'opportunity', targetId: req.params.id, meta: { activityId: entry.id, activityType: entry.type, title: entry.title } });
   res.status(201).json(stripDocumentContent(out));
 });
@@ -501,6 +560,7 @@ router.post('/opportunities/:id/outcome', authenticate, requirePermission('promo
   const current = await query('SELECT doc FROM opportunities WHERE id = $1', [req.params.id]);
   if (!current.rowCount) return res.status(404).json({ error: 'not_found' });
   const previous = current.rows[0].doc || {};
+  if (previous.collaboration) return res.status(409).json({ error: 'workflow_action_required', hint: 'Sales must close the deal from the collaboration workspace.' });
   if (!canAccessOpportunity(req, previous)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
   const stageByOutcome = {
     won: 'closed_won',
@@ -539,7 +599,8 @@ router.post('/opportunities/:id/documents', authenticate, requireAnyEditPermissi
     status: document.status || 'In Review',
   };
   const out = { ...previous, id: req.params.id, documents: [savedDocument, ...(previous.documents || [])], updatedAt: new Date().toISOString() };
-  await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1', [req.params.id, JSON.stringify(out)]);
+  const saved = await query('UPDATE opportunities SET doc = $2, updated_at = now() WHERE id = $1 AND doc = $3::jsonb RETURNING id', [req.params.id, JSON.stringify(out), JSON.stringify(previous)]);
+  if (!saved.rowCount) return res.status(409).json({ error: 'stale_update', hint: 'Another team member saved changes. Refresh and retry.' });
   await audit({ req, action: 'opportunity.document.upload', targetType: 'opportunity', targetId: req.params.id, meta: { documentId: savedDocument.id, title: savedDocument.title, version: savedDocument.version } });
   res.status(201).json(stripDocumentContent(out));
 });
@@ -561,6 +622,7 @@ router.post('/opportunities/:id/handover/signoff', authenticate, requirePermissi
   const previous = current.rows[0].doc || {};
   if (!canAccessOpportunity(req, previous)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
   const handover = previous.handover || {};
+  if (previous.collaboration) return res.status(409).json({ error: 'workflow_action_required', hint: 'Use the Postsales handover action in the collaboration workspace.' });
    const handoverInput = req.body && typeof req.body === 'object' ? req.body : {};
    const allowedHandoverFields = ['technicalRunbookReady', 'credentialsSecurelyTransferred', 'customerTechKickoffScheduled', 'knownTechnicalDebtOrRisks', 'specialSLAsAgreed', 'status'];
    const sanitizedHandover = Object.fromEntries(Object.entries(handoverInput).filter(([key]) => allowedHandoverFields.includes(key)));
@@ -596,6 +658,7 @@ router.post('/opportunities/:id/stage', authenticate, requirePermission('promote
   });
   const cur = await query('SELECT doc FROM opportunities WHERE id = $1', [req.params.id]);
   if (!cur.rowCount) return res.status(404).json({ error: 'not_found' });
+  if (cur.rows[0].doc.collaboration) return res.status(409).json({ error: 'workflow_action_required', hint: 'Use the collaboration workspace to advance this opportunity.' });
   const doc = { ...cur.rows[0].doc, stage: String(stage), updatedAt: new Date().toISOString() };
   if (!canAccessOpportunity(req, cur.rows[0].doc)) return res.status(403).json({ error: 'opportunity_scope_forbidden' });
   const missing = stagePrerequisites(cur.rows[0].doc, String(stage), workflow);

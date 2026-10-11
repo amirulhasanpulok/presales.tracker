@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   LayoutDashboard,
   TableProperties, 
@@ -55,6 +55,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen = false,
   onMobileClose,
 }) => {
+  const [advanced, setAdvanced] = useState(false);
+  const primary = new Set(['dashboard', 'opportunities', 'action_center', 'clients', 'handover_queue', 'analytics', 'notifications']);
   interface NavItem {
     id: ActiveTab;
     label: string;
@@ -77,16 +79,16 @@ interface NavSection {
 
   const sections: NavSection[] = [
     {
-      title: 'Executive & Pipelines',
+      title: 'Workspace',
       items: [
-        { id: 'dashboard' as ActiveTab, label: 'Dashboard', icon: LayoutDashboard, perm: 'app.access' },
-        { id: 'opportunities' as ActiveTab, label: 'Opportunities Tracker', icon: TableProperties, count: totalOpps, perm: 'app.access' },
+        { id: 'dashboard' as ActiveTab, label: 'Team workspace', icon: LayoutDashboard, perm: 'app.access' },
+        { id: 'opportunities' as ActiveTab, label: 'Opportunities', icon: TableProperties, count: totalOpps, perm: 'app.access' },
         { id: 'board' as ActiveTab, label: 'Stage Matrix Board', icon: Kanban, perm: 'app.access' },
         { id: 'calendar' as ActiveTab, label: 'Calendar & Sessions', icon: Calendar, perm: 'app.access' },
       ]
     },
     {
-      title: 'Solutions Engineering',
+      title: 'Work & reports',
       items: [
         { id: 'poc_center' as ActiveTab, label: 'POC & Lab Sandbox', icon: FlaskConical, count: activePocs, highlight: 'amber', perm: 'run_poc_benchmarks' },
         { id: 'boq_workbench' as ActiveTab, label: 'BOQ / BOM Workbench', icon: Calculator, count: pendingBoqs > 0 ? `${pendingBoqs} apprv` : undefined, highlight: 'purple', perm: 'author_boq' },
@@ -98,14 +100,14 @@ interface NavSection {
       ]
     },
     {
-      title: 'Commercial & Accounts',
+      title: 'Clients & team',
       items: [
         { id: 'clients' as ActiveTab, label: 'Clients Directory', icon: Building2, perm: 'app.access' },
         { id: 'sales_kams' as ActiveTab, label: 'Sales KAM Directory', icon: Briefcase, perm: 'app.access' },
       ]
     },
     {
-      title: 'Administration & Governance',
+      title: 'Settings',
       items: [
         { id: 'notifications' as ActiveTab, label: 'Notification Center', icon: Bell, perm: 'app.access' },
         { id: 'audit_logs' as ActiveTab, label: 'Audit Logs', icon: ShieldCheck, perm: 'sys.audit' },
@@ -149,8 +151,9 @@ interface NavSection {
 
       {/* Navigation Sections */}
       <div className="p-2 flex-1 overflow-y-auto min-h-0 space-y-4">
+        <button onClick={() => setAdvanced(!advanced)} className="px-3 py-1 text-xs text-slate-500">{advanced ? 'Hide advanced tools' : 'Show advanced tools & settings'}</button>
         {sections.map((sec, secIdx) => {
-          const visibleItems = sec.items.filter(item => can(item.perm));
+          const visibleItems = sec.items.filter(item => can(item.perm) && (advanced || primary.has(item.id)));
           if (visibleItems.length === 0) return null;
 
           return (

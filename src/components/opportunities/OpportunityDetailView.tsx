@@ -35,8 +35,14 @@ import { OpportunitySales } from './subviews/OpportunitySales';
 import { OpportunityImplementation } from './subviews/OpportunityImplementation';
 import { TenderAndOutcome } from './subviews/TenderAndOutcome';
 import { api } from '../../api';
+import { CollaborationWorkspace } from './CollaborationWorkspace';
+import { UserAccount } from '../../types';
 
 interface OpportunityDetailViewProps {
+  currentUser?: UserAccount;
+  teamDirectory?: UserAccount[];
+  can?: (key:string)=>boolean;
+  onWorkflowSaved?: (o:Opportunity)=>void;
   opportunity: Opportunity;
   initialSubView?: OpportunitySubView;
   onBack: () => void;
@@ -45,13 +51,17 @@ interface OpportunityDetailViewProps {
 }
 
 export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
+  currentUser,
+  teamDirectory = [],
+  can = () => false,
+  onWorkflowSaved,
   opportunity,
   initialSubView = 'overview',
   onBack,
   onUpdateOpportunity,
   onUpdateStage,
 }) => {
-  const [activeSubView, setActiveSubView] = useState<OpportunitySubView>(initialSubView);
+  const [activeSubView, setActiveSubView] = useState<OpportunitySubView>(currentUser ? 'workspace' : initialSubView);
   const [currentStage, setCurrentStage] = useState<OpportunityStage>(opportunity.stage);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
@@ -65,13 +75,14 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   };
 
   const subTabs: { id: OpportunitySubView; label: string; icon: React.FC<{ className?: string }> }[] = [
+    { id: 'workspace', label: 'Team workflow', icon: Users },
     { id: 'overview', label: 'Overview', icon: Layers },
-    { id: 'timeline', label: 'Activity Timeline', icon: Clock },
-    { id: 'tasks', label: 'Tasks & Actions', icon: CheckCircle2 },
+    { id: 'timeline', label: 'Activity history', icon: Clock },
+    { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
     { id: 'stakeholders', label: 'Stakeholders', icon: Users },
-    { id: 'documents', label: 'Documents & SADD', icon: FileText },
-    { id: 'boq', label: 'BOQ / BOM Sizing', icon: Calculator },
-    { id: 'technical', label: 'Technical & POC', icon: Cpu },
+    { id: 'documents', label: 'Documents', icon: FileText },
+    { id: 'boq', label: 'BOQ', icon: Calculator },
+    { id: 'technical', label: 'Requirements & solution', icon: Cpu },
     { id: 'sales', label: 'Sales & Forecast', icon: TrendingUp },
     { id: 'implementation', label: 'Implementation Handover', icon: ShieldCheck },
     { id: 'tender', label: 'Tender & Outcome', icon: Gavel }
@@ -167,11 +178,11 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold text-gray-900 tracking-tight break-words">{opportunity.name}</h1>
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-semibold border border-blue-200">
+              <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-semibold border border-blue-200 ${opportunity.collaboration ? 'hidden' : ''}`}>
                 {opportunity.primaryTechStack}
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1">
+            <div className={`flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1 ${opportunity.collaboration ? 'hidden' : ''}`}>
               <span className="flex items-center gap-1 text-gray-700 font-medium">
                 <Building2 className="w-3.5 h-3.5 text-gray-400" />
                 {opportunity.clientName} ({opportunity.clientIndustry})
@@ -185,7 +196,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 bg-gray-50 p-2.5 rounded border border-gray-200 flex-shrink-0">
+          <div className={`flex flex-wrap items-center gap-3 sm:gap-4 bg-gray-50 p-2.5 rounded border border-gray-200 flex-shrink-0 ${opportunity.collaboration ? 'hidden' : ''}`}>
             <div className="text-right">
               <div className="text-[10px] uppercase font-semibold text-gray-500">Contract Value (TCV)</div>
                <div className="text-base font-bold font-mono text-gray-900">{formatCurrency(opportunity.contractValue)}</div>
@@ -204,7 +215,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
         </div>
 
         {/* Stage Progression Stepper */}
-        <div className="pt-2 border-t border-gray-100">
+        <div className={`pt-2 border-t border-gray-100 ${opportunity.collaboration ? 'hidden' : ''}`}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Presales Pipeline Gate:</span>
             <span className="text-xs font-semibold text-blue-700">
@@ -241,7 +252,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
 
       {/* Sub-view Tabs Navigation Bar */}
       <div className="bg-white border border-gray-200 rounded p-1.5 flex items-center overflow-x-auto gap-1">
-        {subTabs.map(tab => {
+        {subTabs.filter(tab => !opportunity.collaboration || ['workspace','overview','timeline','documents','boq','technical','tasks'].includes(tab.id)).map(tab => {
           const Icon = tab.icon;
           const isActive = activeSubView === tab.id;
           return (
@@ -263,6 +274,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
 
       {/* Active Sub-screen Render */}
       <div>
+        {activeSubView === 'workspace' && currentUser && <CollaborationWorkspace opportunity={opportunity} user={currentUser} people={teamDirectory} can={can} onSaved={saved => onWorkflowSaved?.(saved)} onNavigate={setActiveSubView} />}
         {activeSubView === 'overview' && (
           <OpportunityOverview 
             opportunity={opportunity} 
@@ -274,7 +286,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
             opportunity={opportunity}
             onAddActivity={(activity) => {
               api.addActivity(opportunity.id, activity)
-                .then(updated => onUpdateOpportunity?.(updated))
+                .then(updated => onWorkflowSaved ? onWorkflowSaved(updated) : onUpdateOpportunity?.(updated))
                 .catch(() => window.alert('Could not save the activity. Please try again.'));
             }}
           />
@@ -310,7 +322,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
             opportunity={opportunity}
             onUploadDoc={(doc) => {
               api.uploadDocument(opportunity.id, doc)
-                .then(updated => onUpdateOpportunity?.(updated))
+                .then(updated => onWorkflowSaved ? onWorkflowSaved(updated) : onUpdateOpportunity?.(updated))
                 .catch(() => window.alert('Could not upload the document. Please try again.'));
             }}
           />

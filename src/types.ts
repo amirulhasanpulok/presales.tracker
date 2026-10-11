@@ -205,6 +205,7 @@ export interface DealOutcome {
 }
 
 export interface Opportunity {
+  collaboration?: Collaboration;
   id: string;
   code: string;
   name: string;
@@ -270,6 +271,21 @@ export interface Opportunity {
   updatedAt: string;
   lastContactedAt: string;
   daysInCurrentStage: number;
+}
+
+export interface Collaboration {
+  status: 'review' | 'working' | 'solution_ready' | 'client_followup' | 'revision' | 'declined' | 'won' | 'lost' | 'delivery' | 'completed';
+  cycle: number;
+  assignedAt?: string;
+  assignedBy?: string;
+  originalDueAt?: string;
+  dueAt?: string;
+  changeRequest?: string;
+  nextFollowUpAt?: string | null;
+  solutions: Array<{ id: string; version: number; cycle: number; summary: string; submittedAt: string; submittedBy: string; dueAt: string; onTime: boolean; architecture: string; boq: BOQSummary; documents: OpportunityDocument[]; sentAt?: string; sentBy?: string; submissionNote?: string }>;
+  extensions: Array<{ id: string; cycle: number; status: 'pending' | 'approved' | 'rejected' | 'superseded'; reason: string; previousDueAt: string; requestedDueAt: string; requestedAt: string; requestedBy: string; decidedAt?: string; decidedBy?: string; decisionNote?: string }>;
+  followups: Array<{ id: string; target: string; note: string; author: string; at: string; nextAt?: string }>;
+  acceptanceNote?: string;
 }
 
 export interface PresalesEngineer {
@@ -546,6 +562,7 @@ export type ActiveTab =
 export type RuntimeActiveTab = ActiveTab | 'analytics' | 'sales_kams' | 'notifications' | 'role_permissions';
 
 export type OpportunitySubView =
+  | 'workspace'
   | 'overview'
   | 'timeline'
   | 'tasks'

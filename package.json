@@ -10,7 +10,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "tsc --noEmit",
-    "validate:rbac": "tsx scripts/validate_rbac.ts"
+    "validate:rbac": "tsx scripts/validate_rbac.ts",
+    "test:workflow": "node --test server/collaboration.test.js",
+    "test:workflow:api": "node server/collaboration.integration.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",

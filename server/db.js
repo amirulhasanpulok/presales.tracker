@@ -319,6 +319,12 @@ export async function seedOEMCatalog() {
 
 export async function ensureSystemRoles() {
   await query(`INSERT INTO roles (id, role_name, name, description, users_count, is_system_role, matching_roles, permissions)
+    VALUES ('role-presales-lead', 'Presales Team Lead', 'Presales Team Lead', 'Reviews Sales leads and assigns Presales engineers.', 0, true, '["Presales Team Lead"]'::jsonb,
+    '["workflow.review","create_opportunity","edit_opportunity_core","author_sadd","approve_sadd","run_poc_benchmarks","author_boq","approve_boq_discount","initiate_handover","signoff_handover"]'::jsonb)
+    ON CONFLICT (id) DO NOTHING`);
+  await query(`UPDATE roles SET permissions = permissions || '["workflow.sales"]'::jsonb
+    WHERE id = 'role-kam' AND NOT permissions @> '["workflow.sales"]'::jsonb`);
+  await query(`INSERT INTO roles (id, role_name, name, description, users_count, is_system_role, matching_roles, permissions)
     VALUES ('role-postsales', 'Postsales / Delivery Manager', 'Postsales / Delivery Manager', 'Owns implementation, service transition, and post-sales acceptance.', 0, true, '["Postsales Manager","Postsales","Delivery Manager"]'::jsonb, '["initiate_handover","signoff_handover"]'::jsonb)
     ON CONFLICT (id) DO NOTHING`);
 }

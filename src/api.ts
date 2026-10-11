@@ -27,6 +27,7 @@ export interface PrincipalRole {
 }
 
 export interface BootstrapPayload {
+  teamDirectory?: import('./types').UserAccount[];
   user: PrincipalUser;
   role: Record<string, unknown>;
   roles: unknown[];
@@ -137,6 +138,8 @@ export const api = {
     }),
 
   bootstrap: () => request<BootstrapPayload>('/bootstrap'),
+  workflowAction: (id: string, payload: Record<string, unknown>) =>
+    request<import('./types').Opportunity>(`/opportunities/${encodeURIComponent(id)}/collaboration`, { method: 'POST', body: JSON.stringify(payload) }),
 
   updateCurrency: (currency: string) =>
     request<{ currency: string }>('/settings/currency', { method: 'PUT', body: JSON.stringify({ currency }) }),

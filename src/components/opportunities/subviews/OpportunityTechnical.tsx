@@ -55,6 +55,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
 
   return (
     <div className="space-y-4">
+      {opportunity.collaboration ? <section className="bg-white border border-slate-200 rounded-xl p-5 space-y-4"><div><h2 className="text-lg font-semibold">Requirements & solution</h2><p className="text-sm text-slate-500">Analyse requirements with the client. Record OEM discussions in Activity history.</p></div>{(['requirementDetails','clientPainPoint','currentLegacyStack','expectedSolution','proposedArchitecture'] as const).map(key=><label key={key} className="block text-sm"><span>{({requirementDetails:'Client requirements',clientPainPoint:'Client pain points',currentLegacyStack:'Current infrastructure',expectedSolution:'Expected outcome',proposedArchitecture:'Proposed solution'})[key]}</span><textarea rows={4} className="w-full border border-slate-200 rounded-lg px-3 py-2 mt-1 text-sm" value={scopeAnalysis[key]} onChange={e=>setScopeAnalysis({...scopeAnalysis,[key]:e.target.value})}/></label>)}<button onClick={saveScopeAnalysis} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Save requirements & solution</button></section> : <>
       {/* Top Architecture Status Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white border border-gray-200 rounded p-3">
@@ -240,6 +241,7 @@ export const OpportunityTechnical: React.FC<OpportunityTechnicalProps> = ({
           </div>
         )}
       </div>
+      </>}
     </div>
   );
 };
